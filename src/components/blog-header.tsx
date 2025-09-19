@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import { signInWithPopup, GoogleAuthProvider, signInAnonymously } from 'firebase/auth';
 
 export function BlogHeader() {
   const { user, loading } = useAuth();
@@ -18,6 +19,26 @@ export function BlogHeader() {
     await auth.signOut();
     router.push('/');
   };
+
+  const handleGoogleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      router.push('/profile');
+    } catch (error) {
+      console.error("Google sign-in error", error);
+    }
+  };
+  
+  const handleAnonymousLogin = async () => {
+    try {
+      await signInAnonymously(auth);
+      router.push('/');
+    } catch (error) {
+      console.error("Anonymous sign-in error", error);
+    }
+  };
+
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b">
@@ -43,7 +64,7 @@ export function BlogHeader() {
                   {user ? (
                      <Avatar className="h-9 w-9">
                         <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
-                        <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
+                        <AvatarFallback>{user.isAnonymous ? 'G' : (user.email?.[0].toUpperCase() || 'U')}</AvatarFallback>
                     </Avatar>
                   ) : (
                     <UserCircle className="h-6 w-6" />
@@ -53,11 +74,13 @@ export function BlogHeader() {
               <DropdownMenuContent align="end">
                 {user ? (
                   <>
-                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuLabel>{user.isAnonymous ? "Guest" : (user.displayName || "My Account")}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile"><LayoutDashboard className="mr-2"/>Profile</Link>
-                    </DropdownMenuItem>
+                    {!user.isAnonymous && (
+                        <DropdownMenuItem asChild>
+                            <Link href="/profile"><UserCircle className="mr-2"/>Profile</Link>
+                        </DropdownMenuItem>
+                    )}
                      <DropdownMenuItem asChild>
                       <Link href="/admin"><LayoutDashboard className="mr-2"/>Admin</Link>
                     </DropdownMenuItem>
@@ -69,13 +92,13 @@ export function BlogHeader() {
                   </>
                 ) : (
                   <>
-                    <DropdownMenuLabel>Guest</DropdownMenuLabel>
+                    <DropdownMenuLabel>Get Started</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/login"><LogIn className="mr-2"/>Login</Link>
+                    <DropdownMenuItem onClick={handleGoogleLogin}>
+                      <LogIn className="mr-2"/>Login with Google
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/register"><UserPlus className="mr-2"/>Register</Link>
+                    <DropdownMenuItem onClick={handleAnonymousLogin}>
+                      <UserCircle className="mr-2"/>Continue as Guest
                     </DropdownMenuItem>
                   </>
                 )}

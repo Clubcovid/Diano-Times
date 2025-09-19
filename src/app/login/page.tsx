@@ -2,21 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, signInAnonymously } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn } from 'lucide-react';
+import { LogIn, User } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
 import Link from 'next/link';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loadingGoogle, setLoadingGoogle] = useState(false);
+  const [loadingGuest, setLoadingGuest] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -29,19 +26,11 @@ export default function LoginPage() {
     }
   }, [user, authLoading, router, isAdminLogin]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-        toast({
-            title: 'Missing fields',
-            description: 'Please enter both email and password.',
-            variant: 'destructive',
-        });
-        return;
-    }
-    setLoading(true);
+  const handleGoogleLogin = async () => {
+    setLoadingGoogle(true);
+    const provider = new GoogleAuthProvider();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithPopup(auth, provider);
       toast({
           title: 'Login Successful',
           description: `Welcome back!`,
@@ -50,11 +39,31 @@ export default function LoginPage() {
     } catch (error: any) {
       toast({
         title: 'Login Failed',
-        description: 'Invalid email or password. Please try again.',
+        description: 'Could not log in with Google. Please try again.',
         variant: 'destructive',
       });
     } finally {
-        setLoading(false);
+        setLoadingGoogle(false);
+    }
+  };
+  
+  const handleGuestLogin = async () => {
+    setLoadingGuest(true);
+    try {
+      await signInAnonymously(auth);
+      toast({
+          title: 'Welcome, Guest!',
+          description: `You are browsing as a guest.`,
+      });
+      router.push('/');
+    } catch (error: any) {
+      toast({
+        title: 'Login Failed',
+        description: 'Could not sign in as a guest. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+        setLoadingGuest(false);
     }
   };
 
@@ -75,45 +84,20 @@ export default function LoginPage() {
         </div>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-headline">{isAdminLogin ? 'Admin Login': 'Login'}</CardTitle>
-          <CardDescription>Enter your credentials to access your account.</CardDescription>
+          <CardTitle className="text-2xl font-headline">{isAdminLogin ? 'Admin Login': 'Get Started'}</CardTitle>
+          <CardDescription>Sign in to access your account or continue as a guest.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="user@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Logging in...' : <><LogIn className="mr-2 h-4 w-4" /> Log In</>}
+        <CardContent className="grid gap-4">
+            <Button onClick={handleGoogleLogin} disabled={loadingGoogle || loadingGuest}>
+              {loadingGoogle ? 'Signing in...' : <><LogIn className="mr-2 h-4 w-4" /> Sign in with Google</>}
             </Button>
-          </form>
+            <Button variant="secondary" onClick={handleGuestLogin} disabled={loadingGoogle || loadingGuest}>
+                {loadingGuest ? 'Entering...' : <><User className="mr-2 h-4 w-4" /> Continue as Guest</>}
+            </Button>
         </CardContent>
          <CardFooter className="flex-col gap-2">
-            <p className="text-xs text-muted-foreground">
-                No account? <Link href="/register" className="text-primary hover:underline">Create one</Link>
-            </p>
              <Button variant="outline" asChild className="w-full">
-                <Link href="/">Continue as Guest</Link>
+                <Link href="/">Back to Homepage</Link>
             </Button>
         </CardFooter>
       </Card>
