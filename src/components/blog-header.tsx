@@ -9,7 +9,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import { signInWithPopup, GoogleAuthProvider, signInAnonymously } from 'firebase/auth';
 
 export function BlogHeader() {
   const { user, loading } = useAuth();
@@ -19,26 +18,6 @@ export function BlogHeader() {
     await auth.signOut();
     router.push('/');
   };
-
-  const handleGoogleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-      router.push('/profile');
-    } catch (error) {
-      console.error("Google sign-in error", error);
-    }
-  };
-  
-  const handleAnonymousLogin = async () => {
-    try {
-      await signInAnonymously(auth);
-      router.push('/');
-    } catch (error) {
-      console.error("Anonymous sign-in error", error);
-    }
-  };
-
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b">
@@ -56,31 +35,23 @@ export function BlogHeader() {
         </nav>
         <div className="flex items-center gap-2">
            {loading ? (
-            <Skeleton className="h-10 w-10 rounded-full" />
-          ) : (
+            <Skeleton className="h-10 w-24 rounded-md" />
+          ) : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
-                  {user ? (
                      <Avatar className="h-9 w-9">
                         <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
-                        <AvatarFallback>{user.isAnonymous ? 'G' : (user.email?.[0].toUpperCase() || 'U')}</AvatarFallback>
+                        <AvatarFallback>{user.email?.[0].toUpperCase() || 'U'}</AvatarFallback>
                     </Avatar>
-                  ) : (
-                    <UserCircle className="h-6 w-6" />
-                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {user ? (
-                  <>
-                    <DropdownMenuLabel>{user.isAnonymous ? "Guest" : (user.displayName || "My Account")}</DropdownMenuLabel>
+                    <DropdownMenuLabel>{user.displayName || "My Account"}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {!user.isAnonymous && (
-                        <DropdownMenuItem asChild>
-                            <Link href="/profile"><UserCircle className="mr-2"/>Profile</Link>
-                        </DropdownMenuItem>
-                    )}
+                    <DropdownMenuItem asChild>
+                        <Link href="/profile"><UserCircle className="mr-2"/>Profile</Link>
+                    </DropdownMenuItem>
                      <DropdownMenuItem asChild>
                       <Link href="/admin"><LayoutDashboard className="mr-2"/>Admin</Link>
                     </DropdownMenuItem>
@@ -89,21 +60,23 @@ export function BlogHeader() {
                       <LogOut className="mr-2"/>
                       Logout
                     </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuLabel>Get Started</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleGoogleLogin}>
-                      <LogIn className="mr-2"/>Login with Google
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleAnonymousLogin}>
-                      <UserCircle className="mr-2"/>Continue as Guest
-                    </DropdownMenuItem>
-                  </>
-                )}
               </DropdownMenuContent>
             </DropdownMenu>
+          ) : (
+             <>
+                <Button variant="ghost" asChild>
+                    <Link href="/login">
+                        <LogIn className="mr-2"/>
+                        Login
+                    </Link>
+                </Button>
+                <Button asChild>
+                    <Link href="/register">
+                         <UserPlus className="mr-2"/>
+                        Register
+                    </Link>
+                </Button>
+             </>
           )}
          </div>
       </div>
