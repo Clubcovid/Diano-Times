@@ -175,10 +175,14 @@ const iconMap: { [key: string]: LucideIcon } = {
 
 const WeatherTicker = async () => {
   const cities = ['Nairobi, Kenya', 'Mombasa, Kenya', 'Kisumu, Kenya', 'Eldoret, Kenya'];
-  let weatherData: WeatherForecast[] = [];
+  const weatherData: WeatherForecast[] = [];
   try {
-    const forecasts = await Promise.all(cities.map(location => getWeatherForecast({ location })));
-    weatherData = forecasts.filter(Boolean) as WeatherForecast[];
+    for (const location of cities) {
+      const forecast = await getWeatherForecast({ location });
+      if (forecast) {
+        weatherData.push(forecast);
+      }
+    }
   } catch (error) {
     console.error("Failed to fetch weather data:", error);
     // You could return a fallback or empty component here
