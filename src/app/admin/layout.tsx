@@ -1,19 +1,21 @@
 "use client";
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 const ADMIN_EMAIL = 'georgedianoh@gmail.com';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,6 +42,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
       </div>
     );
+  }
+  
+  const getPageTitle = () => {
+    const segment = pathname.split('/').pop() || 'dashboard';
+    if (segment === 'admin') return 'Dashboard';
+    return segment.charAt(0).toUpperCase() + segment.slice(1);
   }
 
   return (

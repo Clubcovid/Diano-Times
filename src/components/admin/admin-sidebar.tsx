@@ -5,7 +5,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   FileText,
-  FilePlus,
   Users,
   Settings,
   Megaphone,
@@ -20,7 +19,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/posts', label: 'Posts', icon: FileText },
-  { href: '/admin/create', label: 'New Post', icon: FilePlus },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/advertisements', label: 'Advertisements', icon: Megaphone },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
@@ -50,7 +48,7 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                pathname === item.href ? 'bg-muted text-primary' : 'text-muted-foreground'
+                pathname.startsWith(item.href) ? 'bg-muted text-primary' : 'text-muted-foreground'
               }`}
             >
               <item.icon className="h-4 w-4" />
