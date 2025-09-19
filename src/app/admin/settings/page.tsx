@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { ThemeToggle } from '@/components/theme-toggle';
+
 
 export default function SettingsPage() {
   return (
@@ -11,6 +11,25 @@ export default function SettingsPage() {
           Manage your site's appearance and behavior.
         </p>
       </div>
+       <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+          <CardDescription>
+            Customize the look and feel of your site.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div>
+                <p className="font-semibold">Theme</p>
+                <p className="text-sm text-muted-foreground">
+                    Select the theme for the website.
+                </p>
+            </div>
+            <ThemeToggle />
+          </div>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Site Configuration</CardTitle>
@@ -21,21 +40,12 @@ export default function SettingsPage() {
         <CardContent className="space-y-6">
             <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
                 <div>
-                    <Label htmlFor="maintenance-mode" className="font-semibold">Maintenance Mode</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-semibold text-muted-foreground/80">Maintenance Mode</p>
+                    <p className="text-sm text-muted-foreground/80">
                         Temporarily take your site offline for visitors.
                     </p>
                 </div>
-                <Switch id="maintenance-mode" disabled />
-            </div>
-             <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-                <div>
-                    <Label htmlFor="theme-settings" className="font-semibold">Theme Customization</Label>
-                    <p className="text-sm text-muted-foreground">
-                        Change fonts, colors, and other visual styles.
-                    </p>
-                </div>
-                 <p className="text-sm font-medium text-muted-foreground pr-2">Coming Soon</p>
+                 <p className="text-sm font-medium text-muted-foreground/80 pr-2">Coming Soon</p>
             </div>
         </CardContent>
       </Card>

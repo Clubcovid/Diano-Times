@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from './ui/sheet';
+import { ThemeToggle } from './theme-toggle';
 
 export function BlogHeader() {
   const { user, loading } = useAuth();
@@ -41,6 +42,7 @@ export function BlogHeader() {
           {navLinks}
         </nav>
         <div className="flex items-center gap-2">
+           <ThemeToggle />
            {loading ? (
             <Skeleton className="h-10 w-24 rounded-md" />
           ) : user ? (
