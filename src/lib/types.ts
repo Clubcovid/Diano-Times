@@ -11,3 +11,11 @@ export interface Post {
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
+
+export interface AdminUser {
+    uid: string;
+    email: string;
+    displayName: string;
+    photoURL?: string;
+    creationTime: string;
+}

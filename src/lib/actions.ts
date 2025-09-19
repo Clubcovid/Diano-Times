@@ -1,11 +1,14 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/firebase';
+import { db, getFirebaseAuth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
 import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc, where, query, getDocs } from 'firebase/firestore';
-import { postSchema, type PostFormData } from './schemas';
+import { postSchema } from './schemas';
 import { z } from 'zod';
+import type { UserRecord } from 'firebase-admin/auth';
+import type { AdminUser } from './types';
+
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
   const q = query(collection(db, 'posts'), where('slug', '==', slug));
@@ -135,4 +138,26 @@ export async function deletePost(postId: string): Promise<{ success: boolean, me
     console.error('Error deleting post:', error);
     return { success: false, message: 'Failed to delete post.' };
   }
+}
+
+function mapUser(user: UserRecord): AdminUser {
+    return {
+        uid: user.uid,
+        email: user.email || 'No email',
+        displayName: user.displayName || 'No name',
+        photoURL: user.photoURL,
+        creationTime: user.metadata.creationTime,
+    };
+}
+
+
+export async function getUsers(): Promise<AdminUser[]> {
+    try {
+        const auth = getFirebaseAuth();
+        const userRecords = await auth.listUsers();
+        return userRecords.users.map(mapUser);
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        return [];
+    }
 }

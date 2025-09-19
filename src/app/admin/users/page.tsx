@@ -1,22 +1,18 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { UsersTable } from '@/components/admin/users-table';
+import { getUsers } from '@/lib/actions';
 
-export default function UsersPage() {
+export default async function UsersPage() {
+  const users = await getUsers();
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold font-headline">Users</h1>
         <p className="text-muted-foreground">
-          Manage your site's users. This feature is coming soon.
+          View and manage all registered users on your site.
         </p>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Coming Soon</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>A table of registered users, their online status, and last seen time will be displayed here.</p>
-        </CardContent>
-      </Card>
+      <UsersTable users={users} />
     </div>
   );
 }
