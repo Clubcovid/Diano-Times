@@ -6,7 +6,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Rss } from 'lucide-react';
+import { ArrowRight, Rss, ArrowUp, ArrowDown } from 'lucide-react';
+import { mockPosts, mockTrendingTopics, mockAds, mockMarketData } from '@/lib/mock-data';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 function PostsSkeleton() {
   return (
@@ -25,57 +27,140 @@ function PostsSkeleton() {
 }
 
 async function PostsSection() {
-  const allPosts = await getPosts({ publishedOnly: true });
+  let allPosts = await getPosts({ publishedOnly: true });
+
+  if (allPosts.length === 0) {
+    allPosts = mockPosts;
+  }
+
   const [featuredPost, ...otherPosts] = allPosts;
 
   return (
-    <>
-      {featuredPost && (
-        <section className="mb-12">
-          <Link href={`/posts/${featuredPost.slug}`}>
-            <div className="relative aspect-video lg:aspect-[2.4/1] rounded-lg overflow-hidden group">
-              <Image
-                src={featuredPost.coverImage || 'https://picsum.photos/seed/diano-featured/1200/500'}
-                alt={featuredPost.title}
-                fill
-                className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
-                priority
-                data-ai-hint="kenyan landscape"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-              <div className="absolute bottom-0 left-0 p-6 md:p-8 text-white">
-                {featuredPost.tags?.[0] && (
-                  <Badge variant="secondary" className="mb-2">{featuredPost.tags[0]}</Badge>
-                )}
-                <h2 className="text-2xl md:text-4xl font-headline font-bold leading-tight max-w-3xl">
-                  {featuredPost.title}
-                </h2>
-                <div className="mt-4 flex items-center gap-2">
-                  <span>Continue Reading</span>
-                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+       <div className="lg:col-span-3">
+        {featuredPost && (
+          <section className="mb-12">
+            <Link href={`/posts/${featuredPost.slug}`}>
+              <div className="relative aspect-video lg:aspect-[2/1] rounded-lg overflow-hidden group">
+                <Image
+                  src={featuredPost.coverImage || 'https://picsum.photos/seed/diano-featured/1200/600'}
+                  alt={featuredPost.title}
+                  fill
+                  className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
+                  priority
+                  data-ai-hint="kenyan landscape"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                <div className="absolute bottom-0 left-0 p-6 md:p-8 text-white">
+                  {featuredPost.tags?.[0] && (
+                    <Badge variant="secondary" className="mb-2">{featuredPost.tags[0]}</Badge>
+                  )}
+                  <h2 className="text-2xl md:text-4xl font-headline font-bold leading-tight max-w-3xl">
+                    {featuredPost.title}
+                  </h2>
+                  <div className="mt-4 flex items-center gap-2">
+                    <span>Continue Reading</span>
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
                 </div>
               </div>
-            </div>
-          </Link>
-        </section>
-      )}
+            </Link>
+          </section>
+        )}
 
-      {otherPosts.length > 0 ? (
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {otherPosts.map((post) => (
-            <PostCard key={post.id} post={post as Post} />
-          ))}
-        </div>
-      ) : (
-         <div className="text-center py-16 col-span-full">
-            <h2 className="text-2xl font-bold font-headline">No more posts found</h2>
-            <p className="text-muted-foreground mt-2">
-              It looks like there are no other published posts yet.
-            </p>
+        {otherPosts.length > 0 ? (
+          <div className="grid gap-8 md:grid-cols-2">
+            {otherPosts.slice(0, 4).map((post) => (
+              <PostCard key={post.id} post={post as Post} />
+            ))}
           </div>
-      )}
-    </>
+        ) : (
+           <div className="text-center py-16 col-span-full">
+              <h2 className="text-2xl font-bold font-headline">No more posts found</h2>
+              <p className="text-muted-foreground mt-2">
+                It looks like there are no other published posts yet.
+              </p>
+            </div>
+        )}
+      </div>
+      <aside className="lg:col-span-1 space-y-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Trending Topics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {mockTrendingTopics.map((topic, index) => (
+                  <li key={index} className="text-sm font-medium text-primary hover:underline">
+                    <Link href="#">{topic}</Link>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Advertisement</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {mockAds.map(ad => (
+                <Link href={ad.link} key={ad.id} target="_blank" rel="noopener noreferrer" className="block group">
+                   <div className="relative aspect-square rounded-lg overflow-hidden">
+                    <Image
+                      src={ad.imageUrl}
+                      alt={ad.alt}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      data-ai-hint="advertisement marketing"
+                    />
+                    <div className="absolute inset-0 bg-black/40" />
+                     <div className="absolute bottom-4 left-4 text-white">
+                        <h3 className="font-bold font-headline">{ad.title}</h3>
+                        <p className="text-xs">{ad.description}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+      </aside>
+    </div>
   );
+}
+
+const MarketTicker = () => {
+    return (
+        <div className="bg-secondary text-secondary-foreground py-2 border-b-2 border-primary">
+            <div className="container mx-auto px-4 md:px-6">
+                <div className="relative flex overflow-hidden group">
+                    <div className="marquee">
+                        <div className="marquee-content">
+                            {mockMarketData.map(stock => (
+                                <div key={stock.ticker} className="flex items-center gap-4 text-sm font-medium">
+                                    <span className="font-bold">{stock.ticker}</span>
+                                    <span>${stock.price.toFixed(2)}</span>
+                                    <span className={`flex items-center ${stock.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+                                        {stock.change.startsWith('+') ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                                        {stock.change}
+                                    </span>
+                                </div>
+                            ))}
+                             {mockMarketData.map(stock => (
+                                <div key={stock.ticker +'-clone'} className="flex items-center gap-4 text-sm font-medium">
+                                    <span className="font-bold">{stock.ticker}</span>
+                                    <span>${stock.price.toFixed(2)}</span>
+                                    <span className={`flex items-center ${stock.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+                                        {stock.change.startsWith('+') ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                                        {stock.change}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
 }
 
 export default function HomePage() {
@@ -100,6 +185,7 @@ export default function HomePage() {
           </Button>
         </div>
       </header>
+      <MarketTicker />
 
       <main className="flex-1">
         <div className="container mx-auto px-4 md:px-6 py-8">
