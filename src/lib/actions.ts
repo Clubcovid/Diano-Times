@@ -5,10 +5,10 @@ import { revalidatePath } from 'next/cache';
 import { db, getFirebaseAuth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
 import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc, where, query, getDocs, orderBy } from 'firebase/firestore';
-import { postSchema, adSchema, type AdFormData } from './schemas';
+import { postSchema, adSchema, videoSchema, type AdFormData, type VideoFormData } from './schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
-import type { AdminUser, Ad } from './types';
+import type { AdminUser, Ad, Video } from './types';
 
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
@@ -226,5 +226,73 @@ export async function deleteAd(adId: string): Promise<{ success: boolean, messag
   } catch (error) {
     console.error('Error deleting ad:', error);
     return { success: false, message: 'Failed to delete ad.' };
+  }
+}
+
+// Videos Actions
+
+export async function getVideos(): Promise<Video[]> {
+  try {
+    const videosCollection = collection(db, 'videos');
+    const q = query(videosCollection, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Video));
+  } catch (error) {
+    console.error('Error fetching videos:', error);
+    return [];
+  }
+}
+
+type VideoActionState = {
+  success: boolean;
+  message: string;
+  video?: Video;
+}
+
+export async function createVideo(data: VideoFormData): Promise<VideoActionState> {
+  const validatedFields = videoSchema.safeParse(data);
+  if (!validatedFields.success) {
+    return { success: false, message: 'Validation failed.' };
+  }
+
+  try {
+    const docRef = await addDoc(collection(db, 'videos'), {
+      ...validatedFields.data,
+      createdAt: serverTimestamp(),
+    });
+    revalidatePath('/admin/videos');
+    revalidatePath('/video');
+    return { success: true, message: 'Video created.', video: { id: docRef.id, ...validatedFields.data, createdAt: new Date() } as Video };
+  } catch (error) {
+    return { success: false, message: 'Failed to create video.' };
+  }
+}
+
+export async function updateVideo(videoId: string, data: VideoFormData): Promise<VideoActionState> {
+  const validatedFields = videoSchema.safeParse(data);
+  if (!validatedFields.success) {
+    return { success: false, message: 'Validation failed.' };
+  }
+
+  try {
+    const videoRef = doc(db, 'videos', videoId);
+    await updateDoc(videoRef, validatedFields.data);
+    revalidatePath('/admin/videos');
+    revalidatePath('/video');
+    return { success: true, message: 'Video updated.', video: { id: videoId, ...validatedFields.data, createdAt: new Date() } as Video };
+  } catch (error) {
+    return { success: false, message: 'Failed to update video.' };
+  }
+}
+
+export async function deleteVideo(videoId: string): Promise<{ success: boolean, message: string }> {
+  try {
+    await deleteDoc(doc(db, 'videos', videoId));
+    revalidatePath('/admin/videos');
+    revalidatePath('/video');
+    return { success: true, message: 'Video deleted successfully.' };
+  } catch (error) {
+    console.error('Error deleting video:', error);
+    return { success: false, message: 'Failed to delete video.' };
   }
 }

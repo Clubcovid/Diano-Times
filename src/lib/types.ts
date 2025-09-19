@@ -30,3 +30,10 @@ export interface Ad {
   linkUrl: string;
   createdAt: Timestamp;
 }
+
+export interface Video {
+  id: string;
+  title: string;
+  youtubeUrl: string;
+  createdAt: Timestamp;
+}

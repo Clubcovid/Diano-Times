@@ -22,3 +22,12 @@ export const adSchema = z.object({
 });
 
 export type AdFormData = z.infer<typeof adSchema>;
+
+const youtubeUrlRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
+
+export const videoSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters.'),
+  youtubeUrl: z.string().regex(youtubeUrlRegex, 'Please enter a valid YouTube URL.'),
+});
+
+export type VideoFormData = z.infer<typeof videoSchema>;
