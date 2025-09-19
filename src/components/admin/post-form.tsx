@@ -1,7 +1,7 @@
+
 'use client';
 
-import { useEffect, useTransition } from 'react';
-import { useFormState } from 'react-dom';
+import { useEffect, useTransition, useActionState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -54,7 +54,7 @@ export function PostForm({ post }: { post?: Post }) {
   });
 
   const action = post ? updatePost.bind(null, post.id) : createPost;
-  const [state, formAction] = useFormState(action, initialState);
+  const [state, formAction] = useActionState(action, initialState);
 
   useEffect(() => {
     if (state.success) {
