@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -34,7 +35,12 @@ import type { Post } from '@/lib/types';
 import { deletePost } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 
-export function PostsTable({ posts }: { posts: Post[] }) {
+type SerializablePost = Omit<Post, 'createdAt' | 'updatedAt'> & {
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function PostsTable({ posts }: { posts: SerializablePost[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -103,7 +109,7 @@ export function PostsTable({ posts }: { posts: Post[] }) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {format(post.createdAt.toDate(), 'MMM d, yyyy')}
+                  {format(new Date(post.createdAt), 'MMM d, yyyy')}
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>

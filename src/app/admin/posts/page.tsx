@@ -4,9 +4,15 @@ import { getPosts } from '@/lib/posts';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
+import type { Post } from '@/lib/types';
 
 export default async function PostsPage() {
-  const posts = await getPosts();
+  const posts: Post[] = await getPosts();
+  const serializablePosts = posts.map(post => ({
+    ...post,
+    createdAt: post.createdAt.toDate().toISOString(),
+    updatedAt: post.updatedAt.toDate().toISOString(),
+  }));
 
   return (
     <div className="space-y-6">
@@ -24,7 +30,7 @@ export default async function PostsPage() {
             </Link>
         </Button>
       </div>
-      <PostsTable posts={posts} />
+      <PostsTable posts={serializablePosts} />
     </div>
   );
 }
