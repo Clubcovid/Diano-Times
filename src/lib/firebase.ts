@@ -18,7 +18,11 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 if (typeof window !== 'undefined') {
-  isSupported().then(yes => yes ? getAnalytics(app) : null);
+  isSupported().then(yes => {
+    if (yes && firebaseConfig.measurementId) {
+      getAnalytics(app)
+    }
+  });
 }
 
 export { app, auth, db };
