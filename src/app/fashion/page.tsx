@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Rss } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,15 +7,10 @@ import { PostCard } from '@/components/post-card';
 import { Suspense } from 'react';
 import { TagList } from '@/components/tag-list';
 import { getTags } from '@/lib/posts';
-import { mockPosts } from '@/lib/mock-data';
 import { BlogHeader } from '@/components/blog-header';
 
 async function PostsData({ tag }: { tag?: string }) {
   let posts = await getPosts({ publishedOnly: true, tag: tag || 'Fashion' });
-
-  if (posts.length === 0) {
-    posts = mockPosts.filter(p => p.tags.includes('Fashion'));
-  }
 
   if (posts.length === 0) {
     return (
