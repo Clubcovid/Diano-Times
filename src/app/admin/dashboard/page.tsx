@@ -1,8 +1,9 @@
-
-"use client"
-
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getPosts } from '@/lib/posts';
+import { getUsers } from '@/lib/actions';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const trafficData = [
   { name: 'Direct', value: 400, fill: 'hsl(var(--chart-1))' },
@@ -21,15 +22,34 @@ const engagementData = [
   { name: 'Jul', uv: 3490, pv: 4300, amt: 2100 },
 ];
 
-const postsData = [
-    {name: "Tech", posts: 12, fill: 'hsl(var(--chart-1))'},
-    {name: "Lifestyle", posts: 19, fill: 'hsl(var(--chart-2))'},
-    {name: "Fashion", posts: 3, fill: 'hsl(var(--chart-3))'},
-    {name: "Business", posts: 5, fill: 'hsl(var(--chart-4))'},
-    {name: "Sports", posts: 2, fill: 'hsl(var(--chart-5))'},
-]
+async function getCategoryData() {
+    const posts = await getPosts();
+    const categoryCounts = posts.reduce((acc, post) => {
+        post.tags.forEach(tag => {
+            if (acc[tag]) {
+                acc[tag]++;
+            } else {
+                acc[tag] = 1;
+            }
+        });
+        return acc;
+    }, {} as Record<string, number>);
 
-export default function DashboardPage() {
+    const chartColors = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+
+    return Object.entries(categoryCounts).map(([name, count], index) => ({
+        name,
+        posts: count,
+        fill: chartColors[index % chartColors.length]
+    }));
+}
+
+
+export default async function DashboardPage() {
+  const posts = await getPosts();
+  const users = await getUsers();
+  const postsData = await getCategoryData();
+
   return (
     <div className="space-y-6">
         <div>
@@ -44,8 +64,8 @@ export default function DashboardPage() {
             <CardTitle>Total Posts</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">39</div>
-            <p className="text-xs text-muted-foreground">+2 since last month</p>
+            <div className="text-4xl font-bold">{posts.length}</div>
+            <p className="text-xs text-muted-foreground">All posts in the database.</p>
           </CardContent>
         </Card>
         <Card>
@@ -53,8 +73,8 @@ export default function DashboardPage() {
             <CardTitle>Total Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">1,250</div>
-             <p className="text-xs text-muted-foreground">+120 since last month</p>
+            <div className="text-4xl font-bold">{users.length}</div>
+             <p className="text-xs text-muted-foreground">Total registered users.</p>
           </CardContent>
         </Card>
         <Card>
@@ -63,7 +83,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">250,000</div>
-             <p className="text-xs text-muted-foreground">+12% since last month</p>
+             <p className="text-xs text-muted-foreground">(Mock Data) +12% since last month</p>
           </CardContent>
         </Card>
       </div>
@@ -71,7 +91,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle>Engagement Overview</CardTitle>
+            <CardTitle>Engagement Overview (Mock Data)</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -90,7 +110,7 @@ export default function DashboardPage() {
 
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Traffic Sources</CardTitle>
+            <CardTitle>Traffic Sources (Mock Data)</CardTitle>
           </CardHeader>
           <CardContent>
              <ResponsiveContainer width="100%" height={300}>
@@ -113,7 +133,7 @@ export default function DashboardPage() {
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="posts" fill="hsl(var(--primary))" />
+                    <Bar dataKey="posts" />
                 </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -121,5 +141,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
