@@ -1,13 +1,14 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { db, getFirebaseAuth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
-import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc, where, query, getDocs } from 'firebase/firestore';
-import { postSchema } from './schemas';
+import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc, where, query, getDocs, orderBy } from 'firebase/firestore';
+import { postSchema, adSchema, type AdFormData } from './schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
-import type { AdminUser } from './types';
+import type { AdminUser, Ad } from './types';
 
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
@@ -161,4 +162,69 @@ export async function getUsers(): Promise<AdminUser[]> {
         console.error('Error fetching users:', error);
         return [];
     }
+}
+
+// Advertisements Actions
+
+export async function getAds(): Promise<Ad[]> {
+  try {
+    const adsCollection = collection(db, 'advertisements');
+    const q = query(adsCollection, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
+  } catch (error) {
+    console.error('Error fetching ads:', error);
+    return [];
+  }
+}
+
+type AdActionState = {
+  success: boolean;
+  message: string;
+  ad?: Ad;
+}
+
+export async function createAd(data: AdFormData): Promise<AdActionState> {
+  const validatedFields = adSchema.safeParse(data);
+  if (!validatedFields.success) {
+    return { success: false, message: 'Validation failed.' };
+  }
+
+  try {
+    const docRef = await addDoc(collection(db, 'advertisements'), {
+      ...validatedFields.data,
+      createdAt: serverTimestamp(),
+    });
+    revalidatePath('/admin/advertisements');
+    return { success: true, message: 'Ad created.', ad: { id: docRef.id, ...validatedFields.data, createdAt: new Date() } as Ad };
+  } catch (error) {
+    return { success: false, message: 'Failed to create ad.' };
+  }
+}
+
+export async function updateAd(adId: string, data: AdFormData): Promise<AdActionState> {
+  const validatedFields = adSchema.safeParse(data);
+  if (!validatedFields.success) {
+    return { success: false, message: 'Validation failed.' };
+  }
+
+  try {
+    const adRef = doc(db, 'advertisements', adId);
+    await updateDoc(adRef, validatedFields.data);
+    revalidatePath('/admin/advertisements');
+    return { success: true, message: 'Ad updated.', ad: { id: adId, ...validatedFields.data, createdAt: new Date() } as Ad };
+  } catch (error) {
+    return { success: false, message: 'Failed to update ad.' };
+  }
+}
+
+export async function deleteAd(adId: string): Promise<{ success: boolean, message: string }> {
+  try {
+    await deleteDoc(doc(db, 'advertisements', adId));
+    revalidatePath('/admin/advertisements');
+    return { success: true, message: 'Ad deleted successfully.' };
+  } catch (error) {
+    console.error('Error deleting ad:', error);
+    return { success: false, message: 'Failed to delete ad.' };
+  }
 }

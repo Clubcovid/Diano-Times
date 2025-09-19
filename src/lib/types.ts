@@ -1,3 +1,4 @@
+
 import type { Timestamp } from 'firebase/firestore';
 
 export interface Post {
@@ -19,4 +20,13 @@ export interface AdminUser {
     photoURL?: string;
     creationTime: string;
     lastSeen: string;
+}
+
+export interface Ad {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  linkUrl: string;
+  createdAt: Timestamp;
 }

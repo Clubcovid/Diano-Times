@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const postSchema = z.object({
@@ -12,3 +13,12 @@ export const postSchema = z.object({
 });
 
 export type PostFormData = z.infer<typeof postSchema>;
+
+export const adSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters.'),
+  description: z.string().min(10, 'Description must be at least 10 characters.'),
+  imageUrl: z.string().url('Please enter a valid image URL.'),
+  linkUrl: z.string().url('Please enter a valid link URL.'),
+});
+
+export type AdFormData = z.infer<typeof adSchema>;
