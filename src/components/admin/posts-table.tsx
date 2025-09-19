@@ -45,6 +45,7 @@ export function PostsTable({ posts }: { posts: SerializablePost[] }) {
   const [isPending, startTransition] = useTransition();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const [currentPosts, setCurrentPosts] = useState(posts);
 
   const handleDelete = (postId: string) => {
     setPostToDelete(postId);
@@ -57,6 +58,7 @@ export function PostsTable({ posts }: { posts: SerializablePost[] }) {
     startTransition(async () => {
       const result = await deletePost(postToDelete);
       if (result.success) {
+        setCurrentPosts(currentPosts.filter(p => p.id !== postToDelete));
         toast({
           title: 'Success',
           description: result.message,
@@ -73,7 +75,7 @@ export function PostsTable({ posts }: { posts: SerializablePost[] }) {
     });
   }
 
-  if (posts.length === 0) {
+  if (currentPosts.length === 0) {
     return (
         <div className="text-center py-16 border rounded-lg">
             <h2 className="text-2xl font-bold font-headline">No posts yet</h2>
@@ -100,7 +102,7 @@ export function PostsTable({ posts }: { posts: SerializablePost[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {posts.map((post) => (
+            {currentPosts.map((post) => (
               <TableRow key={post.id}>
                 <TableCell className="font-medium">{post.title}</TableCell>
                 <TableCell>
