@@ -1,3 +1,4 @@
+
 import * as admin from 'firebase-admin';
 
 // Check if the necessary environment variables are set
@@ -25,7 +26,34 @@ if (!admin.apps.length) {
     // If no service account, create dummy functions/objects to avoid crashes.
     // The parts of the app that need admin access will fail gracefully.
     console.warn("Firebase Admin SDK not initialized. Missing FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY. Admin features will not work.");
-    db = {} as admin.firestore.Firestore;
+    
+    // Provide a mock db object that prevents crashes on collection() calls
+    db = {
+      collection: () => ({
+        get: async () => ({
+          docs: [],
+          empty: true,
+        }),
+        where: () => ({
+          get: async () => ({
+            docs: [],
+            empty: true,
+          }),
+        }),
+        orderBy: () => ({
+            get: async () => ({
+                docs: [],
+                empty: true,
+            })
+        }),
+        doc: () => ({
+            get: async () => ({
+                exists: false
+            })
+        })
+      }),
+    } as unknown as admin.firestore.Firestore;
+
     // Provide a mock auth object with an empty listUsers function
     auth = {
         listUsers: async () => ({ users: [], pageToken: undefined }),
