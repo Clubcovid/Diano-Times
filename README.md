@@ -32,24 +32,62 @@ Welcome to Diano Times, a modern, full-stack news and blog platform built with N
 - **Schema Validation**: [Zod](https://zod.dev/)
 - **Icons**: [Lucide React](https://lucide.dev/guide/packages/lucide-react)
 
-## Project Structure
+## Project Architecture
+
+This project is built on a modern, full-stack architecture leveraging Next.js and Firebase.
+
+### Frontend
+- **Next.js App Router**: The application uses the App Router for routing, which allows for nested layouts, server components, and granular control over loading states.
+- **React Server Components (RSC)**: By default, pages and components are React Server Components, which run on the server to improve performance by reducing the amount of JavaScript sent to the client. This is used for fetching and displaying data on pages like the homepage and individual post pages.
+- **Client Components**: Components requiring user interaction, state, or lifecycle effects (e.g., forms, buttons, interactive UI elements) are marked with the `'use client'` directive. The admin dashboard is primarily client-rendered to provide a rich, interactive experience.
+- **Styling**: Styling is handled by **Tailwind CSS** for utility-first styling and **ShadCN UI** for the base component library. The theme (colors, fonts, etc.) is configured in `src/app/globals.css` and `tailwind.config.ts`.
+- **State Management**:
+    - **Local State**: Managed with `useState` and `useReducer` hooks within client components.
+    - **Global State**: React Context is used for global state management, specifically for authentication (`src/components/auth-provider.tsx`), which provides user information across the application.
+
+### Backend and Data
+- **Next.js Server Actions**: Form submissions and data mutations (Create, Update, Delete) are handled using Server Actions (`src/lib/actions.ts`). This allows client components to call secure, server-side functions directly without needing to create separate API endpoints.
+- **Firebase Firestore**: The primary database is a NoSQL Firestore database. Data is organized into collections:
+    - `posts`: Stores all blog post content, metadata, and status.
+    - `users`: Managed by Firebase Authentication, with user profiles accessible for admin display.
+    - `advertisements`: Stores ad-related data like image URLs, links, and titles.
+    - `videos`: Stores YouTube video links and titles.
+- **Firebase Authentication**: Handles user registration and login. Access to the admin panel is restricted to a specific admin email address, as defined in `src/app/admin/layout.tsx`.
+
+### AI Integration
+- **Genkit**: All generative AI features are powered by Genkit.
+- **AI Flows**: Genkit "flows" are defined in the `src/ai/flows` directory. These are server-side functions that interact with a Generative Model (e.g., Gemini).
+    - `generate-url-friendly-slug.ts`: An AI flow that takes a post title and generates a URL-safe slug, which can be triggered from the post editor.
+- **Schema Definition**: Zod (`zod`) is used to define the input and output schemas for AI flows, ensuring type safety and structured data.
+
+### Project Structure
 
 ```
 .
 ├── src
 │   ├── ai                  # Genkit AI flows and configuration
+│   │   ├── flows           # Individual AI flow definitions
+│   │   └── genkit.ts       # Genkit initialization
 │   ├── app                 # Next.js App Router pages and layouts
 │   │   ├── admin           # Admin dashboard routes
 │   │   ├── posts           # Dynamic routes for individual posts
 │   │   └── ...             # Main site pages (home, login, etc.)
 │   ├── components          # Reusable React components
 │   │   ├── admin           # Components specific to the admin dashboard
-│   │   └── ui              # ShadCN UI components
-│   ├── hooks               # Custom React hooks
+│   │   ├── ui              # ShadCN UI components
+│   │   └── ...             # Other shared components (header, post cards, etc.)
+│   ├── hooks               # Custom React hooks (e.g., useToast)
 │   └── lib                 # Core logic, Firebase setup, actions, schemas
-├── .env.local              # Environment variables (needs to be created)
-└── ...                     # Configuration files
+│       ├── actions.ts      # Server Actions for data mutation
+│       ├── firebase.ts     # Client-side Firebase initialization
+│       ├── firebase-admin.ts # Server-side Firebase Admin SDK initialization
+│       ├── posts.ts        # Functions for fetching post data
+│       ├── schemas.ts      # Zod schemas for form and data validation
+│       └── types.ts        # TypeScript type definitions
+├── .env                    # Environment variables (needs to be created)
+└── ...                     # Configuration files (next.config.ts, tailwind.config.ts, etc.)
 ```
+
 
 ## Getting Started
 
@@ -115,3 +153,4 @@ This will start the Genkit development server, typically available at `http://lo
 - The admin dashboard is located at `/admin`.
 - To access it, you first need to create a user in your Firebase project via the Firebase Console (Authentication tab).
 - Use those credentials to log in on the `/login` page.
+```
