@@ -1,52 +1,49 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn } from 'lucide-react';
-import { useAuth } from '@/components/auth-provider';
+import { UserPlus } from 'lucide-react';
 import Link from 'next/link';
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { user, loading: authLoading } = useAuth();
-  const isAdminLogin = searchParams.get('type') === 'admin';
 
-  useEffect(() => {
-    if (!authLoading && user) {
-      router.push(isAdminLogin ? '/admin' : '/profile');
-    }
-  }, [user, authLoading, router, isAdminLogin]);
-
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!email || !password || !displayName) {
         toast({
             title: 'Missing fields',
-            description: 'Please enter both email and password.',
+            description: 'Please fill in all fields.',
             variant: 'destructive',
         });
         return;
     }
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push(isAdminLogin ? '/admin' : '/profile');
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, { displayName });
+      
+      toast({
+        title: 'Registration Successful',
+        description: 'You have been successfully registered.',
+      });
+      router.push('/profile');
     } catch (error: any) {
       toast({
-        title: 'Login Failed',
-        description: 'Invalid email or password. Please try again.',
+        title: 'Registration Failed',
+        description: error.message || 'An unexpected error occurred.',
         variant: 'destructive',
       });
     } finally {
@@ -54,23 +51,27 @@ export default function LoginPage() {
     }
   };
 
-  if (authLoading || user) {
-      return (
-          <div className="flex h-screen w-full items-center justify-center bg-background">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
-          </div>
-      );
-  }
-
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-muted/40">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-headline">{isAdminLogin ? 'Admin Login': 'Login'}</CardTitle>
-          <CardDescription>Enter your credentials to access your account.</CardDescription>
+          <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
+          <CardDescription>Join Diano Times to get the full experience.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-4">
+             <div className="space-y-2">
+              <Label htmlFor="displayName">Full Name</Label>
+              <Input
+                id="displayName"
+                type="text"
+                placeholder="John Doe"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -95,13 +96,13 @@ export default function LoginPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Logging in...' : <><LogIn className="mr-2 h-4 w-4" /> Log In</>}
+              {loading ? 'Creating Account...' : <><UserPlus className="mr-2 h-4 w-4" /> Register</>}
             </Button>
           </form>
         </CardContent>
-         <CardFooter className="flex-col gap-4">
+        <CardFooter className="flex-col gap-4">
             <p className="text-xs text-muted-foreground">
-                No account? <Link href="/register" className="text-primary hover:underline">Create one</Link>
+                Already have an account? <Link href="/login" className="text-primary hover:underline">Log in</Link>
             </p>
             <Button variant="link" asChild className="mx-auto">
                 <Link href="/">&larr; Back to site</Link>

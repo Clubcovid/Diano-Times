@@ -7,6 +7,7 @@ import { Suspense } from 'react';
 import { TagList } from '@/components/tag-list';
 import { getTags } from '@/lib/posts';
 import { mockPosts } from '@/lib/mock-data';
+import { BlogHeader } from '@/components/blog-header';
 
 async function PostsData({ tag }: { tag?: string }) {
   let posts = await getPosts({ publishedOnly: true, tag: tag || 'Fashion' });
@@ -59,26 +60,7 @@ async function Tags() {
 export default function CategoryPage({ searchParams }: { searchParams: { tag?: string } }) {
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="text-3xl font-bold font-headline text-primary">
-            Diano Times
-          </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-            <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">Home</Link>
-            <Link href="/fashion" className="text-foreground hover:text-primary transition-colors">Fashion</Link>
-            <Link href="/gadgets" className="text-muted-foreground hover:text-primary transition-colors">Gadgets</Link>
-            <Link href="/lifestyle" className="text-muted-foreground hover:text-primary transition-colors">Lifestyle</Link>
-            <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
-            <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
-          </nav>
-          <Button variant="outline">
-            <Rss className="mr-2" />
-            Subscribe
-          </Button>
-        </div>
-      </header>
-
+      <BlogHeader />
       <main className="flex-1">
         <div className="container mx-auto px-4 md:px-6 py-12">
             <div className="text-center mb-12">

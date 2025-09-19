@@ -6,10 +6,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Rss, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon } from 'lucide-react';
+import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, LogIn, UserPlus, LayoutDashboard } from 'lucide-react';
 import { mockPosts, mockTrendingTopics, mockAds, mockMarketData } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getWeatherForecast, type WeatherForecast } from '@/ai/flows/get-weather-forecast';
+import { BlogHeader } from '@/components/blog-header';
 
 function PostsSkeleton() {
   return (
@@ -232,25 +233,7 @@ const WeatherTicker = async () => {
 export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="text-3xl font-bold font-headline text-primary">
-            Diano Times
-          </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-            <Link href="/" className="text-foreground hover:text-primary transition-colors">Home</Link>
-            <Link href="/fashion" className="text-muted-foreground hover:text-primary transition-colors">Fashion</Link>
-            <Link href="/gadgets" className="text-muted-foreground hover:text-primary transition-colors">Gadgets</Link>
-            <Link href="/lifestyle" className="text-muted-foreground hover:text-primary transition-colors">Lifestyle</Link>
-            <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
-            <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
-          </nav>
-          <Button variant="outline">
-            <Rss className="mr-2" />
-            Subscribe
-          </Button>
-        </div>
-      </header>
+      <BlogHeader />
       <Suspense>
           <WeatherTicker />
       </Suspense>

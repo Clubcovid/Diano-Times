@@ -11,15 +11,14 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && !user && pathname !== '/login') {
-      router.push('/login');
+    if (!loading && !user) {
+      router.push('/login?type=admin');
     }
-  }, [user, loading, router, pathname]);
+  }, [user, loading, router]);
 
-  if (loading || (!user && pathname !== '/login')) {
+  if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
