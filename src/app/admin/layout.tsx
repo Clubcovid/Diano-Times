@@ -1,24 +1,40 @@
 "use client";
 
 import { useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useToast } from '@/hooks/use-toast';
+
+const ADMIN_EMAIL = 'georgedianoh@gmail.com';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login?type=admin');
-    }
-  }, [user, loading, router]);
+    if (loading) return;
 
-  if (loading || !user) {
+    if (!user) {
+      router.push('/login?type=admin');
+      return;
+    }
+
+    if (user.email !== ADMIN_EMAIL) {
+      toast({
+        title: 'Access Denied',
+        description: 'You do not have permission to access the admin panel.',
+        variant: 'destructive',
+      });
+      router.push('/');
+    }
+  }, [user, loading, router, toast]);
+
+  if (loading || !user || user.email !== ADMIN_EMAIL) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
