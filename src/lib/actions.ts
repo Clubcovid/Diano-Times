@@ -77,7 +77,7 @@ export async function createPost(prevState: FormState, formData: FormData): Prom
     });
 
     revalidatePath('/');
-    revalidatePath('/admin');
+    revalidatePath('/admin/posts');
 
     return { success: true, message: 'Post created successfully.', postId: docRef.id };
   } catch (error) {
@@ -116,7 +116,7 @@ export async function updatePost(postId: string, prevState: FormState, formData:
 
     revalidatePath('/');
     revalidatePath(`/posts/${data.slug}`);
-    revalidatePath('/admin');
+    revalidatePath('/admin/posts');
 
     return { success: true, message: 'Post updated successfully.', postId };
   } catch (error) {
@@ -129,7 +129,7 @@ export async function deletePost(postId: string): Promise<{ success: boolean, me
   try {
     await deleteDoc(doc(db, 'posts', postId));
     revalidatePath('/');
-    revalidatePath('/admin');
+    revalidatePath('/admin/posts');
     return { success: true, message: 'Post deleted successfully.' };
   } catch (error) {
     console.error('Error deleting post:', error);

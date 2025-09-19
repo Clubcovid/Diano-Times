@@ -62,7 +62,7 @@ export function PostForm({ post }: { post?: Post }) {
         title: 'Success!',
         description: state.message,
       });
-      router.push('/admin');
+      router.push('/admin/posts');
     } else if (state.message) {
       toast({
         title: 'Error',
