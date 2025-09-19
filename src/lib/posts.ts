@@ -1,3 +1,4 @@
+
 import 'server-only';
 import { db } from '@/lib/firebase';
 import {
@@ -24,28 +25,25 @@ function toPost(doc: any): Post {
 
 export async function getPosts(options: { publishedOnly?: boolean, tag?: string } = {}): Promise<Post[]> {
   const constraints: QueryConstraint[] = [];
-
-  if (options.publishedOnly) {
-    constraints.push(where('status', '==', 'published'));
-  }
-
-  if (options.tag) {
-    constraints.push(where('tags', 'array-contains', options.tag));
-  } else {
-    // Only sort by createdAt on the main page fetch, not on tag-filtered pages
-    // This avoids the need for a composite index for each tag.
-    constraints.push(orderBy('createdAt', 'desc'));
-  }
   
-  const q = query(postsCollection, ...constraints);
+  // We'll fetch all posts and then filter in code to avoid complex index requirements.
+  const q = query(postsCollection);
 
   try {
     const snapshot = await getDocs(q);
-    const posts = snapshot.docs.map(toPost);
-    // If we filtered by tag, we sort here in code instead of in the query.
-    if (options.tag) {
-        posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+    let posts = snapshot.docs.map(toPost);
+
+    if (options.publishedOnly) {
+      posts = posts.filter(post => post.status === 'published');
     }
+
+    if (options.tag) {
+      posts = posts.filter(post => post.tags.includes(options.tag!));
+    }
+    
+    // Sort by creation date, descending
+    posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+
     return posts;
   } catch (error) {
     console.error("Error fetching posts: ", error);
