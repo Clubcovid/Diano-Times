@@ -1,3 +1,35 @@
+
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "diano-blog-1",
+      "description": "Abstract technology background",
+      "imageUrl": "https://picsum.photos/seed/diano-1/1200/800",
+      "imageHint": "abstract technology"
+    },
+    {
+      "id": "diano-blog-2",
+      "description": "Person working on a creative project",
+      "imageUrl": "https://picsum.photos/seed/diano-2/1200/800",
+      "imageHint": "creative process"
+    },
+    {
+      "id": "diano-blog-3",
+      "description": "Glowing digital world map",
+      "imageUrl": "https://picsum.photos/seed/diano-3/1200/800",
+      "imageHint": "digital world"
+    },
+    {
+      "id": "diano-blog-4",
+      "description": "Minimalist desk setup",
+      "imageUrl": "https://picsum.photos/seed/diano-4/1200/800",
+      "imageHint": "minimalist desk"
+    },
+    {
+      "id": "diano-blog-5",
+      "description": "Neon signs in a city at night",
+      "imageUrl": "https://picsum.photos/seed/diano-5/1200/800",
+      "imageHint": "neon city"
+    }
+  ]
 }
