@@ -18,4 +18,5 @@ export interface AdminUser {
     displayName: string;
     photoURL?: string;
     creationTime: string;
+    lastSeen: string;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import {
   Table,
   TableBody,
@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import type { AdminUser } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
@@ -28,6 +27,16 @@ export function UsersTable({ users }: { users: AdminUser[] }) {
     )
   }
 
+  const formatLastSeen = (dateString: string) => {
+    if (dateString === 'N/A') return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch (error) {
+      return 'Invalid date';
+    }
+  }
+
   return (
     <div className="border rounded-lg">
       <Table>
@@ -36,7 +45,6 @@ export function UsersTable({ users }: { users: AdminUser[] }) {
             <TableHead>User</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Joined</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead>Last Seen</TableHead>
           </TableRow>
         </TableHeader>
@@ -56,11 +64,8 @@ export function UsersTable({ users }: { users: AdminUser[] }) {
               <TableCell>
                 {format(new Date(user.creationTime), 'MMM d, yyyy')}
               </TableCell>
-              <TableCell>
-                 <Badge variant="outline" className="text-slate-400">Offline</Badge>
-              </TableCell>
               <TableCell className="text-muted-foreground">
-                N/A
+                {formatLastSeen(user.lastSeen)}
               </TableCell>
             </TableRow>
           ))}

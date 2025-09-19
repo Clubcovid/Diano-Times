@@ -147,6 +147,7 @@ function mapUser(user: UserRecord): AdminUser {
         displayName: user.displayName || 'No name',
         photoURL: user.photoURL,
         creationTime: user.metadata.creationTime,
+        lastSeen: user.metadata.lastSignInTime || 'N/A'
     };
 }
 
