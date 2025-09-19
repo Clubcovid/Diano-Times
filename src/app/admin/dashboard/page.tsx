@@ -1,18 +1,19 @@
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getPosts } from '@/lib/posts';
 import { getUsers } from '@/lib/actions';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { DashboardCharts, type PostCategoryData, type EngagementData, type TrafficData } from '@/components/admin/dashboard-charts';
 
-const trafficData = [
+const trafficData: TrafficData = [
   { name: 'Direct', value: 400, fill: 'hsl(var(--chart-1))' },
   { name: 'Organic', value: 300, fill: 'hsl(var(--chart-2))' },
   { name: 'Referral', value: 200, fill: 'hsl(var(--chart-3))' },
   { name: 'Social', value: 278, fill: 'hsl(var(--chart-4))' },
 ];
 
-const engagementData = [
+const engagementData: EngagementData = [
   { name: 'Jan', uv: 4000, pv: 2400, amt: 2400 },
   { name: 'Feb', uv: 3000, pv: 1398, amt: 2210 },
   { name: 'Mar', uv: 2000, pv: 9800, amt: 2290 },
@@ -22,7 +23,7 @@ const engagementData = [
   { name: 'Jul', uv: 3490, pv: 4300, amt: 2100 },
 ];
 
-async function getCategoryData() {
+async function getCategoryData(): Promise<PostCategoryData> {
     const posts = await getPosts();
     const categoryCounts = posts.reduce((acc, post) => {
         post.tags.forEach(tag => {
@@ -88,56 +89,11 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
-          <CardHeader>
-            <CardTitle>Engagement Overview (Mock Data)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={engagementData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="pv" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
-                <Line type="monotone" dataKey="uv" stroke="hsl(var(--secondary-foreground))" />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Traffic Sources (Mock Data)</CardTitle>
-          </CardHeader>
-          <CardContent>
-             <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                    <Pie data={trafficData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label />
-                    <Tooltip />
-                    <Legend />
-                </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-       <Card>
-          <CardHeader>
-            <CardTitle>Posts by Category</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-               <BarChart data={postsData}>
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="posts" />
-                </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      <DashboardCharts
+        postsData={postsData}
+        engagementData={engagementData}
+        trafficData={trafficData}
+      />
     </div>
   );
 }
