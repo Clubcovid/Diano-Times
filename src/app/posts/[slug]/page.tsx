@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { getPostBySlug, getPosts } from '@/lib/posts';
-import { BlogHeader } from '@/components/blog-header';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import Link from 'next/link';
+import { Rss } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export async function generateStaticParams() {
   const posts = await getPosts({ publishedOnly: true });
@@ -23,20 +25,38 @@ export default async function PostPage({ params }: { params: { slug: string } })
 
   return (
     <>
-      <BlogHeader />
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b">
+        <div className="container mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
+          <Link href="/" className="text-3xl font-bold font-headline text-primary">
+            Diano Times
+          </Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+            <Link href="/" className="text-foreground hover:text-primary transition-colors">Home</Link>
+            <Link href="/fashion" className="text-muted-foreground hover:text-primary transition-colors">Fashion</Link>
+            <Link href="/gadgets" className="text-muted-foreground hover:text-primary transition-colors">Gadgets</Link>
+            <Link href="/lifestyle" className="text-muted-foreground hover:text-primary transition-colors">Lifestyle</Link>
+            <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
+            <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
+          </nav>
+          <Button variant="outline">
+            <Rss className="mr-2" />
+            Subscribe
+          </Button>
+        </div>
+      </header>
       <main className="container mx-auto px-4 md:px-6 py-12">
         <article className="max-w-3xl mx-auto">
-          <header className="mb-8">
-            <div className="mb-4">
-              <div className="flex flex-wrap gap-2">
+          <header className="mb-8 text-center">
+             <div className="mb-4">
+              <div className="flex flex-wrap gap-2 justify-center">
                 {post.tags.map((tag) => (
-                  <Badge key={tag} variant="outline" className="text-primary border-primary">
+                  <Badge key={tag} variant="outline">
                     {tag}
                   </Badge>
                 ))}
               </div>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold font-headline leading-tight mb-4 text-primary-foreground bg-primary p-2 rounded-md">
+            <h1 className="text-4xl md:text-5xl font-bold font-headline leading-tight mb-4">
               {post.title}
             </h1>
             <div className="text-muted-foreground text-sm">
@@ -51,17 +71,44 @@ export default async function PostPage({ params }: { params: { slug: string } })
               className="object-cover"
               priority
               sizes="(max-width: 768px) 100vw, 768px"
+              data-ai-hint="kenyan culture"
             />
           </div>
           <div
-            className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline prose-headings:text-primary prose-a:text-accent prose-a:transition-colors hover:prose-a:text-accent/80"
+            className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline prose-headings:text-primary prose-a:text-accent-foreground prose-a:transition-colors hover:prose-a:text-primary"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
         </article>
       </main>
-      <footer className="py-6 border-t mt-12">
-        <div className="container mx-auto px-4 md:px-6 text-center text-muted-foreground">
-          &copy; {new Date().getFullYear()} Diano Blog. All rights reserved.
+      <footer className="bg-muted text-muted-foreground py-12 mt-12">
+        <div className="container mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div>
+            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Diano Times</h3>
+            <p className="text-sm">Your source for Kenyan news, lifestyle, and technological trends.</p>
+          </div>
+          <div>
+            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Quick Links</h3>
+            <ul className="space-y-2 text-sm">
+              <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+              <li><Link href="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
+              <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Categories</h3>
+             <ul className="space-y-2 text-sm">
+                <li><Link href="/fashion" className="hover:text-primary transition-colors">Fashion</Link></li>
+                <li><Link href="/gadgets" className="hover:text-primary transition-colors">Gadgets</Link></li>
+                <li><Link href="/lifestyle" className="hover:text-primary transition-colors">Lifestyle</Link></li>
+             </ul>
+          </div>
+          <div>
+            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Follow Us</h3>
+            {/* Add Social media icons here */}
+          </div>
+        </div>
+        <div className="container mx-auto px-4 md:px-6 mt-8 text-center text-sm border-t border-border pt-6">
+          &copy; {new Date().getFullYear()} Diano Times. All rights reserved.
         </div>
       </footer>
     </>

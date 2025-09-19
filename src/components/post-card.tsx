@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Post } from '@/lib/types';
 import { format } from 'date-fns';
@@ -10,35 +10,32 @@ export function PostCard({ post }: { post: Post }) {
 
   return (
     <Link href={`/posts/${post.slug}`} className="block">
-      <Card className="h-full flex flex-col group overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1 duration-300 ease-in-out">
+      <Card className="h-full flex flex-col group overflow-hidden transition-all duration-300 ease-in-out border-0 shadow-none hover:shadow-xl rounded-lg">
         <CardHeader className="p-0">
-          <div className="aspect-video relative overflow-hidden">
+          <div className="aspect-video relative overflow-hidden rounded-t-lg">
             <Image
-              src={post.coverImage || "https://picsum.photos/seed/diano-fallback/1200/800"}
+              src={post.coverImage || "https://picsum.photos/seed/diano-fallback/600/400"}
               alt={post.title}
               fill
               className="object-cover transition-transform group-hover:scale-105 duration-300 ease-in-out"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              data-ai-hint="kenyan life"
             />
           </div>
         </CardHeader>
-        <CardContent className="flex-1 p-6">
-          <CardTitle className="font-headline text-xl leading-snug group-hover:text-primary transition-colors">
+        <CardContent className="flex-1 p-4 bg-card rounded-b-lg">
+          {post.tags && post.tags.length > 0 && (
+            <div className="mb-2">
+                <Badge variant="secondary" className="text-primary">{post.tags[0]}</Badge>
+            </div>
+          )}
+          <CardTitle className="font-headline text-lg leading-snug group-hover:text-primary transition-colors">
             {post.title}
           </CardTitle>
-          <p className="text-muted-foreground text-sm mt-2">
+          <p className="text-muted-foreground text-xs mt-2">
             {format(postDate, 'MMMM d, yyyy')}
           </p>
         </CardContent>
-        {post.tags && post.tags.length > 0 && (
-          <CardFooter className="p-6 pt-0">
-            <div className="flex flex-wrap gap-2">
-              {post.tags.slice(0, 3).map((tag) => (
-                <Badge key={tag} variant="secondary">{tag}</Badge>
-              ))}
-            </div>
-          </CardFooter>
-        )}
       </Card>
     </Link>
   );

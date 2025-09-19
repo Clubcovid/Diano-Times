@@ -4,8 +4,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/components/auth-provider';
 
 export const metadata: Metadata = {
-  title: 'Diano Blog MVP',
-  description: 'A modern blog for the digital age.',
+  title: 'Diano Times',
+  description: 'Your source for Kenyan news, lifestyle, and more.',
 };
 
 export default function RootLayout({
@@ -19,7 +19,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Playfair+Display:wght@700&display=swap"
           rel="stylesheet"
         />
       </head>
