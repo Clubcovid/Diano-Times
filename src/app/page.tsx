@@ -1,3 +1,4 @@
+
 import { PostCard } from '@/components/post-card';
 import { getPosts } from '@/lib/posts';
 import type { Post } from '@/lib/types';
@@ -7,7 +8,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, LogIn, UserPlus, LayoutDashboard } from 'lucide-react';
-import { mockPosts, mockTrendingTopics, mockAds, mockMarketData, mockWeatherData } from '@/lib/mock-data';
+import { mockTrendingTopics, mockAds, mockMarketData, mockWeatherData } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getWeatherForecast, type WeatherForecast } from '@/ai/flows/get-weather-forecast';
 import { BlogHeader } from '@/components/blog-header';
@@ -32,7 +33,14 @@ async function PostsSection() {
   let allPosts = await getPosts({ publishedOnly: true });
 
   if (allPosts.length === 0) {
-    allPosts = mockPosts;
+     return (
+       <div className="text-center py-16 col-span-full">
+          <h2 className="text-2xl font-bold font-headline">No posts found</h2>
+          <p className="text-muted-foreground mt-2">
+            It looks like there are no published posts yet.
+          </p>
+        </div>
+    );
   }
 
   const [featuredPost, ...otherPosts] = allPosts;

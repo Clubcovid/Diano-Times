@@ -12,6 +12,7 @@ import {
   QueryConstraint,
 } from 'firebase/firestore';
 import type { Post } from './types';
+import { mockPosts } from './mock-data';
 
 const postsCollection = collection(db, 'posts');
 
@@ -33,6 +34,11 @@ export async function getPosts(options: { publishedOnly?: boolean, tag?: string 
     const snapshot = await getDocs(q);
     let posts = snapshot.docs.map(toPost);
 
+    if (posts.length === 0) {
+      console.log("No posts found in Firestore, using mock data.");
+      posts = mockPosts;
+    }
+
     if (options.publishedOnly) {
       posts = posts.filter(post => post.status === 'published');
     }
@@ -47,55 +53,85 @@ export async function getPosts(options: { publishedOnly?: boolean, tag?: string 
     return posts;
   } catch (error) {
     console.error("Error fetching posts: ", error);
-    // In a real app, you might want to handle this more gracefully.
-    // For now, we return an empty array on error.
-    return [];
+    // If Firestore fetch fails, fall back to mock data
+    console.log("Firestore fetch failed, using mock data as fallback.");
+    let posts = mockPosts;
+    if (options.publishedOnly) {
+      posts = posts.filter(post => post.status === 'published');
+    }
+    if (options.tag) {
+      posts = posts.filter(post => post.tags.includes(options.tag!));
+    }
+    posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+    return posts;
   }
 }
 
 export async function getTags(): Promise<string[]> {
-  const q = query(postsCollection, where('status', '==', 'published'));
-  
   try {
+    const q = query(postsCollection, where('status', '==', 'published'));
     const snapshot = await getDocs(q);
+    
+    let tagsSource = snapshot.docs;
+
+    if (tagsSource.length === 0) {
+        // Fallback to mock data if firestore is empty
+        const tags = new Set<string>();
+        mockPosts.forEach(post => {
+            if (post.status === 'published') {
+                post.tags?.forEach(tag => tags.add(tag));
+            }
+        });
+        return Array.from(tags).sort();
+    }
+
     const tags = new Set<string>();
-    snapshot.docs.forEach(doc => {
+    tagsSource.forEach(doc => {
       const data = doc.data() as Omit<Post, 'id'>;
       data.tags?.forEach(tag => tags.add(tag));
     });
     return Array.from(tags).sort();
   } catch (error) {
     console.error("Error fetching tags: ", error);
-    return [];
+    const tags = new Set<string>();
+    mockPosts.forEach(post => {
+        if (post.status === 'published') {
+            post.tags?.forEach(tag => tags.add(tag));
+        }
+    });
+    return Array.from(tags).sort();
   }
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-  const q = query(postsCollection, where('slug', '==', slug));
-  
   try {
+    const q = query(postsCollection, where('slug', '==', slug));
     const snapshot = await getDocs(q);
-if (snapshot.empty) {
-      return null;
+    if (snapshot.empty) {
+      const mockPost = mockPosts.find(p => p.slug === slug);
+      return mockPost || null;
     }
     // Assuming slugs are unique, return the first match.
     return toPost(snapshot.docs[0]);
   } catch (error) {
     console.error(`Error fetching post by slug ${slug}:`, error);
-    return null;
+    const mockPost = mockPosts.find(p => p.slug === slug);
+    return mockPost || null;
   }
 }
 
 export async function getPostById(id: string): Promise<Post | null> {
-  const postDocRef = doc(db, 'posts', id);
   try {
+    const postDocRef = doc(db, 'posts', id);
     const postDoc = await getDoc(postDocRef);
     if (!postDoc.exists()) {
-      return null;
+       const mockPost = mockPosts.find(p => p.id === id);
+       return mockPost || null;
     }
     return toPost(postDoc);
   } catch (error) {
     console.error(`Error fetching post by ID ${id}:`, error);
-    return null;
+    const mockPost = mockPosts.find(p => p.id === id);
+    return mockPost || null;
   }
 }
