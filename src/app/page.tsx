@@ -6,9 +6,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Rss, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowRight, Rss, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon } from 'lucide-react';
 import { mockPosts, mockTrendingTopics, mockAds, mockMarketData } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getWeatherForecast, type WeatherForecast } from '@/ai/flows/get-weather-forecast';
 
 function PostsSkeleton() {
   return (
@@ -163,6 +164,67 @@ const MarketTicker = () => {
     )
 }
 
+const iconMap: { [key: string]: LucideIcon } = {
+  Sun,
+  Cloud,
+  CloudRain,
+  CloudLightning,
+  Wind,
+  Snowflake,
+};
+
+const WeatherTicker = async () => {
+  const cities = ['Nairobi, Kenya', 'Mombasa, Kenya', 'Kisumu, Kenya', 'Eldoret, Kenya'];
+  let weatherData: WeatherForecast[] = [];
+  try {
+    const forecasts = await Promise.all(cities.map(location => getWeatherForecast({ location })));
+    weatherData = forecasts.filter(Boolean) as WeatherForecast[];
+  } catch (error) {
+    console.error("Failed to fetch weather data:", error);
+    // You could return a fallback or empty component here
+    return null;
+  }
+
+  if (weatherData.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="bg-background text-foreground py-2 border-b">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="relative flex overflow-hidden group">
+          <div className="marquee">
+            <div className="marquee-content">
+              {weatherData.map(weather => {
+                const Icon = iconMap[weather.icon] || Cloud;
+                return (
+                  <div key={weather.location} className="flex items-center gap-4 text-sm font-medium">
+                    <span className="font-bold">{weather.location}</span>
+                    <Icon className="h-5 w-5 text-primary" />
+                    <span>{weather.temperature}</span>
+                    <span className="text-muted-foreground">{weather.condition}</span>
+                  </div>
+                );
+              })}
+              {weatherData.map(weather => {
+                const Icon = iconMap[weather.icon] || Cloud;
+                return (
+                  <div key={`${weather.location}-clone`} className="flex items-center gap-4 text-sm font-medium">
+                    <span className="font-bold">{weather.location}</span>
+                    <Icon className="h-5 w-5 text-primary" />
+                    <span>{weather.temperature}</span>
+                    <span className="text-muted-foreground">{weather.condition}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -185,6 +247,9 @@ export default function HomePage() {
           </Button>
         </div>
       </header>
+      <Suspense>
+          <WeatherTicker />
+      </Suspense>
       <MarketTicker />
 
       <main className="flex-1">
