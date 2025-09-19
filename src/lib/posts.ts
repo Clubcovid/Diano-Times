@@ -8,6 +8,7 @@ import {
   query,
   where,
   orderBy,
+  QueryConstraint,
 } from 'firebase/firestore';
 import type { Post } from './types';
 
@@ -22,7 +23,7 @@ function toPost(doc: any): Post {
 }
 
 export async function getPosts(options: { publishedOnly?: boolean, tag?: string } = {}): Promise<Post[]> {
-  const constraints = [orderBy('createdAt', 'desc')];
+  const constraints: QueryConstraint[] = [];
 
   if (options.publishedOnly) {
     constraints.push(where('status', '==', 'published'));
@@ -30,13 +31,22 @@ export async function getPosts(options: { publishedOnly?: boolean, tag?: string 
 
   if (options.tag) {
     constraints.push(where('tags', 'array-contains', options.tag));
+  } else {
+    // Only sort by createdAt on the main page fetch, not on tag-filtered pages
+    // This avoids the need for a composite index for each tag.
+    constraints.push(orderBy('createdAt', 'desc'));
   }
   
   const q = query(postsCollection, ...constraints);
 
   try {
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(toPost);
+    const posts = snapshot.docs.map(toPost);
+    // If we filtered by tag, we sort here in code instead of in the query.
+    if (options.tag) {
+        posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+    }
+    return posts;
   } catch (error) {
     console.error("Error fetching posts: ", error);
     // In a real app, you might want to handle this more gracefully.
@@ -67,7 +77,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   
   try {
     const snapshot = await getDocs(q);
-    if (snapshot.empty) {
+if (snapshot.empty) {
       return null;
     }
     // Assuming slugs are unique, return the first match.
