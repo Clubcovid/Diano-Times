@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, LogIn, UserPlus, LayoutDashboard } from 'lucide-react';
-import { mockPosts, mockTrendingTopics, mockAds, mockMarketData } from '@/lib/mock-data';
+import { mockPosts, mockTrendingTopics, mockAds, mockMarketData, mockWeatherData } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getWeatherForecast, type WeatherForecast } from '@/ai/flows/get-weather-forecast';
 import { BlogHeader } from '@/components/blog-header';
@@ -175,20 +175,22 @@ const iconMap: { [key: string]: LucideIcon } = {
 };
 
 const WeatherTicker = async () => {
-  const cities = ['Nairobi, Kenya', 'Mombasa, Kenya', 'Kisumu, Kenya', 'Eldoret, Kenya'];
-  const weatherData: WeatherForecast[] = [];
-  try {
-    for (const location of cities) {
-      const forecast = await getWeatherForecast({ location });
-      if (forecast) {
-        weatherData.push(forecast);
-      }
-    }
-  } catch (error) {
-    console.error("Failed to fetch weather data:", error);
-    // You could return a fallback or empty component here
-    return null;
-  }
+  // AI-based weather fetching disabled to avoid rate-limiting issues.
+  // const cities = ['Nairobi, Kenya', 'Mombasa, Kenya', 'Kisumu, Kenya', 'Eldoret, Kenya'];
+  // const weatherData: WeatherForecast[] = [];
+  // try {
+  //   for (const location of cities) {
+  //     const forecast = await getWeatherForecast({ location });
+  //     if (forecast) {
+  //       weatherData.push(forecast);
+  //     }
+  //   }
+  // } catch (error) {
+  //   console.error("Failed to fetch weather data:", error);
+  //   // You could return a fallback or empty component here
+  //   return null;
+  // }
+  const weatherData = mockWeatherData;
 
   if (weatherData.length === 0) {
     return null;

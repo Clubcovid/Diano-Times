@@ -1,5 +1,6 @@
 import type { Post } from './types';
 import { Timestamp } from 'firebase/firestore';
+import type { WeatherForecast } from '@/ai/flows/get-weather-forecast';
 
 // Helper to create a Firestore Timestamp from a Date
 const toTimestamp = (date: Date): Timestamp => {
@@ -101,4 +102,11 @@ export const mockMarketData = [
     { ticker: 'EABL', price: 155.25, change: '-1.00' },
     { ticker: 'BAMB', price: 210.00, change: '+2.50' },
     { ticker: 'NSE', price: 8.90, change: '+0.05' },
+];
+
+export const mockWeatherData: WeatherForecast[] = [
+    { location: 'Nairobi, Kenya', temperature: '22°C', condition: 'Partly Cloudy', icon: 'Cloud' },
+    { location: 'Mombasa, Kenya', temperature: '28°C', condition: 'Sunny', icon: 'Sun' },
+    { location: 'Kisumu, Kenya', temperature: '26°C', condition: 'Chance of Rain', icon: 'CloudRain' },
+    { location: 'Eldoret, Kenya', temperature: '20°C', condition: 'Cloudy', icon: 'Cloud' },
 ];
