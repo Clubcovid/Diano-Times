@@ -34,6 +34,7 @@ import { Wand2, Save } from 'lucide-react';
 const initialState = {
   success: false,
   message: '',
+  errors: [],
 };
 
 export function PostForm({ post }: { post?: Post }) {
