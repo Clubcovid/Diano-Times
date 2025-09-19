@@ -52,7 +52,12 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-muted/40">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-muted/40">
+        <div className="text-center mb-8">
+            <Link href="/" className="text-4xl font-bold font-headline text-primary">
+                Diano Times
+            </Link>
+        </div>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
@@ -93,6 +98,7 @@ export default function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
+                placeholder="Must be at least 6 characters"
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
@@ -100,12 +106,12 @@ export default function RegisterPage() {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex-col gap-4">
+        <CardFooter className="flex-col gap-2">
             <p className="text-xs text-muted-foreground">
                 Already have an account? <Link href="/login" className="text-primary hover:underline">Log in</Link>
             </p>
-            <Button variant="link" asChild className="mx-auto">
-                <Link href="/">&larr; Back to site</Link>
+             <Button variant="outline" asChild className="w-full">
+                <Link href="/">Continue as Guest</Link>
             </Button>
         </CardFooter>
       </Card>

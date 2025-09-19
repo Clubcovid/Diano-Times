@@ -4,10 +4,20 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
 import { Skeleton } from './ui/skeleton';
-import { LogIn, UserPlus, LayoutDashboard } from 'lucide-react';
+import { LogIn, UserPlus, LayoutDashboard, UserCircle, LogOut } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { auth } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
 
 export function BlogHeader() {
   const { user, loading } = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await auth.signOut();
+    router.push('/');
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b">
@@ -25,34 +35,52 @@ export function BlogHeader() {
         </nav>
         <div className="flex items-center gap-2">
            {loading ? (
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-10 w-24 rounded-md" />
-              <Skeleton className="h-10 w-24 rounded-md" />
-            </div>
-          ) : user ? (
-            <>
-              <Button asChild>
-                <Link href="/profile">
-                  <LayoutDashboard className="mr-2"/>
-                  Profile
-                </Link>
-              </Button>
-            </>
+            <Skeleton className="h-10 w-10 rounded-full" />
           ) : (
-             <>
-              <Button variant="ghost" asChild>
-                <Link href="/login">
-                  <LogIn className="mr-2" />
-                  Login
-                </Link>
-              </Button>
-              <Button asChild>
-                <Link href="/register">
-                  <UserPlus className="mr-2" />
-                  Register
-                </Link>
-              </Button>
-            </>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  {user ? (
+                     <Avatar className="h-9 w-9">
+                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
+                        <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <UserCircle className="h-6 w-6" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {user ? (
+                  <>
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile"><LayoutDashboard className="mr-2"/>Profile</Link>
+                    </DropdownMenuItem>
+                     <DropdownMenuItem asChild>
+                      <Link href="/admin"><LayoutDashboard className="mr-2"/>Admin</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                      <LogOut className="mr-2"/>
+                      Logout
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuLabel>Guest</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/login"><LogIn className="mr-2"/>Login</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/register"><UserPlus className="mr-2"/>Register</Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
          </div>
       </div>

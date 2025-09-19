@@ -42,6 +42,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      toast({
+          title: 'Login Successful',
+          description: `Welcome back!`,
+      });
       router.push(isAdminLogin ? '/admin' : '/profile');
     } catch (error: any) {
       toast({
@@ -63,7 +67,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-muted/40">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-muted/40">
+       <div className="text-center mb-8">
+            <Link href="/" className="text-4xl font-bold font-headline text-primary">
+                Diano Times
+            </Link>
+        </div>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-headline">{isAdminLogin ? 'Admin Login': 'Login'}</CardTitle>
@@ -99,12 +108,12 @@ export default function LoginPage() {
             </Button>
           </form>
         </CardContent>
-         <CardFooter className="flex-col gap-4">
+         <CardFooter className="flex-col gap-2">
             <p className="text-xs text-muted-foreground">
                 No account? <Link href="/register" className="text-primary hover:underline">Create one</Link>
             </p>
-            <Button variant="link" asChild className="mx-auto">
-                <Link href="/">&larr; Back to site</Link>
+             <Button variant="outline" asChild className="w-full">
+                <Link href="/">Continue as Guest</Link>
             </Button>
         </CardFooter>
       </Card>
