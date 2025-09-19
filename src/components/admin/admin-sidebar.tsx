@@ -4,7 +4,11 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
+  FileText,
   FilePlus,
+  Users,
+  Settings,
+  Megaphone,
   LogOut,
   Home,
 } from 'lucide-react';
@@ -14,8 +18,12 @@ import { useAuth } from '../auth-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 const navItems = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/posts', label: 'Posts', icon: FileText },
   { href: '/admin/create', label: 'New Post', icon: FilePlus },
+  { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/advertisements', label: 'Advertisements', icon: Megaphone },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
 export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
