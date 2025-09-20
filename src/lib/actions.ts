@@ -4,11 +4,11 @@
 import { revalidatePath } from 'next/cache';
 import { db, getFirebaseAuth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
-import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc, where, query, getDocs, orderBy } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, serverTimestamp, updateDoc, where, query, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { postSchema, adSchema, videoSchema, type AdFormData, type VideoFormData } from './schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
-import type { AdminUser, Ad, Video } from './types';
+import type { AdminUser, Ad, Video, Post } from './types';
 
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
@@ -86,7 +86,7 @@ export async function createPost(prevState: FormState, formData: FormData): Prom
     return { success: true, message: 'Post created successfully.', postId: docRef.id };
   } catch (error) {
     console.error('Error creating post:', error);
-    return { success: false, message: 'Failed to create post.' };
+    return { success: false, message: 'Failed to create post. Is the database connected?' };
   }
 }
 
@@ -125,7 +125,7 @@ export async function updatePost(postId: string, prevState: FormState, formData:
     return { success: true, message: 'Post updated successfully.', postId };
   } catch (error) {
     console.error('Error updating post:', error);
-    return { success: false, message: 'Failed to update post.' };
+    return { success: false, message: 'Failed to update post. Is the database connected?' };
   }
 }
 
@@ -164,14 +164,33 @@ export async function getUsers(): Promise<AdminUser[]> {
     }
 }
 
-// Advertisements Actions
+// Generic to-plain-object converter
+function docToPlainObject<T>(doc: admin.firestore.DocumentSnapshot): T {
+    const data = doc.data() as any;
+    const plainObject: { [key: string]: any } = { id: doc.id };
 
+    for (const key in data) {
+        if (data[key] instanceof Timestamp) {
+            plainObject[key] = data[key].toDate().toISOString();
+        } else {
+            plainObject[key] = data[key];
+        }
+    }
+    return plainObject as T;
+}
+
+
+// Advertisements Actions
 export async function getAds(): Promise<Ad[]> {
   try {
     const adsCollection = collection(db, 'advertisements');
     const q = query(adsCollection, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt,
+    } as Ad));
   } catch (error) {
     console.error('Error fetching ads:', error);
     return [];
@@ -181,40 +200,42 @@ export async function getAds(): Promise<Ad[]> {
 type AdActionState = {
   success: boolean;
   message: string;
-  ad?: Ad;
+  ad: Ad | null;
 }
 
-export async function createAd(data: AdFormData): Promise<AdActionState> {
-  const validatedFields = adSchema.safeParse(data);
+export async function createOrUpdateAd(prevState: AdActionState, formData: FormData): Promise<AdActionState> {
+  const id = formData.get('id') as string;
+  const isEditing = !!id;
+
+  const rawData = Object.fromEntries(formData);
+  const validatedFields = adSchema.safeParse(rawData);
   if (!validatedFields.success) {
-    return { success: false, message: 'Validation failed.' };
+    return { success: false, message: 'Validation failed.', ad: null };
   }
+  
+  const data = validatedFields.data;
 
   try {
-    const docRef = await addDoc(collection(db, 'advertisements'), {
-      ...validatedFields.data,
-      createdAt: serverTimestamp(),
-    });
-    revalidatePath('/admin/advertisements');
-    return { success: true, message: 'Ad created.', ad: { id: docRef.id, ...validatedFields.data, createdAt: new Date() } as Ad };
+    if (isEditing) {
+      const adRef = doc(db, 'advertisements', id);
+      await updateDoc(adRef, data);
+      const updatedDoc = await getDoc(adRef);
+      const updatedAd = { id, ...updatedDoc.data() } as Ad;
+      revalidatePath('/admin/advertisements');
+      return { success: true, message: 'Ad updated.', ad: updatedAd };
+    } else {
+      const docRef = await addDoc(collection(db, 'advertisements'), {
+        ...data,
+        createdAt: serverTimestamp(),
+      });
+      const newDoc = await getDoc(docRef);
+      const newAd = { id: newDoc.id, ...newDoc.data() } as Ad;
+      revalidatePath('/admin/advertisements');
+      return { success: true, message: 'Ad created.', ad: newAd };
+    }
   } catch (error) {
-    return { success: false, message: 'Failed to create ad.' };
-  }
-}
-
-export async function updateAd(adId: string, data: AdFormData): Promise<AdActionState> {
-  const validatedFields = adSchema.safeParse(data);
-  if (!validatedFields.success) {
-    return { success: false, message: 'Validation failed.' };
-  }
-
-  try {
-    const adRef = doc(db, 'advertisements', adId);
-    await updateDoc(adRef, validatedFields.data);
-    revalidatePath('/admin/advertisements');
-    return { success: true, message: 'Ad updated.', ad: { id: adId, ...validatedFields.data, createdAt: new Date() } as Ad };
-  } catch (error) {
-    return { success: false, message: 'Failed to update ad.' };
+    const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return { success: false, message: `Failed to ${isEditing ? 'update' : 'create'} ad. ${message}`, ad: null };
   }
 }
 
@@ -229,14 +250,18 @@ export async function deleteAd(adId: string): Promise<{ success: boolean, messag
   }
 }
 
-// Videos Actions
 
+// Videos Actions
 export async function getVideos(): Promise<Video[]> {
   try {
     const videosCollection = collection(db, 'videos');
     const q = query(videosCollection, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Video));
+    return snapshot.docs.map(doc => ({ 
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt
+    } as Video));
   } catch (error) {
     console.error('Error fetching videos:', error);
     return [];
@@ -246,42 +271,44 @@ export async function getVideos(): Promise<Video[]> {
 type VideoActionState = {
   success: boolean;
   message: string;
-  video?: Video;
+  video: Video | null;
 }
 
-export async function createVideo(data: VideoFormData): Promise<VideoActionState> {
-  const validatedFields = videoSchema.safeParse(data);
+export async function createOrUpdateVideo(prevState: VideoActionState, formData: FormData): Promise<VideoActionState> {
+  const id = formData.get('id') as string;
+  const isEditing = !!id;
+
+  const rawData = Object.fromEntries(formData);
+  const validatedFields = videoSchema.safeParse(rawData);
   if (!validatedFields.success) {
-    return { success: false, message: 'Validation failed.' };
+    return { success: false, message: 'Validation failed.', video: null };
   }
+  
+  const data = validatedFields.data;
 
   try {
-    const docRef = await addDoc(collection(db, 'videos'), {
-      ...validatedFields.data,
-      createdAt: serverTimestamp(),
-    });
-    revalidatePath('/admin/videos');
-    revalidatePath('/video');
-    return { success: true, message: 'Video created.', video: { id: docRef.id, ...validatedFields.data, createdAt: new Date() } as Video };
+    if (isEditing) {
+      const videoRef = doc(db, 'videos', id);
+      await updateDoc(videoRef, data);
+      const updatedDoc = await getDoc(videoRef);
+      const updatedVideo = { id: updatedDoc.id, ...updatedDoc.data() } as Video;
+      revalidatePath('/admin/videos');
+      revalidatePath('/video');
+      return { success: true, message: 'Video updated.', video: updatedVideo };
+    } else {
+      const docRef = await addDoc(collection(db, 'videos'), {
+        ...data,
+        createdAt: serverTimestamp(),
+      });
+      const newDoc = await getDoc(docRef);
+      const newVideo = { id: newDoc.id, ...newDoc.data() } as Video;
+      revalidatePath('/admin/videos');
+      revalidatePath('/video');
+      return { success: true, message: 'Video created.', video: newVideo };
+    }
   } catch (error) {
-    return { success: false, message: 'Failed to create video.' };
-  }
-}
-
-export async function updateVideo(videoId: string, data: VideoFormData): Promise<VideoActionState> {
-  const validatedFields = videoSchema.safeParse(data);
-  if (!validatedFields.success) {
-    return { success: false, message: 'Validation failed.' };
-  }
-
-  try {
-    const videoRef = doc(db, 'videos', videoId);
-    await updateDoc(videoRef, validatedFields.data);
-    revalidatePath('/admin/videos');
-    revalidatePath('/video');
-    return { success: true, message: 'Video updated.', video: { id: videoId, ...validatedFields.data, createdAt: new Date() } as Video };
-  } catch (error) {
-    return { success: false, message: 'Failed to update video.' };
+    const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return { success: false, message: `Failed to ${isEditing ? 'update' : 'create'} video. ${message}`, video: null };
   }
 }
 

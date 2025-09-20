@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useActionState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/use-toast';
 import { adSchema, type AdFormData } from '@/lib/schemas';
 import type { Ad } from '@/lib/types';
-import { createAd, updateAd } from '@/lib/actions';
+import { createOrUpdateAd } from '@/lib/actions';
 import {
   Dialog,
   DialogContent,
@@ -26,8 +26,14 @@ interface AdFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   ad?: Ad | null;
-  onSuccess: (ad: Ad, isNew: boolean) => void;
+  onSuccess: (ad: Ad) => void;
 }
+
+const initialState = {
+  success: false,
+  message: '',
+  ad: null,
+};
 
 export function AdForm({ isOpen, setIsOpen, ad, onSuccess }: AdFormProps) {
   const { toast } = useToast();
@@ -42,6 +48,8 @@ export function AdForm({ isOpen, setIsOpen, ad, onSuccess }: AdFormProps) {
       linkUrl: '',
     },
   });
+
+  const [state, formAction] = useActionState(createOrUpdateAd, initialState);
 
   useEffect(() => {
     if (ad) {
@@ -60,25 +68,23 @@ export function AdForm({ isOpen, setIsOpen, ad, onSuccess }: AdFormProps) {
       });
     }
   }, [ad, form, isOpen]);
-
-  const onSubmit = async (data: AdFormData) => {
-    const action = isEditing ? updateAd.bind(null, ad.id) : createAd;
-    const result = await action(data);
-
-    if (result.success && result.ad) {
+  
+  useEffect(() => {
+    if (state.success && state.ad) {
       toast({
         title: `Success!`,
         description: `Advertisement ${isEditing ? 'updated' : 'created'}.`,
       });
-      onSuccess(result.ad, !isEditing);
-    } else {
+      onSuccess(state.ad);
+    } else if (state.message && !state.success) {
       toast({
         title: 'Error',
-        description: result.message,
+        description: state.message,
         variant: 'destructive',
       });
     }
-  };
+  }, [state, isEditing, onSuccess, toast]);
+
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -89,7 +95,8 @@ export function AdForm({ isOpen, setIsOpen, ad, onSuccess }: AdFormProps) {
             {isEditing ? 'Update the details for this ad.' : 'Fill out the form to add a new ad.'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+        <form action={formAction} className="space-y-4 py-4">
+          <input type="hidden" name="id" value={ad?.id || ''} />
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input id="title" {...form.register('title')} />
@@ -130,3 +137,4 @@ export function AdForm({ isOpen, setIsOpen, ad, onSuccess }: AdFormProps) {
     </Dialog>
   );
 }
+

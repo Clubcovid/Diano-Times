@@ -49,17 +49,27 @@ export default function AdvertisementsPage() {
     async function fetchAds() {
       setIsLoading(true);
       const fetchedAds = await getAds();
-      setAds(fetchedAds);
+      const serializableAds = fetchedAds.map(ad => ({
+        ...ad,
+        createdAt: ad.createdAt?.toDate ? ad.createdAt.toDate().toISOString() : new Date().toISOString(),
+      }));
+      setAds(serializableAds);
       setIsLoading(false);
     }
     fetchAds();
   }, []);
 
-  const handleFormSuccess = (updatedAd: Ad, isNew: boolean) => {
+  const handleFormSuccess = (updatedAd: Ad) => {
+    const isNew = !ads.some(ad => ad.id === updatedAd.id);
+    const serializableAd = {
+        ...updatedAd,
+        createdAt: updatedAd.createdAt?.toDate ? updatedAd.createdAt.toDate().toISOString() : new Date().toISOString(),
+    };
+
     if (isNew) {
-      setAds((prev) => [updatedAd, ...prev]);
+      setAds((prev) => [serializableAd, ...prev]);
     } else {
-      setAds((prev) => prev.map((ad) => (ad.id === updatedAd.id ? updatedAd : ad)));
+      setAds((prev) => prev.map((ad) => (ad.id === serializableAd.id ? serializableAd : ad)));
     }
     setIsFormOpen(false);
     setSelectedAd(null);
@@ -211,3 +221,4 @@ export default function AdvertisementsPage() {
     </>
   );
 }
+

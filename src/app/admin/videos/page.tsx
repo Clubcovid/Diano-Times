@@ -6,7 +6,6 @@ import { PlusCircle, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -46,17 +45,27 @@ export default function VideosPage() {
     async function fetchVideos() {
       setIsLoading(true);
       const fetchedVideos = await getVideos();
-      setVideos(fetchedVideos);
+      const serializableVideos = fetchedVideos.map(video => ({
+          ...video,
+          createdAt: video.createdAt?.toDate ? video.createdAt.toDate().toISOString() : new Date().toISOString()
+      }));
+      setVideos(serializableVideos);
       setIsLoading(false);
     }
     fetchVideos();
   }, []);
 
-  const handleFormSuccess = (updatedVideo: Video, isNew: boolean) => {
+  const handleFormSuccess = (updatedVideo: Video) => {
+    const isNew = !videos.some(video => video.id === updatedVideo.id);
+    const serializableVideo = {
+        ...updatedVideo,
+        createdAt: updatedVideo.createdAt?.toDate ? updatedVideo.createdAt.toDate().toISOString() : new Date().toISOString()
+    };
+
     if (isNew) {
-      setVideos((prev) => [updatedVideo, ...prev]);
+      setVideos((prev) => [serializableVideo, ...prev]);
     } else {
-      setVideos((prev) => prev.map((video) => (video.id === updatedVideo.id ? updatedVideo : video)));
+      setVideos((prev) => prev.map((video) => (video.id === serializableVideo.id ? serializableVideo : video)));
     }
     setIsFormOpen(false);
     setSelectedVideo(null);

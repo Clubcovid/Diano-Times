@@ -25,38 +25,26 @@ function initializeAdmin() {
     });
   }
   
-  if (process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production') {
-     console.warn("Firebase Admin SDK not initialized in production. Missing environment variables.");
+  // In development or when credentials are not available, we initialize without credentials for local testing.
+  // The app will have limited functionality and will warn the user.
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn("Firebase Admin SDK not initialized. Missing environment variables. Using mock data where available.");
+    return admin.initializeApp({
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'diano-times'
+    });
   }
 
-  // In development or when credentials are not available, we initialize without credentials.
-  // This allows some functionality (like Firestore in-memory) but auth features will fail.
-  return admin.initializeApp({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'diano-times'
-  });
+  // In production, if we still don't have credentials, something is wrong.
+  // We should not initialize a mock app.
+  throw new Error("Firebase Admin SDK failed to initialize in production. Environment variables are missing.");
 }
 
 const adminApp = initializeAdmin();
 
-if (hasServiceAccount) {
-    db = adminApp.firestore();
-    auth = adminApp.auth();
-} else {
-    // Provide mock objects that prevent the app from crashing when admin features are called without credentials.
-    db = {
-        collection: (path: string) => ({
-            get: async () => ({ docs: [], empty: true, size: 0 }),
-            where: () => ({ get: async () => ({ docs: [], empty: true, size: 0 }) }),
-            orderBy: () => ({ get: async () => ({ docs: [], empty: true, size: 0 }) }),
-            doc: () => ({ get: async () => ({ exists: false }), set: async () => {}, update: async () => {}, delete: async () => {} }),
-            add: async () => ({ id: 'mock-id' }),
-        }),
-    } as unknown as admin.firestore.Firestore;
-
-    auth = {
-        listUsers: async () => ({ users: [], pageToken: undefined }),
-    } as unknown as admin.auth.Auth;
-}
+// Assign firestore and auth instances. If initialization failed or was partial,
+// these might throw errors upon use, which is intended behavior now.
+db = adminApp.firestore();
+auth = adminApp.auth();
 
 
 export const getFirebaseAuth = () => auth;

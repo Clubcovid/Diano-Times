@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useActionState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/use-toast';
 import { videoSchema, type VideoFormData } from '@/lib/schemas';
 import type { Video } from '@/lib/types';
-import { createVideo, updateVideo } from '@/lib/actions';
+import { createOrUpdateVideo } from '@/lib/actions';
 import {
   Dialog,
   DialogContent,
@@ -25,8 +25,14 @@ interface VideoFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   video?: Video | null;
-  onSuccess: (video: Video, isNew: boolean) => void;
+  onSuccess: (video: Video) => void;
 }
+
+const initialState = {
+    success: false,
+    message: '',
+    video: null,
+};
 
 export function VideoForm({ isOpen, setIsOpen, video, onSuccess }: VideoFormProps) {
   const { toast } = useToast();
@@ -39,6 +45,8 @@ export function VideoForm({ isOpen, setIsOpen, video, onSuccess }: VideoFormProp
       youtubeUrl: '',
     },
   });
+
+  const [state, formAction] = useActionState(createOrUpdateVideo, initialState);
 
   useEffect(() => {
     if (video) {
@@ -54,24 +62,21 @@ export function VideoForm({ isOpen, setIsOpen, video, onSuccess }: VideoFormProp
     }
   }, [video, form, isOpen]);
 
-  const onSubmit = async (data: VideoFormData) => {
-    const action = isEditing ? updateVideo.bind(null, video.id) : createVideo;
-    const result = await action(data);
-
-    if (result.success && result.video) {
+  useEffect(() => {
+    if (state.success && state.video) {
       toast({
         title: `Success!`,
         description: `Video ${isEditing ? 'updated' : 'created'}.`,
       });
-      onSuccess(result.video, !isEditing);
-    } else {
+      onSuccess(state.video);
+    } else if (state.message && !state.success) {
       toast({
         title: 'Error',
-        description: result.message,
+        description: state.message,
         variant: 'destructive',
       });
     }
-  };
+  }, [state, isEditing, onSuccess, toast]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -82,7 +87,8 @@ export function VideoForm({ isOpen, setIsOpen, video, onSuccess }: VideoFormProp
             {isEditing ? 'Update the details for this video.' : 'Fill out the form to add a new video.'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+        <form action={formAction} className="space-y-4 py-4">
+          <input type="hidden" name="id" value={video?.id || ''} />
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input id="title" {...form.register('title')} />
@@ -109,3 +115,4 @@ export function VideoForm({ isOpen, setIsOpen, video, onSuccess }: VideoFormProp
     </Dialog>
   );
 }
+

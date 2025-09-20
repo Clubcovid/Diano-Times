@@ -13,15 +13,28 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = !getApps().length && firebaseConfig.apiKey ? initializeApp(firebaseConfig) : (getApps().length > 0 ? getApp() : null);
+function initializeFirebase() {
+    if (getApps().length > 0) {
+        return getApp();
+    }
+    // Check if all required public keys are present
+    if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+        return initializeApp(firebaseConfig);
+    }
+    // If keys are not present, return null. This can happen during build time.
+    return null;
+}
 
-const auth = app ? getAuth(app) : {} as any;
-const db = app ? getFirestore(app) : {} as any;
+const app = initializeFirebase();
 
+const auth = app ? getAuth(app) : ({} as any); // Provide a mock to prevent crashes, though it won't work
+const db = app ? getFirestore(app) : ({} as any);
+
+// Initialize Analytics only on the client and if supported
 if (typeof window !== 'undefined' && app) {
   isSupported().then(yes => {
     if (yes && firebaseConfig.measurementId) {
-      getAnalytics(app)
+      getAnalytics(app);
     }
   });
 }
