@@ -16,10 +16,12 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { getPosts } from './posts';
-import { generateTextFromHtml } from './magazine-text-generator';
 import { subDays } from 'date-fns';
 import type { AiFeatureFlags } from './ai-flags';
 import { isAiFeatureEnabled } from './ai-flags';
+import { renderToBuffer } from '@react-pdf/renderer';
+import MagazineLayout from '@/components/magazine/magazine-layout';
+import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
   if (!db) {
@@ -529,7 +531,23 @@ export async function getMagazines(): Promise<Magazine[]> {
     }
 }
 
-export async function generateMagazineText(): Promise<{ success: boolean; message: string; fileUrl?: string; }> {
+export async function getMagazine(id: string): Promise<Magazine | null> {
+    if (!db) {
+        return null;
+    }
+    try {
+        const doc = await db.collection('magazines').doc(id).get();
+        if (!doc.exists) {
+            return null;
+        }
+        return { id: doc.id, ...doc.data() } as Magazine;
+    } catch (error) {
+        console.error("Error fetching magazine:", error);
+        return null;
+    }
+}
+
+export async function generateMagazinePdf(): Promise<{ success: boolean; message: string; magazineId?: string; }> {
     if (!(await isAiFeatureEnabled('isMagazineGenerationEnabled'))) {
       return { success: false, message: 'AI Magazine Generation is currently disabled by the admin.' };
     }
@@ -547,19 +565,19 @@ export async function generateMagazineText(): Promise<{ success: boolean; messag
         }
 
         // 2. Generate magazine content with AI
-        const magazineContent = await generateMagazineAI({ postIds: recentPosts.map(p => p.id) });
+        const magazineContent: GenerateMagazineOutput = await generateMagazineAI({ postIds: recentPosts.map(p => p.id) });
 
-        // 3. Generate text file from HTML
-        const textContent = await generateTextFromHtml(magazineContent);
-
-        // 4. Upload text file to Firebase Storage
+        // 3. Render PDF to a buffer on the server
+        const pdfBuffer = await renderToBuffer(<MagazineLayout data={magazineContent} />);
+        
+        // 4. Upload PDF to Firebase Storage
         const bucket = getStorage().bucket();
-        const fileName = `magazines/diano-weekly-${uuidv4()}.txt`;
+        const fileName = `magazines/diano-weekly-${uuidv4()}.pdf`;
         const file = bucket.file(fileName);
 
-        await file.save(textContent, {
+        await file.save(pdfBuffer, {
             metadata: {
-                contentType: 'text/plain',
+                contentType: 'application/pdf',
             },
         });
 
@@ -575,13 +593,13 @@ export async function generateMagazineText(): Promise<{ success: boolean; messag
             createdAt: FieldValue.serverTimestamp(),
             postIds: recentPosts.map(p => p.id),
         };
-        await db.collection('magazines').add(magazineData);
+        const docRef = await db.collection('magazines').add(magazineData);
 
         // 6. Revalidate paths
         revalidatePath('/diano-weekly');
         revalidatePath('/admin/magazine');
 
-        return { success: true, message: 'Magazine generated successfully.', fileUrl };
+        return { success: true, message: 'Magazine generated successfully.', magazineId: docRef.id };
 
     } catch (error) {
         const message = error instanceof Error ? error.message : "An unknown error occurred.";
@@ -606,4 +624,3 @@ export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ suc
         return { success: false, message };
     }
 }
-

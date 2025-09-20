@@ -1,10 +1,10 @@
+
 import { BlogHeader } from '@/components/blog-header';
 import { getMagazines } from '@/lib/actions';
-import type { Magazine } from '@/lib/types';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Newspaper } from 'lucide-react';
+import { Download, Eye, Newspaper } from 'lucide-react';
 import { format } from 'date-fns';
 
 async function MagazineList() {
@@ -30,14 +30,22 @@ async function MagazineList() {
                             Published on {format(magazine.createdAt.toDate(), 'MMMM d, yyyy')}
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">Download the issue in text format.</p>
-                        <Button asChild>
-                            <Link href={magazine.fileUrl} target="_blank" download={`diano-weekly-${magazine.id}.txt`}>
-                                <Download className="mr-2 h-4 w-4" />
-                                Download .txt
-                            </Link>
-                        </Button>
+                    <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <p className="text-sm text-muted-foreground">View the issue online or download the PDF.</p>
+                        <div className="flex gap-2">
+                             <Button asChild variant="secondary">
+                                <Link href={`/diano-weekly/${magazine.id}`} target="_blank">
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Online
+                                </Link>
+                            </Button>
+                            <Button asChild>
+                                <Link href={magazine.fileUrl} target="_blank" download={`diano-weekly-${magazine.id}.pdf`}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download PDF
+                                </Link>
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
             ))}

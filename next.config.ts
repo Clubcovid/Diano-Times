@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -22,6 +23,10 @@ const nextConfig: NextConfig = {
       // Increase timeout for long-running AI tasks like video generation
       timeout: 120,
     }
+  },
+  webpack: (config) => {
+    config.resolve.alias.canvas = false;
+    return config;
   }
 };
 
