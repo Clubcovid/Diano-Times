@@ -3,7 +3,6 @@
 
 import { db, auth } from '@/lib/firebase-admin';
 import type { ChatSession, ChatMessage } from '@/lib/types';
-import { headers as nextHeaders } from 'next/headers';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { askDianoFlow } from './ask-diano-flow';
 
@@ -82,7 +81,7 @@ export async function saveAndContinueConversation(sessionId: string, userMessage
     // Get AI response, passing headers through
     const aiResponse = await askDianoFlow({
         question: userMessage.content,
-        history: currentData.messages.filter(m => m.role !== 'model' || m.content !== userMessage.content),
+        history: currentData.messages,
         headers: options?.headers,
     });
 

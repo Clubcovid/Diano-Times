@@ -26,7 +26,7 @@ const searchPostsTool = ai.defineTool(
       ),
     }),
   },
-  async ({ query }, options) => {
+  async ({ query }) => {
     console.log(`Searching posts with query: ${query || 'LATEST'}`);
     const posts = await getPosts({ searchQuery: query, limit: 3, publishedOnly: true });
     return {
