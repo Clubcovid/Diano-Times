@@ -122,13 +122,13 @@ async function PostsSection() {
                 />
                 <div className="absolute inset-0 bg-black/50" />
                 
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                <div className="absolute inset-0 hidden flex-col items-center justify-center p-4 md:flex">
                     <div className="w-full max-w-2xl">
                        <SearchForm />
                     </div>
                 </div>
 
-                <Link href={`/posts/${featuredPost.slug}`} className="absolute bottom-0 left-0 p-6 md:p-8 text-white group-hover:bg-gradient-to-t from-black/20 w-full">
+                <Link href={`/posts/${featuredPost.slug}`} className="absolute bottom-0 left-0 p-6 md:p-8 text-white group-hover:bg-gradient-to-t from-black/20 w-full md:absolute">
                  <div className='group-hover:translate-y-[-10px] transition-transform duration-300'>
                     {featuredPost.tags?.[0] && (
                         <Badge variant="secondary" className="mb-2">{featuredPost.tags[0]}</Badge>
