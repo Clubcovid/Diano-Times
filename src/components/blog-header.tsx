@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
 import { Skeleton } from './ui/skeleton';
-import { LogIn, UserPlus, LayoutDashboard, UserCircle, LogOut, Menu, ChevronDown, Search } from 'lucide-react';
+import { LogIn, UserPlus, LayoutDashboard, UserCircle, LogOut, Menu, ChevronDown, Search, Mic } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -115,6 +115,9 @@ export function BlogHeader() {
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
+      <Link href="/ask-diano" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+        <Mic className="h-4 w-4" /> Ask Diano
+      </Link>
       <Link href="/diano-weekly" className="text-muted-foreground hover:text-primary transition-colors">Diano Weekly</Link>
       <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
       <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
@@ -201,6 +204,7 @@ export function BlogHeader() {
                     {categories.map(cat => (
                        <Link key={cat.href} href={cat.href} className="text-muted-foreground hover:text-primary transition-colors">{cat.title}</Link>
                     ))}
+                    <Link href="/ask-diano" className="text-muted-foreground hover:text-primary transition-colors">Ask Diano</Link>
                     <Link href="/diano-weekly" className="text-muted-foreground hover:text-primary transition-colors">Diano Weekly</Link>
                     <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
                     <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
