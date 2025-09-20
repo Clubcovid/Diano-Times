@@ -5,15 +5,19 @@ import { revalidatePath } from 'next/cache';
 import { db, auth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
 import { generatePost as generatePostAI } from '@/ai/flows/generate-post';
+import { generateMagazine as generateMagazineAI } from '@/ai/flows/generate-magazine';
 import { postSchema, adSchema, videoSchema, type PostFormData } from './schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
-import type { AdminUser, Ad, Video, Post } from './types';
+import type { AdminUser, Ad, Video, Post, Magazine } from './types';
 import { headers } from 'next/headers';
 import { mockPosts, mockAds, mockVideos } from './mock-data';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { v4 as uuidv4 } from 'uuid';
+import { getPosts } from './posts';
+import { generatePdfFromHtml } from './pdf';
+import { subDays } from 'date-fns';
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
   if (!db) {
@@ -496,4 +500,81 @@ export async function generateAndSavePost(topic: string): Promise<GeneratePostRe
     console.error("Error generating and saving post:", error);
     return { success: false, message: `Failed to generate post: ${message}` };
   }
+}
+
+export async function getMagazines(): Promise<Magazine[]> {
+    if (!db) {
+        console.error("Database not connected. Cannot fetch magazines.");
+        return [];
+    }
+    try {
+        const magazinesCollection = db.collection('magazines');
+        const snapshot = await magazinesCollection.orderBy('createdAt', 'desc').get();
+        if (snapshot.empty) return [];
+        return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+        } as Magazine));
+    } catch (error) {
+        console.error('Error fetching magazines:', error);
+        return [];
+    }
+}
+
+export async function generateMagazinePdf(): Promise<{ success: boolean; message: string; pdfUrl?: string; }> {
+    if (!db) {
+        return { success: false, message: 'Database not connected.' };
+    }
+
+    try {
+        // 1. Fetch posts from the last 7 days
+        const sevenDaysAgo = subDays(new Date(), 7);
+        const recentPosts = await getPosts({ fromDate: sevenDaysAgo, publishedOnly: true });
+
+        if (recentPosts.length === 0) {
+            return { success: false, message: 'No new posts in the last 7 days to generate a magazine.' };
+        }
+
+        // 2. Generate magazine content with AI
+        const magazineContent = await generateMagazineAI({ postIds: recentPosts.map(p => p.id) });
+
+        // 3. Generate PDF from HTML
+        const pdfBuffer = await generatePdfFromHtml(magazineContent);
+
+        // 4. Upload PDF to Firebase Storage
+        const bucket = getStorage().bucket();
+        const fileName = `magazines/diano-weekly-${uuidv4()}.pdf`;
+        const file = bucket.file(fileName);
+
+        await file.save(pdfBuffer, {
+            metadata: {
+                contentType: 'application/pdf',
+            },
+        });
+
+        const [pdfUrl] = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-09-2491', // Far future expiration date
+        });
+        
+        // 5. Save magazine metadata to Firestore
+        const magazineData = {
+            title: magazineContent.title,
+            pdfUrl: pdfUrl,
+            createdAt: FieldValue.serverTimestamp(),
+            postIds: recentPosts.map(p => p.id),
+        };
+        await db.collection('magazines').add(magazineData);
+
+        // 6. Revalidate paths
+        revalidatePath('/diano-weekly');
+        revalidatePath('/admin/magazine');
+
+        return { success: true, message: 'Magazine generated successfully.', pdfUrl };
+
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "An unknown error occurred.";
+        console.error("Error generating magazine PDF:", error);
+        return { success: false, message: `Failed to generate magazine: ${message}` };
+    }
 }

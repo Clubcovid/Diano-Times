@@ -12,6 +12,7 @@ import {
   Home,
   Video,
   DatabaseZap,
+  Newspaper,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { auth } from '@/lib/firebase';
@@ -24,6 +25,7 @@ const navItems = [
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/advertisements', label: 'Advertisements', icon: Megaphone },
   { href: '/admin/videos', label: 'Videos', icon: Video },
+  { href: '/admin/magazine', label: 'Diano Weekly', icon: Newspaper },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 

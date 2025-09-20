@@ -3,56 +3,116 @@ import 'server-only';
 import { db } from '@/lib/firebase-admin';
 import type { Post } from './types';
 import { mockPosts } from './mock-data';
-import type { Query, QuerySnapshot } from 'firebase-admin/firestore';
+import { Query, Timestamp } from 'firebase-admin/firestore';
 
 function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
   const data = doc.data();
+  if (!data) throw new Error('Document data is empty');
   return {
     id: doc.id,
-    ...data,
+    title: data.title,
+    slug: data.slug,
+    content: data.content,
+    coverImage: data.coverImage,
+    tags: data.tags || [],
+    status: data.status,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
   } as Post;
 }
 
-export async function getPosts(options: { publishedOnly?: boolean, tag?: string } = {}): Promise<Post[]> {
+interface GetPostsOptions {
+  limit?: number;
+  publishedOnly?: boolean;
+  tag?: string;
+  fromDate?: Date;
+  ids?: string[];
+}
+
+export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
+  const { limit, publishedOnly, tag, fromDate, ids } = options;
+
   if (!db) {
-    console.error("Firebase Admin is not initialized. Cannot fetch posts. Returning mock data.");
-    return mockPosts.filter(p => {
-        if (options.publishedOnly && p.status !== 'published') return false;
-        if (options.tag && !p.tags.includes(options.tag)) return false;
-        return true;
-    });
+    console.warn("Firebase Admin is not initialized. Cannot fetch posts. Returning mock data.");
+    let filteredMockPosts = mockPosts;
+
+    if (publishedOnly) {
+      filteredMockPosts = filteredMockPosts.filter(p => p.status === 'published');
+    }
+    if (tag) {
+      filteredMockPosts = filteredMockPosts.filter(p => p.tags.includes(tag));
+    }
+    if (fromDate) {
+       filteredMockPosts = filteredMockPosts.filter(p => p.createdAt.toDate() >= fromDate);
+    }
+    if (ids) {
+        filteredMockPosts = filteredMockPosts.filter(p => ids.includes(p.id));
+    }
+    
+    return filteredMockPosts.slice(0, limit);
   }
 
   const postsCollection = db.collection('posts');
   let query: Query = postsCollection;
   
-  if (options.tag) {
-    query = query.where('tags', 'array-contains', options.tag);
-  } else if (options.publishedOnly) {
+  // Build the query
+  if (publishedOnly) {
     query = query.where('status', '==', 'published');
   }
+  if (tag) {
+    query = query.where('tags', 'array-contains', tag);
+  }
+   if (fromDate) {
+    query = query.where('createdAt', '>=', Timestamp.fromDate(fromDate));
+  }
+  if (ids) {
+     if (ids.length > 0) {
+      query = query.where('__name__', 'in', ids);
+    } else {
+      return []; // Return empty if no IDs are provided
+    }
+  }
+
 
   try {
-    const snapshot = await query.get();
+    const snapshot = await query.orderBy('createdAt', 'desc').limit(limit || 100).get();
+    
     if (snapshot.empty) {
-        return [];
+      return [];
     }
     
-    let posts = snapshot.docs.map(toPost);
+    return snapshot.docs.map(toPost);
+  } catch (error: any) {
+    if (error.code === 'FAILED_PRECONDITION' && error.message.includes('requires an index')) {
+      console.warn(`Firestore query failed due to a missing index. Falling back to client-side filtering. Message: ${error.message}`);
+      
+      // Fallback strategy: Fetch all documents and filter/sort in memory.
+      // This is less efficient but ensures the app doesn't crash.
+      let fallbackQuery: Query = db.collection('posts');
+      if (ids && ids.length > 0) {
+         fallbackQuery = fallbackQuery.where('__name__', 'in', ids);
+      }
+      
+      const allPostsSnapshot = await fallbackQuery.get();
+      let posts = allPostsSnapshot.docs.map(toPost);
 
-    // Manually sort by date since we removed it from the query to avoid index issues
-    posts.sort((a, b) => {
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
-        return dateB - dateA;
-    });
+      // Manual filtering
+      if (publishedOnly) {
+        posts = posts.filter(post => post.status === 'published');
+      }
+      if (tag) {
+        posts = posts.filter(post => post.tags.includes(tag));
+      }
+      if (fromDate) {
+        posts = posts.filter(post => post.createdAt.toDate() >= fromDate);
+      }
+      
+      // Manual sorting
+      posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
-    if (options.tag && options.publishedOnly) {
-      posts = posts.filter(post => post.status === 'published');
+      // Manual limit
+      return posts.slice(0, limit || 100);
     }
-
-    return posts;
-  } catch (error) {
     console.error("Error fetching posts from Firestore:", error);
     return [];
   }

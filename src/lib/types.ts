@@ -37,3 +37,11 @@ export interface Video {
   youtubeUrl: string;
   createdAt: Timestamp;
 }
+
+export interface Magazine {
+  id: string;
+  title: string;
+  pdfUrl: string;
+  createdAt: Timestamp;
+  postIds: string[];
+}

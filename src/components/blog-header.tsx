@@ -115,6 +115,7 @@ export function BlogHeader() {
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
+      <Link href="/diano-weekly" className="text-muted-foreground hover:text-primary transition-colors">Diano Weekly</Link>
       <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
       <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
     </>
@@ -194,6 +195,7 @@ export function BlogHeader() {
                     {categories.map(cat => (
                        <Link key={cat.href} href={cat.href} className="text-muted-foreground hover:text-primary transition-colors">{cat.title}</Link>
                     ))}
+                    <Link href="/diano-weekly" className="text-muted-foreground hover:text-primary transition-colors">Diano Weekly</Link>
                     <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
                     <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
                   </nav>
@@ -225,4 +227,3 @@ export function BlogHeader() {
     </header>
   );
 }
-
