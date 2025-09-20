@@ -31,11 +31,11 @@ async function MagazineList() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">Download the issue in PDF format.</p>
+                        <p className="text-sm text-muted-foreground">Download the issue in text format.</p>
                         <Button asChild>
-                            <Link href={magazine.pdfUrl} target="_blank" download={`diano-weekly-${magazine.id}.pdf`}>
+                            <Link href={magazine.fileUrl} target="_blank" download={`diano-weekly-${magazine.id}.txt`}>
                                 <Download className="mr-2 h-4 w-4" />
-                                Download PDF
+                                Download .txt
                             </Link>
                         </Button>
                     </CardContent>

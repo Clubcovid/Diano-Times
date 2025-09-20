@@ -16,7 +16,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { getPosts } from './posts';
-import { generatePdfFromHtml } from './pdf';
+import { generateTextFromHtml } from './pdf';
 import { subDays } from 'date-fns';
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
@@ -521,7 +521,7 @@ export async function getMagazines(): Promise<Magazine[]> {
     }
 }
 
-export async function generateMagazinePdf(): Promise<{ success: boolean; message: string; pdfUrl?: string; }> {
+export async function generateMagazineText(): Promise<{ success: boolean; message: string; fileUrl?: string; }> {
     if (!db) {
         return { success: false, message: 'Database not connected.' };
     }
@@ -538,21 +538,21 @@ export async function generateMagazinePdf(): Promise<{ success: boolean; message
         // 2. Generate magazine content with AI
         const magazineContent = await generateMagazineAI({ postIds: recentPosts.map(p => p.id) });
 
-        // 3. Generate PDF from HTML
-        const pdfBuffer = await generatePdfFromHtml(magazineContent);
+        // 3. Generate text file from HTML
+        const textContent = await generateTextFromHtml(magazineContent);
 
-        // 4. Upload PDF to Firebase Storage
+        // 4. Upload text file to Firebase Storage
         const bucket = getStorage().bucket();
-        const fileName = `magazines/diano-weekly-${uuidv4()}.pdf`;
+        const fileName = `magazines/diano-weekly-${uuidv4()}.txt`;
         const file = bucket.file(fileName);
 
-        await file.save(pdfBuffer, {
+        await file.save(textContent, {
             metadata: {
-                contentType: 'application/pdf',
+                contentType: 'text/plain',
             },
         });
 
-        const [pdfUrl] = await file.getSignedUrl({
+        const [fileUrl] = await file.getSignedUrl({
             action: 'read',
             expires: '03-09-2491', // Far future expiration date
         });
@@ -560,7 +560,7 @@ export async function generateMagazinePdf(): Promise<{ success: boolean; message
         // 5. Save magazine metadata to Firestore
         const magazineData = {
             title: magazineContent.title,
-            pdfUrl: pdfUrl,
+            fileUrl: fileUrl,
             createdAt: FieldValue.serverTimestamp(),
             postIds: recentPosts.map(p => p.id),
         };
@@ -570,11 +570,11 @@ export async function generateMagazinePdf(): Promise<{ success: boolean; message
         revalidatePath('/diano-weekly');
         revalidatePath('/admin/magazine');
 
-        return { success: true, message: 'Magazine generated successfully.', pdfUrl };
+        return { success: true, message: 'Magazine generated successfully.', fileUrl };
 
     } catch (error) {
         const message = error instanceof Error ? error.message : "An unknown error occurred.";
-        console.error("Error generating magazine PDF:", error);
+        console.error("Error generating magazine file:", error);
         return { success: false, message: `Failed to generate magazine: ${message}` };
     }
 }

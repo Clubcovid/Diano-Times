@@ -41,7 +41,7 @@ export interface Video {
 export interface Magazine {
   id: string;
   title: string;
-  pdfUrl: string;
+  fileUrl: string;
   createdAt: Timestamp;
   postIds: string[];
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { generateMagazinePdf } from '@/lib/actions';
+import { generateMagazineText } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,18 +11,18 @@ import Link from 'next/link';
 export default function MagazineGeneratorPage() {
     const [isGenerating, startTransition] = useTransition();
     const { toast } = useToast();
-    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [fileUrl, setFileUrl] = useState<string | null>(null);
 
     const handleGenerate = () => {
         startTransition(async () => {
-            setPdfUrl(null);
-            const result = await generateMagazinePdf();
+            setFileUrl(null);
+            const result = await generateMagazineText();
             if (result.success) {
                 toast({
                     title: 'Magazine Generated!',
-                    description: 'The weekly magazine PDF has been created.',
+                    description: 'The weekly magazine text file has been created.',
                 });
-                setPdfUrl(result.pdfUrl || null);
+                setFileUrl(result.fileUrl || null);
             } else {
                 toast({
                     title: 'Error',
@@ -38,7 +38,7 @@ export default function MagazineGeneratorPage() {
             <div>
                 <h1 className="text-3xl font-bold font-headline">Weekly Magazine Generator</h1>
                 <p className="text-muted-foreground">
-                    Use AI to generate a downloadable PDF of the weekly magazine.
+                    Use AI to generate a downloadable text file of the weekly magazine.
                 </p>
             </div>
 
@@ -46,12 +46,12 @@ export default function MagazineGeneratorPage() {
                 <CardHeader>
                     <CardTitle>Generate New Issue</CardTitle>
                     <CardDescription>
-                        Click the button below to start the AI generation process. The AI will collect the latest posts from the past 7 days, create a magazine layout, and save it as a PDF.
+                        Click the button below to start the AI generation process. The AI will collect the latest posts from the past 7 days, create a magazine layout, and save it as a text file.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground">
-                        This process may take up to a minute to complete. Please do not navigate away from the page after starting.
+                        This process can take a moment to complete. Please do not navigate away from the page after starting.
                     </p>
                 </CardContent>
                 <CardFooter className="flex-col items-start gap-4">
@@ -68,16 +68,16 @@ export default function MagazineGeneratorPage() {
                             </>
                         )}
                     </Button>
-                    {pdfUrl && (
+                    {fileUrl && (
                         <div className="p-4 bg-secondary rounded-lg w-full flex items-center justify-between">
                             <div>
                                 <p className="font-semibold">Generation Complete!</p>
-                                <p className="text-sm text-muted-foreground">Your PDF is ready for download.</p>
+                                <p className="text-sm text-muted-foreground">Your file is ready for download.</p>
                             </div>
                             <Button asChild>
-                                <Link href={pdfUrl} target="_blank" download>
+                                <Link href={fileUrl} target="_blank" download>
                                     <Download className="mr-2 h-4 w-4" />
-                                    Download PDF
+                                    Download .txt
                                 </Link>
                             </Button>
                         </div>
