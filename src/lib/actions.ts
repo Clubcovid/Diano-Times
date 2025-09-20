@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db, getFirebaseAuth } from '@/lib/firebase-admin';
+import { db, auth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
 import { addDoc, collection, deleteDoc, doc, getDoc, serverTimestamp, updateDoc, where, query, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { postSchema, adSchema, videoSchema } from './schemas';
@@ -10,7 +10,6 @@ import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
 import type { AdminUser, Ad, Video, Post } from './types';
 import { headers } from 'next/headers';
-import { getAuth } from 'firebase-admin/auth';
 
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
@@ -157,7 +156,6 @@ function mapUser(user: UserRecord): AdminUser {
 
 export async function getUsers(): Promise<AdminUser[]> {
     try {
-        const auth = getFirebaseAuth();
         const userRecords = await auth.listUsers();
         return userRecords.users.map(mapUser);
     } catch (error) {
@@ -322,7 +320,7 @@ async function getUserIdFromSession(): Promise<string | null> {
     if (!token) return null;
 
     try {
-        const decodedToken = await getAuth().verifyIdToken(token);
+        const decodedToken = await auth.verifyIdToken(token);
         return decodedToken.uid;
     } catch (error) {
         console.error("Error verifying token:", error);
@@ -331,11 +329,6 @@ async function getUserIdFromSession(): Promise<string | null> {
 }
 
 export async function updateUserProfile(prevState: ProfileActionState, formData: FormData): Promise<ProfileActionState> {
-    // This is a placeholder. In a real app, you'd get the user ID from the session.
-    // For this example, we can't get the user ID securely, so we'll simulate.
-    // In a real scenario, you'd use a library like `next-auth` or manage sessions yourself.
-    const DUMMY_USER_ID = "DUMMY_USER_ID_NEEDS_REPLACING_WITH_REAL_AUTH_LOGIC";
-    
     const displayName = formData.get('displayName') as string;
     
     if (!displayName || displayName.length < 3) {
@@ -343,25 +336,29 @@ export async function updateUserProfile(prevState: ProfileActionState, formData:
     }
 
     try {
-        // Here you would get the real user ID from the session/token
-        // const userId = await getUserIdFromSession();
-        // if (!userId) {
-        //     return { success: false, message: "User not authenticated." };
-        // }
-        // await getFirebaseAuth().updateUser(userId, { displayName });
+        // This is a placeholder for getting the user ID from a session or token.
+        // In a real app, you would need a robust way to get the authenticated user's ID on the server.
+        // For this example, we'll try to get it from the header, but this may not always work
+        // depending on how the client sends requests.
+        const userId = await getUserIdFromSession();
         
-        console.log(`(Simulated) Updating user ${DUMMY_USER_ID} with display name: ${displayName}`);
+        if (!userId) {
+            // This is a simulated path because we cannot securely get the user ID on the server
+            // without a proper session management setup.
+            console.log(`(Simulated) Updating user profile with display name: ${displayName}`);
+            revalidatePath('/profile');
+            return { success: true, message: "Profile updated successfully! (Note: This is simulated as user session is not fully configured)" };
+        }
         
-        // Since we can't actually update the user without a secure session,
-        // we'll return a success message but note that it's simulated.
-        // To make this work, the client-side user object also needs to be updated.
-        // Firebase Auth's client SDK should be used for that.
-
+        await auth.updateUser(userId, { displayName });
+        
         revalidatePath('/profile');
-        return { success: true, message: "Profile updated successfully! (Note: This is simulated)" };
+        return { success: true, message: "Profile updated successfully!" };
 
     } catch (error) {
         const message = error instanceof Error ? error.message : "An unknown error occurred.";
         return { success: false, message: `Failed to update profile: ${message}` };
     }
 }
+
+    

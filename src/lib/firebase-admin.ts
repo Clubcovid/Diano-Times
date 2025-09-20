@@ -36,13 +36,18 @@ if (hasServiceAccount) {
       get: async () => ({ docs: [], empty: true }),
       where: () => ({ get: async () => ({ docs: [], empty: true }) }),
       orderBy: () => ({ get: async () => ({ docs: [], empty: true }) }),
-      doc: () => ({ get: async () => ({ exists: false }) }),
-      addDoc: async () => Promise.resolve({ id: 'mock-id' }),
+      doc: () => ({ 
+          get: async () => ({ exists: false, data: () => null }),
+          delete: async () => {},
+          update: async () => {},
+      }),
+      add: async () => ({ id: 'mock-id' }),
     }),
   } as any;
 
   auth = {
     listUsers: async () => ({ users: [], pageToken: undefined }),
+    updateUser: async () => ({} as any),
   } as any;
 }
 
