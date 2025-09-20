@@ -14,34 +14,34 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-let app: FirebaseApp | null = null;
+// Check if all necessary client-side config values are present
+const hasClientConfig = firebaseConfig.apiKey && firebaseConfig.projectId;
+
+if (!hasClientConfig) {
+    console.warn('Firebase client credentials are not available. Client-side Firebase features will be disabled. Please check your NEXT_PUBLIC_FIREBASE environment variables.');
+}
+
+// Singleton pattern to initialize and get Firebase services
+const getFirebaseApp = (): FirebaseApp | null => {
+    if (!hasClientConfig) return null;
+    return getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+};
+
+const app = getFirebaseApp();
+
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 
-if (firebaseConfig.apiKey && firebaseConfig.projectId) {
-  if (getApps().length === 0) {
-    try {
-      app = initializeApp(firebaseConfig);
-      if (typeof window !== 'undefined') {
-        isSupported().then(yes => {
-          if (yes && firebaseConfig.measurementId) {
-            getAnalytics(app!);
-          }
-        });
-      }
-    } catch (e) {
-      console.error('Firebase initialization error', e);
-    }
-  } else {
-    app = getApp();
-  }
-
-  if (app) {
+if (app) {
     auth = getAuth(app);
     db = getFirestore(app);
-  }
-} else {
-  console.warn('Firebase public credentials are not available. Client-side Firebase features will be disabled.');
+    if (typeof window !== 'undefined') {
+        isSupported().then(yes => {
+            if (yes && firebaseConfig.measurementId) {
+                getAnalytics(app as FirebaseApp);
+            }
+        });
+    }
 }
 
 export { app, auth, db };
