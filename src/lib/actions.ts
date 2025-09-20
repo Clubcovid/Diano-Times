@@ -4,12 +4,13 @@
 import { revalidatePath } from 'next/cache';
 import { db, auth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
-import { addDoc, collection, deleteDoc, doc, getDoc, serverTimestamp, updateDoc, where, query, getDocs, orderBy, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, serverTimestamp, updateDoc, where, query, getDocs, orderBy, Timestamp, writeBatch } from 'firebase/firestore';
 import { postSchema, adSchema, videoSchema } from './schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
 import type { AdminUser, Ad, Video, Post } from './types';
 import { headers } from 'next/headers';
+import { mockPosts, mockAds, mockVideos } from './mock-data';
 
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
@@ -398,4 +399,51 @@ export async function updateUserProfile(prevState: ProfileActionState, formData:
         const message = error instanceof Error ? error.message : "An unknown error occurred.";
         return { success: false, message: `Failed to update profile: ${message}` };
     }
+}
+
+export async function seedDatabase(): Promise<{ success: boolean, message: string }> {
+  if (!db) {
+    return { success: false, message: "Database not connected. Cannot seed data." };
+  }
+
+  try {
+    const batch = writeBatch(db);
+
+    // Seed Posts
+    const postsCollection = collection(db, 'posts');
+    mockPosts.forEach(post => {
+      // The mock data `id` will be used as the document ID in Firestore
+      const docRef = doc(postsCollection, post.id);
+      // We remove the `id` from the object that gets written to the document fields
+      const { id, ...postData } = post;
+      batch.set(docRef, postData);
+    });
+
+    // Seed Ads
+    const adsCollection = collection(db, 'advertisements');
+    mockAds.forEach(ad => {
+      const docRef = doc(adsCollection, ad.id);
+      const { id, ...adData } = ad;
+      batch.set(docRef, { ...adData, createdAt: serverTimestamp() });
+    });
+
+    // Seed Videos
+    const videosCollection = collection(db, 'videos');
+    mockVideos.forEach(video => {
+      // Let Firestore generate an ID for videos
+      const docRef = doc(videosCollection);
+       batch.set(docRef, { ...video, createdAt: serverTimestamp() });
+    });
+
+    await batch.commit();
+    
+    revalidatePath('/');
+    revalidatePath('/admin');
+
+    return { success: true, message: "Database seeded successfully with mock data." };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "An unknown error occurred.";
+    console.error("Error seeding database:", error);
+    return { success: false, message: `Failed to seed database: ${message}` };
+  }
 }

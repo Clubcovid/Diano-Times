@@ -382,9 +382,20 @@ export const mockAds = [
     title: 'Safari Adventures',
     description: 'Book your dream Kenyan safari today!',
     imageUrl: 'https://picsum.photos/seed/safari-ad/600/600',
-    link: '#',
+    linkUrl: '#',
     alt: 'Giraffe in the wild'
   }
+];
+
+export const mockVideos = [
+    {
+        title: 'Exploring the Maasai Mara',
+        youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+    },
+    {
+        title: 'Nairobi City Tour',
+        youtubeUrl: 'https://www.youtube.com/watch?v=VIDEO_ID_2'
+    }
 ];
 
 export const mockMarketData = [

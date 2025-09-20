@@ -1,5 +1,9 @@
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/theme-toggle';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { DatabaseZap } from 'lucide-react';
 
 
 export default function SettingsPage() {
@@ -32,20 +36,25 @@ export default function SettingsPage() {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Site Configuration</CardTitle>
+          <CardTitle>Site Tools</CardTitle>
           <CardDescription>
-            These settings are under development and will be enabled in a future update.
+            Advanced tools for managing your site data.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+        <CardContent>
+            <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
-                    <p className="font-semibold text-muted-foreground/80">Maintenance Mode</p>
-                    <p className="text-sm text-muted-foreground/80">
-                        Temporarily take your site offline for visitors.
+                    <p className="font-semibold">Seed Database</p>
+                    <p className="text-sm text-muted-foreground">
+                        Populate your database with initial mock data.
                     </p>
                 </div>
-                 <p className="text-sm font-medium text-muted-foreground/80 pr-2">Coming Soon</p>
+                 <Button asChild>
+                    <Link href="/admin/settings/seed">
+                        <DatabaseZap className="mr-2 h-4 w-4" />
+                        Go to Seeder
+                    </Link>
+                </Button>
             </div>
         </CardContent>
       </Card>

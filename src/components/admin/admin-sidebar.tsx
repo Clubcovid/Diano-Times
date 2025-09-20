@@ -11,6 +11,7 @@ import {
   LogOut,
   Home,
   Video,
+  DatabaseZap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { auth } from '@/lib/firebase';
@@ -50,17 +51,29 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                pathname.startsWith(item.href) ? 'bg-muted text-primary' : 'text-muted-foreground'
+                pathname.startsWith(item.href) && !item.href.includes('settings') || pathname === item.href ? 'bg-muted text-primary' : 'text-muted-foreground'
               }`}
             >
               <item.icon className="h-4 w-4" />
               {item.label}
             </Link>
           ))}
+           <div className="px-3 py-2">
+                <span className="text-xs font-semibold text-muted-foreground">Tools</span>
+            </div>
+            <Link
+                href="/admin/settings/seed"
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
+                    pathname === '/admin/settings/seed' ? 'bg-muted text-primary' : 'text-muted-foreground'
+                }`}
+            >
+                <DatabaseZap className="h-4 w-4" />
+                Seed Database
+            </Link>
           <Link
             href="/"
             target="_blank"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary mt-4"
           >
             <Home className="h-4 w-4" />
             View Site
