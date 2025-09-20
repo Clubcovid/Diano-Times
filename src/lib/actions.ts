@@ -309,7 +309,7 @@ export async function deleteVideo(videoId: string): Promise<{ success: boolean, 
     revalidatePath('/admin/videos');
     revalidatePath('/video');
     return { success: true, message: 'Video deleted successfully.' };
-  } catch (error) {
+  } catch (error)_ {
     console.error('Error deleting video:', error);
     return { success: false, message: 'Failed to delete video.' };
   }
@@ -346,6 +346,9 @@ export async function updateUserProfile(prevState: ProfileActionState, formData:
     try {
         const userId = await getUserIdFromSession();
         
+        // This is a fallback for local dev where the auth header might not be easily passed.
+        // It's not secure and should not be relied upon in production.
+        // In a real deployed environment, the getUserIdFromSession() should be the source of truth.
         if (!userId) {
             console.log(`(Simulated) Updating user profile with display name: ${displayName}`);
             revalidatePath('/profile');
