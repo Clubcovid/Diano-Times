@@ -1,63 +1,159 @@
 
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { Send, Sparkles, Loader2, Bot, User, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { BlogHeader } from '@/components/blog-header';
-import { askDiano, type AskDianoOutput } from '@/ai/flows/ask-diano-flow';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Link from 'next/link';
-
-interface Message {
-  role: 'user' | 'model'; // 'model' corresponds to the bot
-  content: string;
-  sources?: AskDianoOutput['sources'];
-}
+import { useAuth } from '@/components/auth-provider';
+import type { ChatMessage, ChatSession } from '@/lib/types';
+import { getUserChatSession, saveAndContinueConversation } from '@/ai/flows/diano-chat-flow';
 
 export default function AskDianoPage() {
   const { toast } = useToast();
+  const { user, loading } = useAuth();
   const [isAsking, startAsking] = useTransition();
   const [question, setQuestion] = useState('');
-  const [conversation, setConversation] = useState<Message[]>([]);
+  const [chatSession, setChatSession] = useState<ChatSession | null>(null);
+
+  useEffect(() => {
+    if (user && !loading) {
+      const fetchHistory = async () => {
+        const session = await getUserChatSession();
+        setChatSession(session);
+      };
+      fetchHistory();
+    }
+  }, [user, loading]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!question.trim() || isAsking) return;
+    if (!question.trim() || isAsking || !chatSession) return;
 
-    const userMessage: Message = { role: 'user', content: question };
-    const newConversation = [...conversation, userMessage];
-    setConversation(newConversation);
+    const userMessage: ChatMessage = { role: 'user', content: question };
+    
+    // Optimistically update the UI
+    setChatSession(prev => prev ? { ...prev, messages: [...prev.messages, userMessage] } : null);
     setQuestion('');
 
     startAsking(async () => {
       try {
-        const result = await askDiano({ 
-            question: userMessage.content,
-            history: conversation, // Pass previous messages
-        });
-        const botMessage: Message = {
-          role: 'model',
-          content: result.answer,
-          sources: result.sources,
-        };
-        setConversation((prev) => [...prev, botMessage]);
+        const updatedSession = await saveAndContinueConversation(chatSession.id, userMessage);
+        setChatSession(updatedSession);
       } catch (error: any) {
         toast({
           title: 'Error',
           description: error.message || 'Failed to get an answer.',
           variant: 'destructive',
         });
-        // On error, remove the user message that caused it to allow retry
-        setConversation((prev) =>
-          prev.filter((msg) => msg.content !== userMessage.content)
-        );
+        // On error, revert the optimistic update
+        setChatSession(prev => prev ? { ...prev, messages: prev.messages.slice(0, -1) } : null);
       }
     });
   };
+
+  const renderContent = () => {
+      if (loading) {
+          return (
+             <div className="flex justify-center items-center h-40">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )
+      }
+      if (!user) {
+          return (
+               <Card className="text-center py-12">
+                    <CardHeader>
+                        <CardTitle>Login to Chat</CardTitle>
+                        <CardDescription>You must be logged in to chat with Diano and save your conversation history.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button asChild>
+                            <Link href="/login?redirect=/ask-diano">Login Now</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+          )
+      }
+
+      return (
+        <>
+            <div className="space-y-6">
+                {chatSession?.messages.map((msg, index) => (
+                <div key={index} className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                    {msg.role === 'model' && (
+                    <Avatar>
+                        <AvatarFallback><Bot /></AvatarFallback>
+                    </Avatar>
+                    )}
+                    <div className={`rounded-lg p-4 max-w-[80%] ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    {msg.sources && msg.sources.length > 0 && (
+                        <div className="mt-4">
+                            <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                            <BookOpen className="h-4 w-4" />
+                            Sources from Diano Times:
+                            </h4>
+                            <div className="space-y-2">
+                            {msg.sources.map(source => (
+                                <Button asChild variant="link" size="sm" key={source.slug} className="p-0 h-auto block w-full text-left">
+                                    <Link href={`/posts/${source.slug}`} target="_blank">
+                                        {source.title}
+                                    </Link>
+                                </Button>
+                            ))}
+                            </div>
+                        </div>
+                    )}
+                    </div>
+                    {msg.role === 'user' && (
+                    <Avatar>
+                        <AvatarFallback><User /></AvatarFallback>
+                    </Avatar>
+                    )}
+                </div>
+                ))}
+                {isAsking && (
+                    <div className="flex items-start gap-4">
+                        <Avatar>
+                            <AvatarFallback><Bot /></AvatarFallback>
+                        </Avatar>
+                        <div className="rounded-lg p-4 bg-background flex items-center gap-2">
+                            <Loader2 className="h-5 w-5 animate-spin"/>
+                            <span>Diano is thinking...</span>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <form onSubmit={handleSubmit} className="sticky bottom-6 mt-8">
+                <div className="relative">
+                <Input
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    placeholder="e.g., What are the best places to visit in Mombasa?"
+                    className="h-14 pr-16 text-base"
+                    disabled={isAsking || !user}
+                />
+                <Button
+                    type="submit"
+                    size="icon"
+                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                    disabled={isAsking || !question.trim() || !user}
+                >
+                    <Send className="h-5 w-5" />
+                    <span className="sr-only">Send</span>
+                </Button>
+                </div>
+            </form>
+        </>
+      )
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/40">
@@ -73,75 +169,7 @@ export default function AskDianoPage() {
               Your AI expert on all things Kenya. Ask me anything!
             </p>
           </div>
-
-          <div className="space-y-6">
-            {conversation.map((msg, index) => (
-              <div key={index} className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                {msg.role === 'model' && (
-                  <Avatar>
-                    <AvatarFallback><Bot /></AvatarFallback>
-                  </Avatar>
-                )}
-                <div className={`rounded-lg p-4 max-w-[80%] ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
-                   {msg.sources && msg.sources.length > 0 && (
-                      <div className="mt-4">
-                        <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                          <BookOpen className="h-4 w-4" />
-                          Sources from Diano Times:
-                        </h4>
-                        <div className="space-y-2">
-                          {msg.sources.map(source => (
-                             <Button asChild variant="link" size="sm" key={source.slug} className="p-0 h-auto block w-full text-left">
-                                <Link href={`/posts/${source.slug}`} target="_blank">
-                                    {source.title}
-                                </Link>
-                             </Button>
-                          ))}
-                        </div>
-                      </div>
-                   )}
-                </div>
-                {msg.role === 'user' && (
-                   <Avatar>
-                    <AvatarFallback><User /></AvatarFallback>
-                  </Avatar>
-                )}
-              </div>
-            ))}
-             {isAsking && (
-                 <div className="flex items-start gap-4">
-                    <Avatar>
-                        <AvatarFallback><Bot /></AvatarFallback>
-                    </Avatar>
-                    <div className="rounded-lg p-4 bg-background flex items-center gap-2">
-                        <Loader2 className="h-5 w-5 animate-spin"/>
-                        <span>Diano is thinking...</span>
-                    </div>
-                </div>
-             )}
-          </div>
-
-          <form onSubmit={handleSubmit} className="sticky bottom-6 mt-8">
-            <div className="relative">
-              <Input
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                placeholder="e.g., What are the best places to visit in Mombasa?"
-                className="h-14 pr-16 text-base"
-                disabled={isAsking}
-              />
-              <Button
-                type="submit"
-                size="icon"
-                className="absolute right-3 top-1/2 -translate-y-1/2"
-                disabled={isAsking || !question.trim()}
-              >
-                <Send className="h-5 w-5" />
-                <span className="sr-only">Send</span>
-              </Button>
-            </div>
-          </form>
+            {renderContent()}
         </div>
       </main>
     </div>

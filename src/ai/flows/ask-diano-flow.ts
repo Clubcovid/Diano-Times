@@ -9,6 +9,7 @@ import { getPosts } from '@/lib/posts';
 import { z } from 'genkit';
 import { htmlToText } from 'html-to-text';
 import { isAiFeatureEnabled } from '@/lib/ai-flags';
+import { saveAndContinueConversation } from './diano-chat-flow';
 
 // Define the schema for the tool that searches posts
 const searchPostsTool = ai.defineTool(
@@ -69,7 +70,7 @@ export async function askDiano(input: AskDianoInput): Promise<AskDianoOutput> {
 }
 
 
-const askDianoFlow = ai.defineFlow(
+export const askDianoFlow = ai.defineFlow(
   {
     name: 'askDianoFlow',
     inputSchema: AskDianoInputSchema,
