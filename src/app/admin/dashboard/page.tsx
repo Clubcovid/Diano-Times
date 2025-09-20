@@ -2,9 +2,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getPosts } from '@/lib/posts';
 import { getUsers } from '@/lib/actions';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { DashboardCharts, type PostCategoryData, type EngagementData, type TrafficData } from '@/components/admin/dashboard-charts';
+import type { Post } from '@/lib/types';
 
 const trafficData: TrafficData = [
   { name: 'Direct', value: 400, fill: 'hsl(var(--chart-1))' },
@@ -23,8 +22,7 @@ const engagementData: EngagementData = [
   { name: 'Jul', uv: 3490, pv: 4300, amt: 2100 },
 ];
 
-async function getCategoryData(): Promise<PostCategoryData> {
-    const posts = await getPosts();
+async function getCategoryData(posts: Post[]): Promise<PostCategoryData> {
     const categoryCounts = posts.reduce((acc, post) => {
         post.tags.forEach(tag => {
             if (acc[tag]) {
@@ -49,7 +47,7 @@ async function getCategoryData(): Promise<PostCategoryData> {
 export default async function DashboardPage() {
   const posts = await getPosts();
   const users = await getUsers();
-  const postsData = await getCategoryData();
+  const postsData = await getCategoryData(posts);
 
   return (
     <div className="space-y-6">

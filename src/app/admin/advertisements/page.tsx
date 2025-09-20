@@ -3,9 +3,6 @@ import { PlusCircle } from 'lucide-react';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AdFormDialog } from '@/components/admin/ad-form-dialog';
@@ -13,17 +10,13 @@ import { AdCard } from '@/components/admin/ad-card';
 import type { Ad } from '@/lib/types';
 import { getAds } from '@/lib/actions';
 
-// Helper function to serialize Firestore Timestamps
-const serializeAds = (ads: Ad[]): any[] => {
-    return ads.map(ad => ({
-        ...ad,
-        createdAt: ad.createdAt?.toDate ? ad.createdAt.toDate().toISOString() : new Date().toISOString(),
-    }));
-};
-
 export default async function AdvertisementsPage() {
-  const ads = await getAds();
-  const serializableAds = serializeAds(ads);
+  const ads: Ad[] = await getAds();
+  
+  const serializableAds = ads.map(ad => ({
+    ...ad,
+    createdAt: ad.createdAt?.toDate ? ad.createdAt.toDate().toISOString() : new Date().toISOString(),
+  }));
 
   return (
     <>
@@ -40,7 +33,7 @@ export default async function AdvertisementsPage() {
           </AdFormDialog>
         </div>
 
-        {ads.length === 0 ? (
+        {serializableAds.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <h3 className="text-xl font-semibold">No advertisements found.</h3>

@@ -3,8 +3,6 @@ import { PlusCircle } from 'lucide-react';
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { Video } from '@/lib/types';
@@ -12,18 +10,13 @@ import { getVideos } from '@/lib/actions';
 import { VideoFormDialog } from '@/components/admin/video-form-dialog';
 import { VideoCard } from '@/components/admin/video-card';
 
-
-// Helper function to serialize Firestore Timestamps
-const serializeVideos = (videos: Video[]): any[] => {
-    return videos.map(video => ({
-        ...video,
-        createdAt: video.createdAt?.toDate ? video.createdAt.toDate().toISOString() : new Date().toISOString(),
-    }));
-};
-
 export default async function VideosPage() {
-  const videos = await getVideos();
-  const serializableVideos = serializeVideos(videos);
+  const videos: Video[] = await getVideos();
+
+  const serializableVideos = videos.map(video => ({
+    ...video,
+    createdAt: video.createdAt?.toDate ? video.createdAt.toDate().toISOString() : new Date().toISOString(),
+  }));
 
   return (
     <>
@@ -40,7 +33,7 @@ export default async function VideosPage() {
           </VideoFormDialog>
         </div>
 
-        {videos.length === 0 ? (
+        {serializableVideos.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <h3 className="text-xl font-semibold">No videos found.</h3>

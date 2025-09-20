@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useActionState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
@@ -18,17 +18,11 @@ import { BlogHeader } from '@/components/blog-header';
 
 const ADMIN_EMAIL = 'georgedianoh@gmail.com';
 
-const initialState = {
-  success: false,
-  message: '',
-};
-
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [displayName, setDisplayName] = useState('');
-  const [state, formAction] = useActionState(updateUserProfile, initialState);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -39,23 +33,28 @@ export default function ProfilePage() {
     }
   }, [user, loading, router]);
 
-  useEffect(() => {
-    if (state.message) {
-      if (state.success) {
+  const handleSubmit = async (formData: FormData) => {
+    const result = await updateUserProfile(null, formData);
+     if (result.message) {
+      if (result.success) {
         toast({
           title: 'Success',
-          description: state.message,
+          description: result.message,
         });
-        // We might need to refresh user state here if not done automatically
+        // This is a bit of a hack to force a refresh of the user object
+        // A more robust solution might involve a dedicated user refresh function in the auth context
+        await auth.currentUser?.reload();
+        router.refresh();
       } else {
         toast({
           title: 'Error',
-          description: state.message,
+          description: result.message,
           variant: 'destructive',
         });
       }
     }
-  }, [state, toast]);
+  };
+
 
   const handleSignOut = async () => {
     await auth.signOut();
@@ -90,7 +89,7 @@ export default function ProfilePage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-8">
-            <form action={formAction} className="space-y-4">
+            <form action={handleSubmit} className="space-y-4">
                 <h3 className="font-semibold text-lg">Edit Profile</h3>
                 <div className="space-y-2">
                     <Label htmlFor="displayName">Display Name</Label>
