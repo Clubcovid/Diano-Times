@@ -27,6 +27,9 @@ export function BlogHeader() {
       <Link href="/fashion" className="text-muted-foreground hover:text-primary transition-colors">Fashion</Link>
       <Link href="/gadgets" className="text-muted-foreground hover:text-primary transition-colors">Gadgets</Link>
       <Link href="/lifestyle" className="text-muted-foreground hover:text-primary transition-colors">Lifestyle</Link>
+      <Link href="/sports" className="text-muted-foreground hover:text-primary transition-colors">Sports</Link>
+      <Link href="/world-politics" className="text-muted-foreground hover:text-primary transition-colors">World Politics</Link>
+      <Link href="/world-security" className="text-muted-foreground hover:text-primary transition-colors">World Security</Link>
       <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
       <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
     </>
