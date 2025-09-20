@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition, useEffect, useCallback } from 'react';
 import { Send, Sparkles, Loader2, Bot, User, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useAuth } from '@/components/auth-provider';
 import type { ChatMessage, ChatSession } from '@/lib/types';
 import { getUserChatSession, saveAndContinueConversation } from '@/ai/flows/diano-chat-flow';
+import { auth } from '@/lib/firebase';
 
 export default function AskDianoPage() {
   const { toast } = useToast();
@@ -21,15 +22,32 @@ export default function AskDianoPage() {
   const [question, setQuestion] = useState('');
   const [chatSession, setChatSession] = useState<ChatSession | null>(null);
 
+  const getAuthHeaders = useCallback(async () => {
+    if (!auth.currentUser) return new Headers();
+    const token = await auth.currentUser.getIdToken();
+    const headers = new Headers();
+    headers.append('Authorization', `Bearer ${token}`);
+    return headers;
+  }, []);
+
   useEffect(() => {
     if (user && !loading) {
       const fetchHistory = async () => {
-        const session = await getUserChatSession();
-        setChatSession(session);
+        try {
+          const headers = await getAuthHeaders();
+          const session = await getUserChatSession({ headers });
+          setChatSession(session);
+        } catch(e: any) {
+             toast({
+              title: 'Could not load chat',
+              description: e.message || 'Failed to fetch your conversation history.',
+              variant: 'destructive',
+            });
+        }
       };
       fetchHistory();
     }
-  }, [user, loading]);
+  }, [user, loading, getAuthHeaders, toast]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +61,8 @@ export default function AskDianoPage() {
 
     startAsking(async () => {
       try {
-        const updatedSession = await saveAndContinueConversation(chatSession.id, userMessage);
+        const headers = await getAuthHeaders();
+        const updatedSession = await saveAndContinueConversation(chatSession.id, userMessage, { headers });
         setChatSession(updatedSession);
       } catch (error: any) {
         toast({

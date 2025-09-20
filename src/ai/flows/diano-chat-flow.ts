@@ -3,12 +3,12 @@
 
 import { db, auth } from '@/lib/firebase-admin';
 import type { ChatSession, ChatMessage } from '@/lib/types';
-import { headers } from 'next/headers';
+import { headers as nextHeaders } from 'next/headers';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { askDianoFlow } from './ask-diano-flow';
 
-async function getUserIdFromSession(): Promise<string | null> {
-    const authHeader = headers().get('Authorization');
+async function getUserIdFromSession(headers?: Headers): Promise<string | null> {
+    const authHeader = headers?.get('Authorization');
     if (!authHeader || !auth) return null;
 
     const token = authHeader.split('Bearer ')[1];
@@ -41,10 +41,10 @@ async function createNewChatSession(userId: string): Promise<ChatSession> {
 }
 
 
-export async function getUserChatSession(): Promise<ChatSession> {
+export async function getUserChatSession(options?: { headers?: Headers }): Promise<ChatSession> {
     if (!db) throw new Error('Database not connected.');
     
-    const userId = await getUserIdFromSession();
+    const userId = await getUserIdFromSession(options?.headers);
     if (!userId) {
         throw new Error('User not authenticated.');
     }
@@ -60,10 +60,10 @@ export async function getUserChatSession(): Promise<ChatSession> {
     }
 }
 
-export async function saveAndContinueConversation(sessionId: string, userMessage: ChatMessage): Promise<ChatSession> {
+export async function saveAndContinueConversation(sessionId: string, userMessage: ChatMessage, options?: { headers?: Headers }): Promise<ChatSession> {
     if (!db) throw new Error('Database not connected.');
     
-    const userId = await getUserIdFromSession();
+    const userId = await getUserIdFromSession(options?.headers);
     if (!userId) {
         throw new Error('User not authenticated.');
     }
