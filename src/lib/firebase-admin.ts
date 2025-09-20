@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileoverview
  * This file contains the server-side initialization for the Firebase Admin SDK.
