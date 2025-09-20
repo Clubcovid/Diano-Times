@@ -116,8 +116,9 @@ export async function generatePdfFromHtml(magazineData: GenerateMagazineOutput):
     const htmlContent = createMagazineHtml(magazineData);
     
     const browser = await puppeteer.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
         headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        channel: 'chrome',
     });
 
     const page = await browser.newPage();
