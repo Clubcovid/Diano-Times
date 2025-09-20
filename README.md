@@ -84,7 +84,7 @@ This project is built on a modern, full-stack architecture leveraging Next.js an
 │       ├── posts.ts        # Functions for fetching post data
 │       ├── schemas.ts      # Zod schemas for form and data validation
 │       └── types.ts        # TypeScript type definitions
-├── .env                    # Environment variables (needs to be created)
+├── .env.local              # Environment variables (needs to be created)
 └── ...                     # Configuration files (next.config.ts, tailwind.config.ts, etc.)
 ```
 
@@ -108,9 +108,15 @@ npm install
 
 ### 2. Set Up Environment Variables
 
-This project requires a Firebase project to run. The application is configured to connect to Firebase using environment variables.
+This project requires a Firebase project to run. Create a `.env.local` file in the root of your project.
 
-Create a `.env` file in the root of your project and add your Firebase project's configuration keys:
+#### A. Get Client-Side Firebase Config
+
+1.  Go to the [Firebase Console](https://console.firebase.google.com/) and select your project.
+2.  Click the **gear icon** next to "Project Overview" and go to **Project settings**.
+3.  In the "Your apps" card, select your web app.
+4.  Under "Firebase SDK snippet", choose **Config**.
+5.  Copy the configuration variables into your `.env.local` file:
 
 ```
 # Firebase Public Config
@@ -121,12 +127,32 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
 NEXT_PUBLIC_FIREBASE_APP_ID=1:...
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-...
+```
 
+#### B. Get Server-Side Firebase Admin SDK Credentials
+
+1.  In the Firebase Console, go to **Project settings** > **Service accounts**.
+2.  Click **Generate new private key**, then confirm by clicking **Generate key**.
+3.  A JSON file will be downloaded. Open it and copy the values into your `.env.local` file:
+
+```
+# Firebase Admin SDK (for server-side operations)
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
+```
+
+**Important**: Your `FIREBASE_PRIVATE_KEY` must be wrapped in double quotes (`"`) because it contains newline characters.
+
+#### C. Get Genkit/Gemini API Key
+
+1.  Visit [Google AI Studio](https://aistudio.google.com/app/apikey) to create an API key.
+2.  Add the key to your `.env.local` file:
+
+```
 # Genkit/Gemini AI Config
 GEMINI_API_KEY=AIz...
 ```
-
-**Note**: You can obtain your Firebase configuration from the Firebase Console by navigating to **Project Settings > Your apps**. The `GEMINI_API_KEY` is required for the Genkit AI features.
 
 ### 3. Run the Development Server
 
