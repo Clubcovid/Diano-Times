@@ -1,7 +1,5 @@
 
 import Link from 'next/link';
-import { Rss } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { getPosts } from '@/lib/posts';
 import { PostCard } from '@/components/post-card';
 import { Suspense } from 'react';
@@ -10,7 +8,18 @@ import { getTags } from '@/lib/posts';
 import { BlogHeader } from '@/components/blog-header';
 
 async function PostsData({ tag }: { tag?: string }) {
-  let posts = await getPosts({ publishedOnly: true, tag: tag || 'World Politics' });
+  const worldPoliticsPosts = await getPosts({ publishedOnly: true, tag: 'World Politics' });
+  const worldSecurityPosts = await getPosts({ publishedOnly: true, tag: 'World Security' });
+
+  // Combine and remove duplicates
+  const allPosts = [...worldPoliticsPosts, ...worldSecurityPosts];
+  const uniquePosts = allPosts.filter(
+    (post, index, self) => index === self.findIndex((p) => p.id === post.id)
+  );
+
+  let posts = tag ? uniquePosts.filter(p => p.tags.includes(tag)) : uniquePosts;
+
+  posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
   if (posts.length === 0) {
     return (
@@ -50,7 +59,8 @@ function PostsSkeleton() {
 
 async function Tags() {
     const tags = await getTags();
-    return <TagList tags={tags} activeTag="World Politics" />;
+    const relevantTags = tags.filter(t => ['World Politics', 'World Security', 'Global Affairs'].includes(t));
+    return <TagList tags={relevantTags} activeTag="Global Affairs" />;
 }
 
 export default function CategoryPage({ searchParams }: { searchParams: { tag?: string } }) {
@@ -60,8 +70,8 @@ export default function CategoryPage({ searchParams }: { searchParams: { tag?: s
       <main className="flex-1">
         <div className="container mx-auto px-4 md:px-6 py-12">
             <div className="text-center mb-12">
-                <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">World Politics</h1>
-                <p className="text-lg text-muted-foreground mt-2">Global affairs and political analysis</p>
+                <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">Global Affairs</h1>
+                <p className="text-lg text-muted-foreground mt-2">Global affairs, politics, and security analysis</p>
             </div>
              <div className="mb-8">
                 <Suspense>

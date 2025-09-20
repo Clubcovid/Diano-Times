@@ -1,16 +1,87 @@
+
 "use client";
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
 import { Skeleton } from './ui/skeleton';
-import { LogIn, UserPlus, LayoutDashboard, UserCircle, LogOut, Menu } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { LogIn, UserPlus, LayoutDashboard, UserCircle, LogOut, Menu, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from './ui/sheet';
 import { ThemeToggle } from './theme-toggle';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu"
+import React from 'react';
+
+const categories: { title: string; href: string; description: string }[] = [
+  {
+    title: 'Fashion',
+    href: '/fashion',
+    description: 'The latest trends, styles, and fashion news.',
+  },
+  {
+    title: 'Gadgets',
+    href: '/gadgets',
+    description: 'Reviews and news on the latest tech and electronics.',
+  },
+  {
+    title: 'Lifestyle',
+    href: '/lifestyle',
+    description: 'Culture, food, travel, and wellness.',
+  },
+    {
+    title: 'Sports',
+    href: '/sports',
+    description: 'The latest in local and international sports.',
+  },
+  {
+    title: 'Global Affairs',
+    href: '/global-affairs',
+    description: 'Insights on global security and defense.',
+  },
+];
+
+
+const ListItem = React.forwardRef<
+  React.ElementRef<"a">,
+  React.ComponentPropsWithoutRef<"a">
+>(({ className, title, children, ...props }, ref) => {
+  return (
+    <li>
+      <NavigationMenuLink asChild>
+        <a
+          ref={ref}
+          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+          {...props}
+        >
+          <div className="text-sm font-medium leading-none">{title}</div>
+          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+            {children}
+          </p>
+        </a>
+      </NavigationMenuLink>
+    </li>
+  )
+})
+ListItem.displayName = "ListItem"
+
 
 export function BlogHeader() {
   const { user, loading } = useAuth();
@@ -24,14 +95,27 @@ export function BlogHeader() {
   const navLinks = (
     <>
       <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">Home</Link>
-      <Link href="/fashion" className="text-muted-foreground hover:text-primary transition-colors">Fashion</Link>
-      <Link href="/gadgets" className="text-muted-foreground hover:text-primary transition-colors">Gadgets</Link>
-      <Link href="/lifestyle" className="text-muted-foreground hover:text-primary transition-colors">Lifestyle</Link>
-      <Link href="/sports" className="text-muted-foreground hover:text-primary transition-colors">Sports</Link>
-      <Link href="/world-politics" className="text-muted-foreground hover:text-primary transition-colors">World Politics</Link>
-      <Link href="/world-security" className="text-muted-foreground hover:text-primary transition-colors">World Security</Link>
+      <NavigationMenu>
+        <NavigationMenuList>
+          <NavigationMenuItem>
+            <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
+                {categories.map((component) => (
+                  <ListItem
+                    key={component.title}
+                    title={component.title}
+                    href={component.href}
+                  >
+                    {component.description}
+                  </ListItem>
+                ))}
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
       <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
-      <Link href="/story-time" className="text-muted-foreground hover:text-primary transition-colors">Story Time</Link>
       <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
     </>
   );
@@ -106,7 +190,12 @@ export function BlogHeader() {
                     Diano Times
                   </Link>
                   <nav className="grid gap-4 text-lg">
-                    {navLinks}
+                    <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">Home</Link>
+                    {categories.map(cat => (
+                       <Link key={cat.href} href={cat.href} className="text-muted-foreground hover:text-primary transition-colors">{cat.title}</Link>
+                    ))}
+                    <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
+                    <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
                   </nav>
                    {!user && !loading && (
                     <div className="mt-8 grid gap-4">
@@ -136,3 +225,4 @@ export function BlogHeader() {
     </header>
   );
 }
+

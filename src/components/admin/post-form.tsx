@@ -32,7 +32,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Wand2, Save } from 'lucide-react';
 
-const availableTags = ['Fashion', 'Gadgets', 'Lifestyle', 'Technology', 'Wellness', 'Travel', 'Food', 'Business', 'Culture', 'Art', 'Reviews', 'Tips', 'Nairobi', 'Kenya', 'World Politics', 'Sports', 'World Security'];
+const availableTags = ['Fashion', 'Gadgets', 'Lifestyle', 'Technology', 'Wellness', 'Travel', 'Food', 'Business', 'Culture', 'Art', 'Reviews', 'Tips', 'Nairobi', 'Kenya', 'Global Affairs', 'Sports'];
 
 type SerializablePost = Omit<Post, 'createdAt' | 'updatedAt'> & {
   createdAt: string;
