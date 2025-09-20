@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useEffect, useTransition } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, useTransition } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -30,7 +30,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Wand2, Save } from 'lucide-react';
+import { Wand2, Save, Upload, X } from 'lucide-react';
+import Image from 'next/image';
 
 const availableTags = ['Fashion', 'Gadgets', 'Lifestyle', 'Technology', 'Wellness', 'Travel', 'Food', 'Business', 'Culture', 'Art', 'Reviews', 'Tips', 'Nairobi', 'Kenya'];
 
@@ -45,6 +46,7 @@ export function PostForm({ post }: { post?: SerializablePost }) {
   const [isGeneratingSlug, startSlugGeneration] = useTransition();
   const [isSubmitting, startTransition] = useTransition();
   const isEditing = !!post;
+  const [imagePreview, setImagePreview] = useState<string | null>(post?.coverImage || null);
 
   const form = useForm<PostFormData>({
     resolver: zodResolver(postSchema),
@@ -52,11 +54,28 @@ export function PostForm({ post }: { post?: SerializablePost }) {
       title: post?.title || '',
       slug: post?.slug || '',
       content: post?.content || '',
-      coverImage: post?.coverImage || 'https://picsum.photos/seed/diano-blog-1/1200/800',
+      coverImage: post?.coverImage || '',
       tags: post?.tags || [],
       status: post?.status || 'draft',
     },
   });
+  
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 4 * 1024 * 1024) { // 4MB limit
+        toast({ title: 'Image too large', description: 'Please upload an image smaller than 4MB.', variant: 'destructive' });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        form.setValue('coverImage', result);
+        setImagePreview(result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleGenerateSlug = () => {
     const title = form.getValues('title');
@@ -78,9 +97,18 @@ export function PostForm({ post }: { post?: SerializablePost }) {
 
   const onSubmit = (data: PostFormData) => {
     startTransition(async () => {
+        const formData = new FormData();
+        Object.entries(data).forEach(([key, value]) => {
+            if (key === 'tags' && Array.isArray(value)) {
+                value.forEach(tag => formData.append(key, tag));
+            } else if (value !== undefined) {
+                formData.append(key, value as string);
+            }
+        });
+
         const result = isEditing
-            ? await updatePost(post.id, data)
-            : await createPost(data);
+            ? await updatePost(post.id, formData)
+            : await createPost(formData);
 
         if (result.success) {
             toast({
@@ -94,11 +122,6 @@ export function PostForm({ post }: { post?: SerializablePost }) {
                 description: result.message,
                 variant: 'destructive',
             });
-            if (result.errors) {
-                result.errors.forEach(error => {
-                    form.setError(error.path[0] as keyof PostFormData, { message: error.message });
-                });
-            }
         }
     });
   };
@@ -145,31 +168,62 @@ export function PostForm({ post }: { post?: SerializablePost }) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="coverImage">Cover Image URL</Label>
-            <Input id="coverImage" {...form.register('coverImage')} placeholder="https://example.com/image.jpg"/>
+           <div className="space-y-2">
+            <Label>Cover Image</Label>
+            {imagePreview ? (
+              <div className="relative group">
+                <Image src={imagePreview} alt="Cover image preview" width={400} height={200} className="rounded-md object-cover border" />
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  size="icon" 
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => {
+                    setImagePreview(null);
+                    form.setValue('coverImage', '');
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center w-full">
+                <label htmlFor="cover-image-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-accent">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                        <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                        <p className="text-xs text-muted-foreground">PNG, JPG or WEBP (MAX. 4MB)</p>
+                    </div>
+                    <Input id="cover-image-upload" type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleImageChange} />
+                </label>
+            </div> 
+            )}
             {form.formState.errors.coverImage && <p className="text-sm text-destructive">{form.formState.errors.coverImage.message}</p>}
           </div>
           <div className="space-y-2">
             <Label>Tags</Label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {availableTags.map((tag) => (
+            <Controller
+              name="tags"
+              control={form.control}
+              render={({ field }) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {availableTags.map((tag) => (
                     <div key={tag} className="flex items-center gap-2">
-                        <Checkbox
-                            id={`tag-${tag}`}
-                            onCheckedChange={(checked) => {
-                                const currentTags = form.getValues('tags') || [];
-                                const newTags = checked
-                                    ? [...currentTags, tag]
-                                    : currentTags.filter((t) => t !== tag);
-                                form.setValue('tags', newTags, { shouldValidate: true });
-                            }}
-                            checked={form.watch('tags')?.includes(tag)}
-                        />
-                        <Label htmlFor={`tag-${tag}`} className="font-normal">{tag}</Label>
+                      <Checkbox
+                        id={`tag-${tag}`}
+                        checked={field.value?.includes(tag)}
+                        onCheckedChange={(checked) => {
+                          return checked
+                            ? field.onChange([...(field.value || []), tag])
+                            : field.onChange(field.value?.filter((value) => value !== tag));
+                        }}
+                      />
+                      <Label htmlFor={`tag-${tag}`} className="font-normal">{tag}</Label>
                     </div>
-                ))}
-            </div>
+                  ))}
+                </div>
+              )}
+            />
             {form.formState.errors.tags && <p className="text-sm text-destructive">{form.formState.errors.tags.message}</p>}
           </div>
           <div className="space-y-2">

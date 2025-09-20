@@ -2,6 +2,7 @@
 import { initializeApp, getApps, getApp, FirebaseApp, FirebaseOptions } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
 // Your web app's Firebase configuration
@@ -10,7 +11,7 @@ const firebaseConfig: FirebaseOptions = {
   authDomain: "studio-2630134466-e06b1.firebaseapp.com",
   databaseURL: "https://studio-2630134466-e06b1-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "studio-2630134466-e06b1",
-  storageBucket: "studio-2630134466-e06b1.firebasestorage.app",
+  storageBucket: "studio-2630134466-e06b1.appspot.com",
   messagingSenderId: "1036795142239",
   appId: "1:1036795142239:web:1a32fd0ddba4ff2fe97bea"
 };
@@ -26,6 +27,7 @@ if (!getApps().length) {
 
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
+const storage = getStorage(app);
 
 if (typeof window !== 'undefined') {
     isSupported().then(yes => {
@@ -36,4 +38,4 @@ if (typeof window !== 'undefined') {
 }
 
 
-export { app, auth, db };
+export { app, auth, db, storage };

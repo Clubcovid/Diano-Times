@@ -1,14 +1,30 @@
 
 import { z } from 'zod';
 
+const MAX_IMAGE_SIZE = 4 * 1024 * 1024; // 4MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+const imageSchema = z.string().refine(
+  (data) => {
+    if (data.startsWith('data:image')) {
+      // It's a base64 string
+      const sizeInBytes = (data.length * (3 / 4)) - (data.endsWith('==') ? 2 : data.endsWith('=') ? 1 : 0);
+      return sizeInBytes <= MAX_IMAGE_SIZE;
+    }
+    // It's a URL
+    return z.string().url().safeParse(data).success || data === '';
+  },
+  `Image size must be less than 4MB.`
+);
+
 export const postSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters long.' }),
   slug: z.string()
     .min(3, { message: 'Slug must be at least 3 characters long.' })
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { message: 'Slug must be URL-friendly (e.g., "my-first-post").' }),
   content: z.string().min(10, { message: 'Content must be at least 10 characters long.' }),
-  coverImage: z.string().url({ message: 'Must be a valid URL.' }).or(z.literal('')),
-  tags: z.array(z.string()).refine(value => value.some(tag => tag), {
+  coverImage: imageSchema.or(z.literal('')),
+  tags: z.array(z.string()).refine(value => value.length > 0, {
     message: 'You have to select at least one tag.',
   }),
   status: z.enum(['draft', 'published']),

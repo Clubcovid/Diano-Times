@@ -5,14 +5,15 @@ import { revalidatePath } from 'next/cache';
 import { db, auth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
 import { generatePost as generatePostAI } from '@/ai/flows/generate-post';
-import { postSchema, adSchema, videoSchema, type PostFormData } from './schemas';
+import { postSchema, adSchema, videoSchema } from './schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
-import type { AdminUser, Ad, Video, Post } from './types';
+import type { AdminUser, Ad, Video } from './types';
 import { headers } from 'next/headers';
 import { mockPosts, mockAds, mockVideos } from './mock-data';
 import { FieldValue } from 'firebase-admin/firestore';
-
+import { getStorage } from 'firebase-admin/storage';
+import { v4 as uuidv4 } from 'uuid';
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
   if (!db) {
@@ -53,6 +54,32 @@ export async function generateSlug(title: string): Promise<{ success: boolean; s
   }
 }
 
+async function uploadImageAndGetURL(base64Image: string, slug: string): Promise<string> {
+    const bucket = getStorage().bucket('gs://studio-2630134466-e06b1.appspot.com');
+    const mimeTypeMatch = base64Image.match(/^data:(image\/\w+);base64,/);
+    if (!mimeTypeMatch) {
+        throw new Error('Invalid Base64 image format.');
+    }
+    const mimeType = mimeTypeMatch[1];
+    const extension = mimeType.split('/')[1];
+    
+    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    const fileName = `post-covers/${slug}-${uuidv4()}.${extension}`;
+    const file = bucket.file(fileName);
+
+    await file.save(buffer, {
+        metadata: {
+            contentType: mimeType,
+        },
+        public: true, // Make file publicly readable
+    });
+    
+    // Return the public URL
+    return file.publicUrl();
+}
+
 type FormState = {
   success: boolean;
   message: string;
@@ -60,11 +87,20 @@ type FormState = {
   postId?: string;
 };
 
-export async function createPost(rawData: PostFormData): Promise<FormState> {
+export async function createPost(formData: FormData): Promise<FormState> {
   if (!db) {
     return { success: false, message: 'Database not connected. Is the admin SDK configured correctly?' };
   }
 
+  const rawData = {
+    title: formData.get('title'),
+    slug: formData.get('slug'),
+    content: formData.get('content'),
+    coverImage: formData.get('coverImage'),
+    tags: formData.getAll('tags'),
+    status: formData.get('status'),
+  };
+  
   const validatedFields = postSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
@@ -75,22 +111,30 @@ export async function createPost(rawData: PostFormData): Promise<FormState> {
     };
   }
 
-  const data = validatedFields.data;
+  let data = validatedFields.data;
 
   if (!(await isSlugUnique(data.slug))) {
     return {
       success: false,
       message: 'This slug is already in use. Please choose a different one.',
-      errors: [{ path: ['slug'], message: 'This slug is already in use.', code: 'custom' }],
     };
   }
-
+  
   try {
-    const docRef = await db.collection('posts').add({
+    let imageUrl = data.coverImage;
+    // Check if coverImage is a base64 string
+    if (imageUrl.startsWith('data:image')) {
+      imageUrl = await uploadImageAndGetURL(imageUrl, data.slug);
+    }
+
+    const postToSave = {
       ...data,
+      coverImage: imageUrl,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
-    });
+    };
+
+    const docRef = await db.collection('posts').add(postToSave);
 
     revalidatePath('/');
     revalidatePath('/admin/posts');
@@ -98,14 +142,24 @@ export async function createPost(rawData: PostFormData): Promise<FormState> {
     return { success: true, message: 'Post created successfully.', postId: docRef.id };
   } catch (error) {
     console.error('Error creating post:', error);
-    return { success: false, message: 'Failed to create post. Is the database connected?' };
+    const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return { success: false, message: `Failed to create post: ${message}` };
   }
 }
 
-export async function updatePost(postId: string, rawData: PostFormData): Promise<FormState> {
+export async function updatePost(postId: string, formData: FormData): Promise<FormState> {
   if (!db) {
     return { success: false, message: 'Database not connected.' };
   }
+
+  const rawData = {
+    title: formData.get('title'),
+    slug: formData.get('slug'),
+    content: formData.get('content'),
+    coverImage: formData.get('coverImage'),
+    tags: formData.getAll('tags'),
+    status: formData.get('status'),
+  };
 
   const validatedFields = postSchema.safeParse(rawData);
 
@@ -113,24 +167,28 @@ export async function updatePost(postId: string, rawData: PostFormData): Promise
     return {
       success: false,
       message: 'Validation failed. Please check the fields.',
-      errors: validatedFields.error.issues,
     };
   }
   
-  const data = validatedFields.data;
+  let data = validatedFields.data;
 
   if (!(await isSlugUnique(data.slug, postId))) {
     return {
       success: false,
       message: 'This slug is already in use. Please choose a different one.',
-      errors: [{ path: ['slug'], message: 'This slug is already in use.', code: 'custom' }],
     };
   }
 
   try {
+    let imageUrl = data.coverImage;
+    if (imageUrl.startsWith('data:image')) {
+        imageUrl = await uploadImageAndGetURL(imageUrl, data.slug);
+    }
+    
     const postRef = db.collection('posts').doc(postId);
     await postRef.update({
       ...data,
+      coverImage: imageUrl,
       updatedAt: FieldValue.serverTimestamp(),
     });
 
@@ -141,7 +199,8 @@ export async function updatePost(postId: string, rawData: PostFormData): Promise
     return { success: true, message: 'Post updated successfully.', postId };
   } catch (error) {
     console.error('Error updating post:', error);
-    return { success: false, message: 'Failed to update post. Is the database connected?' };
+    const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return { success: false, message: `Failed to update post: ${message}` };
   }
 }
 
@@ -190,7 +249,7 @@ export async function getUsers(): Promise<AdminUser[]> {
 export async function getAds(): Promise<Ad[]> {
   if (!db) {
       console.error("Database not connected. Cannot fetch ads.");
-      return [];
+      return mockAds;
   }
   try {
     const adsCollection = db.collection('advertisements');
@@ -272,7 +331,7 @@ export async function deleteAd(adId: string): Promise<{ success: boolean, messag
 export async function getVideos(): Promise<Video[]> {
   if (!db) {
     console.error("Database not connected. Cannot fetch videos.");
-    return [];
+    return mockVideos;
   }
   try {
     const videosCollection = db.collection('videos');
