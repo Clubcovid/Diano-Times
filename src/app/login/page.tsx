@@ -28,7 +28,7 @@ function LoginForm() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      router.push(isAdminLogin ? '/admin' : '/profile');
+      router.push(isAdminLogin ? '/admin' : '/');
     }
   }, [user, authLoading, router, isAdminLogin]);
 
@@ -41,7 +41,7 @@ function LoginForm() {
           title: 'Login Successful',
           description: `Welcome back!`,
       });
-      router.push(isAdminLogin ? '/admin' : '/profile');
+      router.push(isAdminLogin ? '/admin' : '/');
     } catch (error: any) {
       toast({
         title: 'Login Failed',
@@ -62,7 +62,7 @@ function LoginForm() {
             title: 'Login Successful',
             description: `Welcome back!`,
         });
-        router.push(isAdminLogin ? '/admin' : '/profile');
+        router.push(isAdminLogin ? '/admin' : '/');
     } catch (error: any) {
         toast({
             title: 'Login Failed',

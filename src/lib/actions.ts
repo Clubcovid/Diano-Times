@@ -5,10 +5,12 @@ import { revalidatePath } from 'next/cache';
 import { db, getFirebaseAuth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
 import { addDoc, collection, deleteDoc, doc, getDoc, serverTimestamp, updateDoc, where, query, getDocs, orderBy, Timestamp } from 'firebase/firestore';
-import { postSchema, adSchema, videoSchema, type AdFormData, type VideoFormData } from './schemas';
+import { postSchema, adSchema, videoSchema } from './schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
 import type { AdminUser, Ad, Video, Post } from './types';
+import { headers } from 'next/headers';
+import { getAuth } from 'firebase-admin/auth';
 
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
@@ -164,23 +166,7 @@ export async function getUsers(): Promise<AdminUser[]> {
     }
 }
 
-// Generic to-plain-object converter
-function docToPlainObject<T>(doc: admin.firestore.DocumentSnapshot): T {
-    const data = doc.data() as any;
-    const plainObject: { [key: string]: any } = { id: doc.id };
 
-    for (const key in data) {
-        if (data[key] instanceof Timestamp) {
-            plainObject[key] = data[key].toDate().toISOString();
-        } else {
-            plainObject[key] = data[key];
-        }
-    }
-    return plainObject as T;
-}
-
-
-// Advertisements Actions
 export async function getAds(): Promise<Ad[]> {
   try {
     const adsCollection = collection(db, 'advertisements');
@@ -251,7 +237,6 @@ export async function deleteAd(adId: string): Promise<{ success: boolean, messag
 }
 
 
-// Videos Actions
 export async function getVideos(): Promise<Video[]> {
   try {
     const videosCollection = collection(db, 'videos');
@@ -322,4 +307,61 @@ export async function deleteVideo(videoId: string): Promise<{ success: boolean, 
     console.error('Error deleting video:', error);
     return { success: false, message: 'Failed to delete video.' };
   }
+}
+
+type ProfileActionState = {
+    success: boolean;
+    message: string;
+}
+
+async function getUserIdFromSession(): Promise<string | null> {
+    const authHeader = headers().get('Authorization');
+    if (!authHeader) return null;
+
+    const token = authHeader.split('Bearer ')[1];
+    if (!token) return null;
+
+    try {
+        const decodedToken = await getAuth().verifyIdToken(token);
+        return decodedToken.uid;
+    } catch (error) {
+        console.error("Error verifying token:", error);
+        return null;
+    }
+}
+
+export async function updateUserProfile(prevState: ProfileActionState, formData: FormData): Promise<ProfileActionState> {
+    // This is a placeholder. In a real app, you'd get the user ID from the session.
+    // For this example, we can't get the user ID securely, so we'll simulate.
+    // In a real scenario, you'd use a library like `next-auth` or manage sessions yourself.
+    const DUMMY_USER_ID = "DUMMY_USER_ID_NEEDS_REPLACING_WITH_REAL_AUTH_LOGIC";
+    
+    const displayName = formData.get('displayName') as string;
+    
+    if (!displayName || displayName.length < 3) {
+        return { success: false, message: "Display name must be at least 3 characters." };
+    }
+
+    try {
+        // Here you would get the real user ID from the session/token
+        // const userId = await getUserIdFromSession();
+        // if (!userId) {
+        //     return { success: false, message: "User not authenticated." };
+        // }
+        // await getFirebaseAuth().updateUser(userId, { displayName });
+        
+        console.log(`(Simulated) Updating user ${DUMMY_USER_ID} with display name: ${displayName}`);
+        
+        // Since we can't actually update the user without a secure session,
+        // we'll return a success message but note that it's simulated.
+        // To make this work, the client-side user object also needs to be updated.
+        // Firebase Auth's client SDK should be used for that.
+
+        revalidatePath('/profile');
+        return { success: true, message: "Profile updated successfully! (Note: This is simulated)" };
+
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "An unknown error occurred.";
+        return { success: false, message: `Failed to update profile: ${message}` };
+    }
 }

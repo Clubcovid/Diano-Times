@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -26,7 +27,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      router.push('/profile');
+      router.push('/');
     }
   }, [user, authLoading, router]);
 
@@ -39,7 +40,7 @@ export default function RegisterPage() {
         title: 'Registration Successful',
         description: 'Welcome to Diano Times!',
       });
-      router.push('/profile');
+      router.push('/');
     } catch (error: any) {
       toast({
         title: 'Registration Failed',
@@ -65,7 +66,7 @@ export default function RegisterPage() {
         title: 'Registration Successful',
         description: 'Welcome to Diano Times!',
       });
-      router.push('/profile');
+      router.push('/');
     } catch (error: any) {
       toast({
         title: 'Registration Failed',

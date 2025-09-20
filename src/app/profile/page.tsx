@@ -1,26 +1,61 @@
+
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, useActionState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut } from 'lucide-react';
+import { LogOut, User, Mail, Save } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import Link from 'next/link';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { updateUserProfile } from '@/lib/actions';
+import { BlogHeader } from '@/components/blog-header';
 
 const ADMIN_EMAIL = 'georgedianoh@gmail.com';
+
+const initialState = {
+  success: false,
+  message: '',
+};
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
+  const [displayName, setDisplayName] = useState('');
+  const [state, formAction] = useActionState(updateUserProfile, initialState);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
+    if (user) {
+      setDisplayName(user.displayName || '');
+    }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    if (state.message) {
+      if (state.success) {
+        toast({
+          title: 'Success',
+          description: state.message,
+        });
+        // We might need to refresh user state here if not done automatically
+      } else {
+        toast({
+          title: 'Error',
+          description: state.message,
+          variant: 'destructive',
+        });
+      }
+    }
+  }, [state, toast]);
 
   const handleSignOut = async () => {
     await auth.signOut();
@@ -34,52 +69,65 @@ export default function ProfilePage() {
       </div>
     );
   }
-  
-  const isAdmin = user && user.email === ADMIN_EMAIL;
+
+  const isAdmin = user.email === ADMIN_EMAIL;
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/40">
-        <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b">
-            <div className="container mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
-            <Link href="/" className="text-3xl font-bold font-headline text-primary">
-                Diano Times
-            </Link>
-             <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">Home</Link>
-                <Link href="/fashion" className="text-muted-foreground hover:text-primary transition-colors">Fashion</Link>
-                <Link href="/gadgets" className="text-muted-foreground hover:text-primary transition-colors">Gadgets</Link>
-                <Link href="/lifestyle" className="text-muted-foreground hover:text-primary transition-colors">Lifestyle</Link>
-                <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
-                <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
-             </nav>
+      <BlogHeader />
+      <main className="flex flex-1 items-center justify-center p-4">
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
             <div className="flex items-center gap-4">
-                {isAdmin && (
-                    <Button asChild variant="secondary">
-                        <Link href="/admin">Admin Dashboard</Link>
-                    </Button>
-                )}
-                <Button onClick={handleSignOut} variant="outline">
+              <Avatar className="h-20 w-20">
+                  <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
+                  <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div>
+                <CardTitle className="text-3xl font-headline">{user.displayName || 'Welcome'}</CardTitle>
+                <CardDescription>{user.email}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-8">
+            <form action={formAction} className="space-y-4">
+                <h3 className="font-semibold text-lg">Edit Profile</h3>
+                <div className="space-y-2">
+                    <Label htmlFor="displayName">Display Name</Label>
+                    <div className="flex items-center gap-2">
+                        <User className="h-5 w-5 text-muted-foreground"/>
+                        <Input 
+                            id="displayName" 
+                            name="displayName"
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <Label>Email</Label>
+                     <div className="flex items-center gap-2">
+                        <Mail className="h-5 w-5 text-muted-foreground"/>
+                        <Input value={user.email || ''} disabled />
+                    </div>
+                </div>
+                <Button type="submit">
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="flex justify-between items-center border-t pt-6">
+              {isAdmin && (
+                <Button asChild variant="secondary">
+                    <Link href="/admin">Admin Dashboard</Link>
+                </Button>
+              )}
+               <Button onClick={handleSignOut} variant="outline">
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
                 </Button>
-            </div>
-            </div>
-      </header>
-      <main className="flex flex-1 items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="items-center text-center">
-            <Avatar className="h-24 w-24 mb-4">
-                <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
-                <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <CardTitle className="text-2xl font-headline">{user.displayName || 'Welcome'}</CardTitle>
-            <CardDescription>{user.email}</CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-muted-foreground">
-                This is your profile page. More features coming soon!
-            </p>
-          </CardContent>
+          </CardFooter>
         </Card>
       </main>
     </div>
