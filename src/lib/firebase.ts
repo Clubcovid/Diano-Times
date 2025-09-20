@@ -14,7 +14,6 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Check if all necessary client-side config values are present
 const hasClientConfig = firebaseConfig.apiKey && firebaseConfig.projectId;
 
 if (!hasClientConfig) {
@@ -22,26 +21,25 @@ if (!hasClientConfig) {
 }
 
 // Singleton pattern to initialize and get Firebase services
-const getFirebaseApp = (): FirebaseApp | null => {
-    if (!hasClientConfig) return null;
-    return getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-};
-
-const app = getFirebaseApp();
-
+let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 
-if (app) {
-    auth = getAuth(app);
-    db = getFirestore(app);
-    if (typeof window !== 'undefined') {
-        isSupported().then(yes => {
-            if (yes && firebaseConfig.measurementId) {
-                getAnalytics(app as FirebaseApp);
-            }
-        });
+if (hasClientConfig) {
+    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    
+    if (app) {
+        auth = getAuth(app);
+        db = getFirestore(app);
+        if (typeof window !== 'undefined') {
+            isSupported().then(yes => {
+                if (yes && firebaseConfig.measurementId) {
+                    getAnalytics(app as FirebaseApp);
+                }
+            });
+        }
     }
 }
+
 
 export { app, auth, db };

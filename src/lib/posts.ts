@@ -12,6 +12,7 @@ import {
   QueryConstraint,
 } from 'firebase/firestore';
 import type { Post } from './types';
+import { mockPosts } from './mock-data';
 
 function toPost(doc: any): Post {
   const data = doc.data();
@@ -22,6 +23,15 @@ function toPost(doc: any): Post {
 }
 
 export async function getPosts(options: { publishedOnly?: boolean, tag?: string } = {}): Promise<Post[]> {
+  if (!db) {
+    console.error("Firebase Admin is not initialized. Cannot fetch posts. Returning mock data.");
+    return mockPosts.filter(p => {
+        if (options.publishedOnly && p.status !== 'published') return false;
+        if (options.tag && !p.tags.includes(options.tag)) return false;
+        return true;
+    });
+  }
+
   const postsCollection = collection(db, 'posts');
 
   const constraints: QueryConstraint[] = [];
@@ -33,7 +43,6 @@ export async function getPosts(options: { publishedOnly?: boolean, tag?: string 
     constraints.push(where('tags', 'array-contains', options.tag));
   }
   
-  // Always sort by creation date
   constraints.push(orderBy('createdAt', 'desc'));
 
   const q = query(postsCollection, ...constraints);
@@ -45,13 +54,18 @@ export async function getPosts(options: { publishedOnly?: boolean, tag?: string 
     }
     return snapshot.docs.map(toPost);
   } catch (error) {
-    console.error("Error fetching posts from Firestore. Is the Admin SDK configured correctly?", error);
-    // Return empty array on error
+    console.error("Error fetching posts from Firestore:", error);
     return [];
   }
 }
 
 export async function getTags(): Promise<string[]> {
+    if (!db) {
+      console.error("Firebase Admin is not initialized. Cannot fetch tags.");
+      const mockTags = new Set<string>();
+      mockPosts.forEach(post => post.tags.forEach(tag => mockTags.add(tag)));
+      return Array.from(mockTags).sort();
+    }
     const postsCollection = collection(db, 'posts');
   try {
     const q = query(postsCollection, where('status', '==', 'published'));
@@ -74,6 +88,10 @@ export async function getTags(): Promise<string[]> {
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
+    if (!db) {
+      console.error(`Firebase Admin is not initialized. Cannot fetch post by slug: ${slug}.`);
+      return mockPosts.find(p => p.slug === slug) || null;
+    }
     const postsCollection = collection(db, 'posts');
   try {
     const q = query(postsCollection, where('slug', '==', slug));
@@ -89,6 +107,10 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 }
 
 export async function getPostById(id: string): Promise<Post | null> {
+  if (!db) {
+      console.error(`Firebase Admin is not initialized. Cannot fetch post by id: ${id}.`);
+      return mockPosts.find(p => p.id === id) || null;
+  }
   try {
     const postDocRef = doc(db, 'posts', id);
     const postDoc = await getDoc(postDocRef);
