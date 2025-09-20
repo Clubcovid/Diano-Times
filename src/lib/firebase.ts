@@ -13,11 +13,12 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = !getApps().length && firebaseConfig.apiKey ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
+const app = !getApps().length && firebaseConfig.apiKey ? initializeApp(firebaseConfig) : (getApps().length > 0 ? getApp() : null);
 
-if (typeof window !== 'undefined') {
+const auth = app ? getAuth(app) : {} as any;
+const db = app ? getFirestore(app) : {} as any;
+
+if (typeof window !== 'undefined' && app) {
   isSupported().then(yes => {
     if (yes && firebaseConfig.measurementId) {
       getAnalytics(app)

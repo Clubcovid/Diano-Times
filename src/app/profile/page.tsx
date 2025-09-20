@@ -10,6 +10,8 @@ import { LogOut } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import Link from 'next/link';
 
+const ADMIN_EMAIL = 'georgedianoh@gmail.com';
+
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -32,6 +34,8 @@ export default function ProfilePage() {
       </div>
     );
   }
+  
+  const isAdmin = user && user.email === ADMIN_EMAIL;
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/40">
@@ -49,9 +53,11 @@ export default function ProfilePage() {
                 <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
              </nav>
             <div className="flex items-center gap-4">
-                <Button asChild variant="secondary">
-                    <Link href="/admin">Admin Dashboard</Link>
-                </Button>
+                {isAdmin && (
+                    <Button asChild variant="secondary">
+                        <Link href="/admin">Admin Dashboard</Link>
+                    </Button>
+                )}
                 <Button onClick={handleSignOut} variant="outline">
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
