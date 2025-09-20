@@ -23,7 +23,7 @@ function toPost(doc: any): Post {
 
 export async function getPosts(options: { publishedOnly?: boolean, tag?: string } = {}): Promise<Post[]> {
   if (!db) {
-      console.error("Firestore is not initialized. Check your Firebase Admin credentials.");
+      console.error("Firestore (Admin) is not initialized. Check your Firebase Admin credentials. Cannot fetch posts.");
       return [];
   }
   const postsCollection = collection(db, 'posts');
@@ -57,7 +57,7 @@ export async function getPosts(options: { publishedOnly?: boolean, tag?: string 
 
 export async function getTags(): Promise<string[]> {
     if (!db) {
-        console.error("Firestore is not initialized. Check your Firebase Admin credentials.");
+        console.error("Firestore (Admin) is not initialized. Cannot fetch tags.");
         return [];
     }
     const postsCollection = collection(db, 'posts');
@@ -83,7 +83,7 @@ export async function getTags(): Promise<string[]> {
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
     if (!db) {
-        console.error("Firestore is not initialized. Check your Firebase Admin credentials.");
+        console.error("Firestore (Admin) is not initialized. Cannot fetch post by slug.");
         return null;
     }
     const postsCollection = collection(db, 'posts');
@@ -102,7 +102,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 
 export async function getPostById(id: string): Promise<Post | null> {
     if (!db) {
-        console.error("Firestore is not initialized. Check your Firebase Admin credentials.");
+        console.error("Firestore (Admin) is not initialized. Cannot fetch post by ID.");
         return null;
     }
   try {

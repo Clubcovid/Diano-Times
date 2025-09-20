@@ -160,7 +160,7 @@ function mapUser(user: UserRecord): AdminUser {
 
 export async function getUsers(): Promise<AdminUser[]> {
     if (!auth) {
-        console.error("Firebase Auth is not initialized. Check your Firebase Admin credentials.");
+        console.error("Firebase Auth (Admin) is not initialized. Check your Firebase Admin credentials.");
         return [];
     }
     try {
@@ -175,7 +175,7 @@ export async function getUsers(): Promise<AdminUser[]> {
 
 export async function getAds(): Promise<Ad[]> {
   if (!db) {
-      console.error("Firestore is not initialized. Check your Firebase Admin credentials.");
+      console.error("Firestore (Admin) is not initialized. Check your Firebase Admin credentials.");
       return [];
   }
   try {
@@ -256,7 +256,7 @@ export async function deleteAd(adId: string): Promise<{ success: boolean, messag
 
 export async function getVideos(): Promise<Video[]> {
   if (!db) {
-      console.error("Firestore is not initialized. Check your Firebase Admin credentials.");
+      console.error("Firestore (Admin) is not initialized. Check your Firebase Admin credentials.");
       return [];
   }
   try {

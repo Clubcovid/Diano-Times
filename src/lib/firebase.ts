@@ -1,6 +1,7 @@
-import { initializeApp, getApps, getApp, FirebaseOptions } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+
+import { initializeApp, getApps, getApp, FirebaseApp, FirebaseOptions } from "firebase/app";
+import { getAuth, Auth } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
 const firebaseConfig: FirebaseOptions = {
@@ -13,30 +14,34 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-function initializeFirebase() {
-    if (getApps().length > 0) {
-        return getApp();
-    }
-    // Check if all required public keys are present
-    if (firebaseConfig.apiKey && firebaseConfig.projectId) {
-        return initializeApp(firebaseConfig);
-    }
-    // If keys are not present, return null. This can happen during build time.
-    return null;
-}
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
+let db: Firestore | null = null;
 
-const app = initializeFirebase();
-
-const auth = app ? getAuth(app) : ({} as any); // Provide a mock to prevent crashes, though it won't work
-const db = app ? getFirestore(app) : ({} as any);
-
-// Initialize Analytics only on the client and if supported
-if (typeof window !== 'undefined' && app) {
-  isSupported().then(yes => {
-    if (yes && firebaseConfig.measurementId) {
-      getAnalytics(app);
+if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+  if (getApps().length === 0) {
+    try {
+      app = initializeApp(firebaseConfig);
+      if (typeof window !== 'undefined') {
+        isSupported().then(yes => {
+          if (yes && firebaseConfig.measurementId) {
+            getAnalytics(app!);
+          }
+        });
+      }
+    } catch (e) {
+      console.error('Firebase initialization error', e);
     }
-  });
+  } else {
+    app = getApp();
+  }
+
+  if (app) {
+    auth = getAuth(app);
+    db = getFirestore(app);
+  }
+} else {
+  console.warn('Firebase public credentials are not available. Client-side Firebase features will be disabled.');
 }
 
 export { app, auth, db };
