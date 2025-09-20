@@ -5,21 +5,19 @@
  */
 import * as admin from 'firebase-admin';
 
-// Check if the app is already initialized to prevent re-initialization
-if (!admin.apps.length) {
-  // Check if the service account credentials are available in environment variables.
-  const serviceAccount: admin.ServiceAccount = {
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
-  };
+// Check if the service account credentials are available in environment variables.
+const serviceAccount: admin.ServiceAccount = {
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+  privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+};
 
-  const hasServiceAccount =
-    serviceAccount.projectId &&
-    serviceAccount.clientEmail &&
-    serviceAccount.privateKey;
-  
-  if (hasServiceAccount) {
+const hasServiceAccount =
+  serviceAccount.projectId &&
+  serviceAccount.clientEmail &&
+  serviceAccount.privateKey;
+
+if (hasServiceAccount && !admin.apps.length) {
     try {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
@@ -28,24 +26,18 @@ if (!admin.apps.length) {
     } catch (error) {
       console.error('Firebase Admin SDK initialization error:', error);
     }
-  } else {
-    // In a production or Vercel environment, we want to fail fast if keys are missing.
-    // For local development, we can log a warning.
-    const errorMessage = 'Firebase Admin SDK credentials are not available in environment variables. Server-side Firebase features will be disabled.';
-    if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-        throw new Error(errorMessage);
-    }
-    console.warn(errorMessage);
-  }
+} else if (!hasServiceAccount) {
+    console.warn('Firebase Admin SDK credentials are not available in environment variables. Server-side Firebase features will be disabled.');
 }
 
-// Get the initialized app, or a default app if it exists.
+// Get the initialized app.
 const app = admin.apps.length > 0 ? admin.app() : null;
 
-// Initialize services, or provide mock objects if initialization failed
-// This is a safety net, but the primary logic relies on the early exit/throw
-// if credentials are not present in production.
+// Initialize services if the app was initialized.
+// If not, these will be objects that will cause errors if used,
+// which is intended to make it clear that the Admin SDK is not configured.
 const db = app ? admin.firestore() : ({} as admin.firestore.Firestore);
-const auth = app ? admin.auth() : ({ listUsers: async () => ({ users: [] }) } as unknown as admin.auth.Auth);
+const auth = app ? admin.auth() : ({} as admin.auth.Auth);
+
 
 export { db, auth };
