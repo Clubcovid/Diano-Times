@@ -6,6 +6,56 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { BlogHeader } from '@/components/blog-header';
+import { Metadata, ResolvingMetadata } from 'next';
+import { htmlToText } from 'html-to-text';
+
+type Props = {
+  params: { slug: string }
+}
+
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  const post = await getPostBySlug(params.slug);
+
+  if (!post) {
+    return {
+      title: 'Post Not Found',
+    }
+  }
+
+  const description = htmlToText(post.content, {
+    wordwrap: 155,
+    selectors: [
+        { selector: 'a', options: { ignoreHref: true } },
+        { selector: 'img', format: 'skip' }
+    ]
+  }).substring(0, 155);
+
+  const previousImages = (await parent).openGraph?.images || []
+
+  return {
+    title: `${post.title} | Diano Times`,
+    description: description,
+    openGraph: {
+      title: post.title,
+      description: description,
+      type: 'article',
+      url: `https://dianotimes.com/posts/${post.slug}`,
+      images: post.coverImage ? [post.coverImage, ...previousImages] : [...previousImages],
+      publishedTime: post.createdAt.toDate().toISOString(),
+      modifiedTime: post.updatedAt.toDate().toISOString(),
+      tags: post.tags,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: description,
+      images: post.coverImage ? [post.coverImage] : [],
+    },
+  }
+}
 
 export async function generateStaticParams() {
   const posts = await getPosts({ publishedOnly: true });
