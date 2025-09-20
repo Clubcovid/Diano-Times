@@ -1,20 +1,11 @@
 
 import 'server-only';
 import { db } from '@/lib/firebase-admin';
-import {
-  collection,
-  getDocs,
-  doc,
-  getDoc,
-  query,
-  where,
-  orderBy,
-  QueryConstraint,
-} from 'firebase/firestore';
 import type { Post } from './types';
 import { mockPosts } from './mock-data';
+import type { Query, QuerySnapshot } from 'firebase-admin/firestore';
 
-function toPost(doc: any): Post {
+function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
   const data = doc.data();
   return {
     id: doc.id,
@@ -32,23 +23,20 @@ export async function getPosts(options: { publishedOnly?: boolean, tag?: string 
     });
   }
 
-  const postsCollection = collection(db, 'posts');
-
-  const constraints: QueryConstraint[] = [];
+  const postsCollection = db.collection('posts');
+  let query: Query = postsCollection;
   
   if (options.publishedOnly) {
-    constraints.push(where('status', '==', 'published'));
+    query = query.where('status', '==', 'published');
   }
   if (options.tag) {
-    constraints.push(where('tags', 'array-contains', options.tag));
+    query = query.where('tags', 'array-contains', options.tag);
   }
   
-  constraints.push(orderBy('createdAt', 'desc'));
-
-  const q = query(postsCollection, ...constraints);
+  query = query.orderBy('createdAt', 'desc');
 
   try {
-    const snapshot = await getDocs(q);
+    const snapshot = await query.get();
     if (snapshot.empty) {
         return [];
     }
@@ -66,10 +54,9 @@ export async function getTags(): Promise<string[]> {
       mockPosts.forEach(post => post.tags.forEach(tag => mockTags.add(tag)));
       return Array.from(mockTags).sort();
     }
-    const postsCollection = collection(db, 'posts');
+    const postsCollection = db.collection('posts');
   try {
-    const q = query(postsCollection, where('status', '==', 'published'));
-    const snapshot = await getDocs(q);
+    const snapshot = await postsCollection.where('status', '==', 'published').get();
     
     if (snapshot.empty) {
         return [];
@@ -92,10 +79,9 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
       console.error(`Firebase Admin is not initialized. Cannot fetch post by slug: ${slug}.`);
       return mockPosts.find(p => p.slug === slug) || null;
     }
-    const postsCollection = collection(db, 'posts');
   try {
-    const q = query(postsCollection, where('slug', '==', slug));
-    const snapshot = await getDocs(q);
+    const postsCollection = db.collection('posts');
+    const snapshot = await postsCollection.where('slug', '==', slug).get();
     if (snapshot.empty) {
       return null;
     }
@@ -112,9 +98,9 @@ export async function getPostById(id: string): Promise<Post | null> {
       return mockPosts.find(p => p.id === id) || null;
   }
   try {
-    const postDocRef = doc(db, 'posts', id);
-    const postDoc = await getDoc(postDocRef);
-    if (!postDoc.exists()) {
+    const postDocRef = db.collection('posts').doc(id);
+    const postDoc = await postDocRef.get();
+    if (!postDoc.exists) {
        return null;
     }
     return toPost(postDoc);
@@ -123,3 +109,5 @@ export async function getPostById(id: string): Promise<Post | null> {
     return null;
   }
 }
+
+    

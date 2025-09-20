@@ -4,22 +4,23 @@
 import { revalidatePath } from 'next/cache';
 import { db, auth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
-import { addDoc, collection, deleteDoc, doc, getDoc, serverTimestamp, updateDoc, where, query, getDocs, orderBy, Timestamp, writeBatch } from 'firebase/firestore';
 import { postSchema, adSchema, videoSchema } from './schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
 import type { AdminUser, Ad, Video, Post } from './types';
 import { headers } from 'next/headers';
 import { mockPosts, mockAds, mockVideos } from './mock-data';
+import { FieldValue } from 'firebase-admin/firestore';
 
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
   if (!db) {
     console.error("DB not connected for slug check");
-    return true; // Assume unique if DB is not connected to avoid blocking UI
+    return true; 
   }
-  const q = query(collection(db, 'posts'), where('slug', '==', slug));
-  const snapshot = await getDocs(q);
+  const postsRef = db.collection('posts');
+  const snapshot = await postsRef.where('slug', '==', slug).get();
+  
   if (snapshot.empty) {
     return true;
   }
@@ -83,10 +84,10 @@ export async function createPost(prevState: FormState, formData: FormData): Prom
   }
 
   try {
-    const docRef = await addDoc(collection(db, 'posts'), {
+    const docRef = await db.collection('posts').add({
       ...data,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     revalidatePath('/');
@@ -124,10 +125,10 @@ export async function updatePost(postId: string, prevState: FormState, formData:
   }
 
   try {
-    const postRef = doc(db, 'posts', postId);
-    await updateDoc(postRef, {
+    const postRef = db.collection('posts').doc(postId);
+    await postRef.update({
       ...data,
-      updatedAt: serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     revalidatePath('/');
@@ -146,7 +147,7 @@ export async function deletePost(postId: string): Promise<{ success: boolean, me
     return { success: false, message: 'Database not connected.' };
   }
   try {
-    await deleteDoc(doc(db, 'posts', postId));
+    await db.collection('posts').doc(postId).delete();
     revalidatePath('/');
     revalidatePath('/admin/posts');
     return { success: true, message: 'Post deleted successfully.' };
@@ -189,14 +190,12 @@ export async function getAds(): Promise<Ad[]> {
       return [];
   }
   try {
-    const adsCollection = collection(db, 'advertisements');
-    const q = query(adsCollection, orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
+    const adsCollection = db.collection('advertisements');
+    const snapshot = await adsCollection.orderBy('createdAt', 'desc').get();
     if (snapshot.empty) return [];
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
-      createdAt: doc.data().createdAt,
     } as Ad));
   } catch (error) {
     console.error('Error fetching ads:', error);
@@ -228,16 +227,16 @@ export async function createOrUpdateAd(prevState: AdActionState, formData: FormD
   try {
     let adToReturn: Ad;
     if (isEditing) {
-      const adRef = doc(db, 'advertisements', id);
-      await updateDoc(adRef, data);
-      const updatedDoc = await getDoc(adRef);
+      const adRef = db.collection('advertisements').doc(id);
+      await adRef.update(data);
+      const updatedDoc = await adRef.get();
       adToReturn = { id, ...updatedDoc.data() } as Ad;
     } else {
-      const docRef = await addDoc(collection(db, 'advertisements'), {
+      const docRef = await db.collection('advertisements').add({
         ...data,
-        createdAt: serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
-      const newDoc = await getDoc(docRef);
+      const newDoc = await docRef.get();
       adToReturn = { id: newDoc.id, ...newDoc.data() } as Ad;
     }
     revalidatePath('/admin/advertisements');
@@ -257,7 +256,7 @@ export async function deleteAd(adId: string): Promise<{ success: boolean, messag
     return { success: false, message: 'Database not connected.' };
   }
   try {
-    await deleteDoc(doc(db, 'advertisements', adId));
+    await db.collection('advertisements').doc(adId).delete();
     revalidatePath('/admin/advertisements');
     return { success: true, message: 'Ad deleted successfully.' };
   } catch (error) {
@@ -273,14 +272,12 @@ export async function getVideos(): Promise<Video[]> {
     return [];
   }
   try {
-    const videosCollection = collection(db, 'videos');
-    const q = query(videosCollection, orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
+    const videosCollection = db.collection('videos');
+    const snapshot = await videosCollection.orderBy('createdAt', 'desc').get();
     if (snapshot.empty) return [];
     return snapshot.docs.map(doc => ({ 
       id: doc.id,
       ...doc.data(),
-      createdAt: doc.data().createdAt
     } as Video));
   } catch (error) {
     console.error('Error fetching videos:', error);
@@ -312,16 +309,16 @@ export async function createOrUpdateVideo(prevState: VideoActionState, formData:
   try {
      let videoToReturn: Video;
     if (isEditing) {
-      const videoRef = doc(db, 'videos', id);
-      await updateDoc(videoRef, data);
-      const updatedDoc = await getDoc(videoRef);
+      const videoRef = db.collection('videos').doc(id);
+      await videoRef.update(data);
+      const updatedDoc = await videoRef.get();
       videoToReturn = { id: updatedDoc.id, ...updatedDoc.data() } as Video;
     } else {
-      const docRef = await addDoc(collection(db, 'videos'), {
+      const docRef = await db.collection('videos').add({
         ...data,
-        createdAt: serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
-      const newDoc = await getDoc(docRef);
+      const newDoc = await docRef.get();
       videoToReturn = { id: newDoc.id, ...newDoc.data() } as Video;
     }
     revalidatePath('/admin/videos');
@@ -342,7 +339,7 @@ export async function deleteVideo(videoId: string): Promise<{ success: boolean, 
     return { success: false, message: 'Database not connected.' };
   }
   try {
-    await deleteDoc(doc(db, 'videos', videoId));
+    await db.collection('videos').doc(videoId).delete();
     revalidatePath('/admin/videos');
     revalidatePath('/video');
     return { success: true, message: 'Video deleted successfully.' };
@@ -407,33 +404,30 @@ export async function seedDatabase(): Promise<{ success: boolean, message: strin
   }
 
   try {
-    const batch = writeBatch(db);
+    const batch = db.batch();
 
     // Seed Posts
-    const postsCollection = collection(db, 'posts');
+    const postsCollection = db.collection('posts');
     mockPosts.forEach(post => {
-      // The mock data `id` will be used as the document ID in Firestore
-      const docRef = doc(postsCollection, post.id);
-      // We remove the `id` from the object that gets written to the document fields
+      const docRef = postsCollection.doc(post.id);
       const { id, ...postData } = post;
-      batch.set(docRef, { ...postData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+      batch.set(docRef, { ...postData, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
     });
 
     // Seed Ads
-    const adsCollection = collection(db, 'advertisements');
+    const adsCollection = db.collection('advertisements');
     mockAds.forEach(ad => {
-      const docRef = doc(adsCollection, ad.id);
+      const docRef = adsCollection.doc(ad.id);
       const { id, ...adData } = ad;
-      batch.set(docRef, { ...adData, createdAt: serverTimestamp() });
+      batch.set(docRef, { ...adData, createdAt: FieldValue.serverTimestamp() });
     });
 
     // Seed Videos
-    const videosCollection = collection(db, 'videos');
+    const videosCollection = db.collection('videos');
     mockVideos.forEach(video => {
-      // Let Firestore generate an ID for videos
-      const docRef = doc(videosCollection, video.id);
+      const docRef = videosCollection.doc(video.id);
       const { id, ...videoData } = video;
-      batch.set(docRef, { ...videoData, createdAt: serverTimestamp() });
+      batch.set(docRef, { ...videoData, createdAt: FieldValue.serverTimestamp() });
     });
 
     await batch.commit();
