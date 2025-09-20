@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useEffect, useActionState } from 'react';
+import { useEffect } from 'react';
+import { useFormState } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/use-toast';
@@ -44,7 +45,7 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
     },
   });
 
-  const [state, formAction] = useActionState(createOrUpdateVideo, initialState);
+  const [state, formAction] = useFormState(createOrUpdateVideo, initialState);
 
   useEffect(() => {
     if (state.success && state.video) {
@@ -89,3 +90,5 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
     </form>
   );
 }
+
+    

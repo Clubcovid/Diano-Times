@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile } from '@/lib/actions';
 import { BlogHeader } from '@/components/blog-header';
+import { useFormState } from 'react-dom';
 
 const ADMIN_EMAIL = 'georgedianoh@gmail.com';
 
@@ -24,6 +25,8 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [displayName, setDisplayName] = useState('');
 
+  const [state, formAction] = useFormState(updateUserProfile, undefined);
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
@@ -32,28 +35,28 @@ export default function ProfilePage() {
       setDisplayName(user.displayName || '');
     }
   }, [user, loading, router]);
-
-  const handleSubmit = async (formData: FormData) => {
-    const result = await updateUserProfile(null, formData);
-     if (result.message) {
-      if (result.success) {
+  
+  useEffect(() => {
+    if (state?.message) {
+      if (state.success) {
         toast({
           title: 'Success',
-          description: result.message,
+          description: state.message,
         });
         // This is a bit of a hack to force a refresh of the user object
         // A more robust solution might involve a dedicated user refresh function in the auth context
-        await auth.currentUser?.reload();
-        router.refresh();
+        auth.currentUser?.reload().then(() => {
+            router.refresh();
+        });
       } else {
         toast({
           title: 'Error',
-          description: result.message,
+          description: state.message,
           variant: 'destructive',
         });
       }
     }
-  };
+  }, [state, toast, router]);
 
 
   const handleSignOut = async () => {
@@ -89,7 +92,7 @@ export default function ProfilePage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-8">
-            <form action={handleSubmit} className="space-y-4">
+            <form action={formAction} className="space-y-4">
                 <h3 className="font-semibold text-lg">Edit Profile</h3>
                 <div className="space-y-2">
                     <Label htmlFor="displayName">Display Name</Label>
@@ -132,3 +135,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

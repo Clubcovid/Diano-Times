@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useEffect, useActionState } from 'react';
+import { useEffect } from 'react';
+import { useFormState } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/use-toast';
@@ -50,7 +51,7 @@ export function AdForm({ ad, onSuccess }: AdFormProps) {
     },
   });
 
-  const [state, formAction] = useActionState(createOrUpdateAd, initialState);
+  const [state, formAction] = useFormState(createOrUpdateAd, initialState);
 
   useEffect(() => {
     if (state.success && state.ad) {
@@ -110,3 +111,5 @@ export function AdForm({ ad, onSuccess }: AdFormProps) {
     </form>
   );
 }
+
+    

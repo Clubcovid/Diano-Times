@@ -225,7 +225,7 @@ type AdActionState = {
   ad: Ad | null;
 }
 
-export async function createOrUpdateAd(prevState: AdActionState, formData: FormData): Promise<AdActionState> {
+export async function createOrUpdateAd(prevState: AdActionState | undefined, formData: FormData): Promise<AdActionState> {
   if (!db) {
     return { success: false, message: 'Database not connected.', ad: null };
   }
@@ -307,7 +307,7 @@ type VideoActionState = {
   video: Video | null;
 }
 
-export async function createOrUpdateVideo(prevState: VideoActionState, formData: FormData): Promise<VideoActionState> {
+export async function createOrUpdateVideo(prevState: VideoActionState | undefined, formData: FormData): Promise<VideoActionState> {
   if (!db) {
     return { success: false, message: 'Database not connected.', video: null };
   }
@@ -386,7 +386,7 @@ async function getUserIdFromSession(): Promise<string | null> {
     }
 }
 
-export async function updateUserProfile(prevState: ProfileActionState, formData: FormData): Promise<ProfileActionState> {
+export async function updateUserProfile(prevState: ProfileActionState | undefined, formData: FormData): Promise<ProfileActionState> {
     if (!auth) {
         return { success: false, message: "Authentication service is not available." };
     }
@@ -624,3 +624,5 @@ export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ suc
         return { success: false, message };
     }
 }
+
+    
