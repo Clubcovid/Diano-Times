@@ -309,7 +309,7 @@ export async function deleteVideo(videoId: string): Promise<{ success: boolean, 
     revalidatePath('/admin/videos');
     revalidatePath('/video');
     return { success: true, message: 'Video deleted successfully.' };
-  } catch (error)_ {
+  } catch (error) {
     console.error('Error deleting video:', error);
     return { success: false, message: 'Failed to delete video.' };
   }
