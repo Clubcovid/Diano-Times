@@ -1,20 +1,19 @@
-/**
- * @fileoverview
- * This file contains the server-side initialization for the Firebase Admin SDK.
- * It uses a singleton pattern to ensure that the SDK is initialized only once.
- */
+
 import * as admin from 'firebase-admin';
 
 let db: admin.firestore.Firestore | null = null;
 let auth: admin.auth.Auth | null = null;
 
-// Check if the service account credentials are available in environment variables.
+// Ensure this file is only run on the server
+import 'server-only';
+
 const hasServiceAccount =
   process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
   process.env.FIREBASE_CLIENT_EMAIL &&
   process.env.FIREBASE_PRIVATE_KEY;
 
 if (hasServiceAccount) {
+  // Initialize on first import
   if (!admin.apps.length) {
     try {
       const serviceAccount: admin.ServiceAccount = {
@@ -28,15 +27,20 @@ if (hasServiceAccount) {
       });
       console.log('Firebase Admin SDK initialized successfully.');
     } catch (error: any) {
-      if (error.code !== 'auth/already-exists') {
-          console.error('Firebase Admin SDK initialization error:', error);
+      // This can happen in Next.js dev mode due to hot-reloading.
+      // We'll check if the app already exists.
+      if (error.code !== 'auth/invalid-credential' && !/already exists/i.test(error.message)) {
+        console.error('Firebase Admin SDK initialization error:', error);
       }
     }
   }
+  // Assign db and auth after initialization (or if already initialized)
   db = admin.firestore();
   auth = admin.auth();
 } else {
-  console.warn('Firebase Admin SDK credentials are not available. Server-side Firebase features will be disabled.');
+  console.warn(
+    'Firebase Admin credentials are not set in environment variables. Server-side Firebase functionality will be disabled.'
+  );
 }
 
 export { db, auth };
