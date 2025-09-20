@@ -100,8 +100,20 @@ export function PostForm({ post }: { post?: Post }) {
     });
   }
 
+  const onSubmit = (data: PostFormData) => {
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+        if (key === 'tags' && Array.isArray(value)) {
+            value.forEach(tag => formData.append('tags', tag));
+        } else {
+            formData.append(key, value as string);
+        }
+    });
+    formAction(formData);
+  };
+
   return (
-    <form action={formAction} className="space-y-6">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Post Details</CardTitle>
@@ -159,7 +171,7 @@ export function PostForm({ post }: { post?: Post }) {
                                 const newTags = checked
                                     ? [...currentTags, tag]
                                     : currentTags.filter((t) => t !== tag);
-                                form.setValue('tags', newTags);
+                                form.setValue('tags', newTags, { shouldValidate: true });
                             }}
                             checked={form.watch('tags')?.includes(tag)}
                         />
@@ -171,7 +183,7 @@ export function PostForm({ post }: { post?: Post }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select name="status" defaultValue={form.getValues('status')} onValueChange={(value) => form.setValue('status', value as 'draft' | 'published')}>
+            <Select {...form.register('status')} defaultValue={form.getValues('status')} onValueChange={(value) => form.setValue('status', value as 'draft' | 'published')}>
                 <SelectTrigger id="status">
                     <SelectValue placeholder="Select status" />
                 </SelectTrigger>

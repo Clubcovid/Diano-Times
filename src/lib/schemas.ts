@@ -8,7 +8,7 @@ export const postSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { message: 'Slug must be URL-friendly (e.g., "my-first-post").' }),
   content: z.string().min(10, { message: 'Content must be at least 10 characters long.' }),
   coverImage: z.string().url({ message: 'Must be a valid URL.' }).or(z.literal('')),
-  tags: z.array(z.string()).refine(value => value.some(item => item), {
+  tags: z.array(z.string()).refine(value => value.length > 0, {
     message: 'You have to select at least one tag.',
   }),
   status: z.enum(['draft', 'published']),

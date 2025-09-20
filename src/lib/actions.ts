@@ -63,7 +63,17 @@ export async function createPost(prevState: FormState, formData: FormData): Prom
   if (!db) {
     return { success: false, message: 'Database not connected. Is the admin SDK configured correctly?' };
   }
-  const validatedFields = postSchema.safeParse(Object.fromEntries(formData.entries()));
+
+  const rawData = {
+    title: formData.get('title'),
+    slug: formData.get('slug'),
+    content: formData.get('content'),
+    coverImage: formData.get('coverImage'),
+    tags: formData.getAll('tags'),
+    status: formData.get('status'),
+  };
+
+  const validatedFields = postSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
     return {
@@ -104,7 +114,17 @@ export async function updatePost(postId: string, prevState: FormState, formData:
   if (!db) {
     return { success: false, message: 'Database not connected.' };
   }
-  const validatedFields = postSchema.safeParse(Object.fromEntries(formData.entries()));
+
+   const rawData = {
+    title: formData.get('title'),
+    slug: formData.get('slug'),
+    content: formData.get('content'),
+    coverImage: formData.get('coverImage'),
+    tags: formData.getAll('tags'),
+    status: formData.get('status'),
+  };
+
+  const validatedFields = postSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
     return {
@@ -442,5 +462,3 @@ export async function seedDatabase(): Promise<{ success: boolean, message: strin
     return { success: false, message: `Failed to seed database: ${message}` };
   }
 }
-
-    
