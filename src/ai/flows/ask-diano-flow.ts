@@ -13,8 +13,8 @@ import { htmlToText } from 'html-to-text';
 const searchPostsTool = ai.defineTool(
   {
     name: 'searchPosts',
-    description: 'Search for relevant blog posts based on a query. Use this to find information to answer user questions.',
-    inputSchema: z.object({ query: z.string() }),
+    description: 'Search for relevant blog posts based on a query or get the most recent posts. Use this to find information to answer user questions, especially when asked about "what\'s new" or "today\'s news".',
+    inputSchema: z.object({ query: z.string().optional().describe('The search query. If omitted, the most recent posts will be returned.') }),
     outputSchema: z.object({
       posts: z.array(
         z.object({
@@ -26,7 +26,7 @@ const searchPostsTool = ai.defineTool(
     }),
   },
   async ({ query }) => {
-    console.log(`Searching posts with query: ${query}`);
+    console.log(`Searching posts with query: ${query || 'LATEST'}`);
     const posts = await getPosts({ searchQuery: query, limit: 3, publishedOnly: true });
     return {
       posts: posts.map((post) => ({
@@ -73,8 +73,10 @@ const askDianoFlow = ai.defineFlow(
       Your role is to answer the user's question with this persona.
 
       1.  **Analyze the Question**: Understand what the user is asking.
-      2.  **Use Tools**: If the question can be answered using information from the blog, use the \`searchPosts\` tool to find relevant articles. You can use multiple tool calls if needed.
-      3.  **Synthesize and Answer**: Based on the information from the tools and your own knowledge, provide a comprehensive, clear, and friendly answer that reflects your persona.
+      2.  **Use Tools**:
+          - If the question can be answered using information from the blog, use the \`searchPosts\` tool to find relevant articles. You can use multiple tool calls if needed.
+          - If the user asks a general question like "What's new?", "What's happening today?", or "Suggest some articles", use the \`searchPosts\` tool without providing a query to get the latest posts.
+      3.  **Synthesize and Answer**: Based on the information from the tools and your own knowledge, provide a comprehensive, clear, and friendly answer that reflects your persona. If you retrieve recent posts for a general query, present them to the user as the latest news.
       4.  **Cite Sources**: If you used any blog posts to formulate your answer, list them as sources in the final output. Do not make up sources.
 
       User's Question: "${question}"
