@@ -3,32 +3,40 @@ import * as admin from 'firebase-admin';
 
 let app: admin.app.App;
 
-const hasServiceAccount =
-  process.env.FIREBASE_CLIENT_EMAIL &&
-  process.env.FIREBASE_PRIVATE_KEY &&
-  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+function initializeAdmin() {
+  if (admin.apps.length > 0) {
+    app = admin.apps[0]!;
+    return;
+  }
 
-if (hasServiceAccount && admin.apps.length === 0) {
-  const serviceAccount: admin.ServiceAccount = {
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
-  };
+  const hasServiceAccount =
+    process.env.FIREBASE_CLIENT_EMAIL &&
+    process.env.FIREBASE_PRIVATE_KEY &&
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-  app = admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-} else if (admin.apps.length > 0) {
-  app = admin.apps[0]!;
-} else {
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn(
-      'Firebase Admin SDK not initialized. Missing environment variables. Using mock implementations.'
-    );
+  if (hasServiceAccount) {
+    const serviceAccount: admin.ServiceAccount = {
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+    };
+
+    app = admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+  } else {
+     if (process.env.NODE_ENV !== 'production') {
+      console.warn(
+        'Firebase Admin SDK not initialized. Missing environment variables. Using mock implementations.'
+      );
+    }
   }
 }
 
-// @ts-ignore
+// Initialize on module load
+initializeAdmin();
+
+// @ts-ignore - Allow mock implementation
 const db: admin.firestore.Firestore = app ? admin.firestore(app) : {
     collection: () => ({
       get: async () => ({ docs: [], empty: true }),
@@ -43,7 +51,7 @@ const db: admin.firestore.Firestore = app ? admin.firestore(app) : {
     }),
 };
 
-// @ts-ignore
+// @ts-ignore - Allow mock implementation
 const auth: admin.auth.Auth = app ? admin.auth(app) : {
     listUsers: async () => ({ users: [], pageToken: undefined }),
     updateUser: async () => ({} as any),
