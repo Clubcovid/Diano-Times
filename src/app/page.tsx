@@ -17,6 +17,7 @@ import { BackToTop } from '@/components/back-to-top';
 import { getAds } from '@/lib/actions';
 import type { Ad } from '@/lib/types';
 import { NewsletterPopup } from '@/components/newsletter-popup';
+import { SearchForm } from '@/components/search-form';
 
 function PostsSkeleton() {
   return (
@@ -110,31 +111,38 @@ async function PostsSection() {
        <div className="lg:col-span-3">
         {featuredPost && (
           <section className="mb-12">
-            <Link href={`/posts/${featuredPost.slug}`}>
-              <div className="relative aspect-video lg:aspect-[2/1] rounded-lg overflow-hidden group">
+            <div className="relative aspect-video lg:aspect-[2/1] rounded-lg overflow-hidden group">
                 <Image
-                  src={featuredPost.coverImage || 'https://picsum.photos/seed/diano-featured/1200/600'}
-                  alt={featuredPost.title}
-                  fill
-                  className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
-                  priority
-                  data-ai-hint="kenyan landscape"
+                src={featuredPost.coverImage || 'https://picsum.photos/seed/diano-featured/1200/600'}
+                alt={featuredPost.title}
+                fill
+                className="object-cover"
+                priority
+                data-ai-hint="kenyan landscape"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-6 md:p-8 text-white">
-                  {featuredPost.tags?.[0] && (
-                    <Badge variant="secondary" className="mb-2">{featuredPost.tags[0]}</Badge>
-                  )}
-                  <h2 className="text-2xl md:text-4xl font-headline font-bold leading-tight max-w-3xl">
-                    {featuredPost.title}
-                  </h2>
-                  <div className="mt-4 flex items-center gap-2">
-                    <span>Continue Reading</span>
-                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </div>
+                <div className="absolute inset-0 bg-black/50" />
+                
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                    <div className="w-full max-w-2xl">
+                       <SearchForm />
+                    </div>
                 </div>
-              </div>
-            </Link>
+
+                <Link href={`/posts/${featuredPost.slug}`} className="absolute bottom-0 left-0 p-6 md:p-8 text-white group-hover:bg-gradient-to-t from-black/20 w-full">
+                 <div className='group-hover:translate-y-[-10px] transition-transform duration-300'>
+                    {featuredPost.tags?.[0] && (
+                        <Badge variant="secondary" className="mb-2">{featuredPost.tags[0]}</Badge>
+                    )}
+                    <h2 className="text-2xl md:text-4xl font-headline font-bold leading-tight max-w-3xl">
+                        {featuredPost.title}
+                    </h2>
+                    <div className="mt-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <span>Continue Reading</span>
+                        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                    </div>
+                 </div>
+                </Link>
+            </div>
           </section>
         )}
         

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
 import { Skeleton } from './ui/skeleton';
-import { LogIn, UserPlus, LayoutDashboard, UserCircle, LogOut, Menu, ChevronDown } from 'lucide-react';
+import { LogIn, UserPlus, LayoutDashboard, UserCircle, LogOut, Menu, ChevronDown, Search } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -132,6 +132,12 @@ export function BlogHeader() {
         </nav>
         <div className="flex items-center gap-2">
            <ThemeToggle />
+           <Button variant="outline" size="icon" asChild>
+                <Link href="/search">
+                    <Search className="h-5 w-5" />
+                    <span className="sr-only">Search</span>
+                </Link>
+           </Button>
            {loading ? (
             <Skeleton className="h-10 w-24 rounded-md" />
           ) : user ? (

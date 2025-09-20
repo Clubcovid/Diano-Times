@@ -27,10 +27,11 @@ interface GetPostsOptions {
   tag?: string;
   fromDate?: Date;
   ids?: string[];
+  searchQuery?: string;
 }
 
 export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
-  const { limit, publishedOnly, tag, fromDate, ids } = options;
+  const { limit, publishedOnly, tag, fromDate, ids, searchQuery } = options;
 
   if (!db) {
     console.warn("Firebase Admin is not initialized. Cannot fetch posts. Returning mock data.");
@@ -47,6 +48,13 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
     }
     if (ids) {
         filteredMockPosts = filteredMockPosts.filter(p => ids.includes(p.id));
+    }
+    if (searchQuery) {
+        const lowerCaseQuery = searchQuery.toLowerCase();
+        filteredMockPosts = filteredMockPosts.filter(p => 
+            p.title.toLowerCase().includes(lowerCaseQuery) ||
+            p.content.toLowerCase().includes(lowerCaseQuery)
+        );
     }
     
     return filteredMockPosts.slice(0, limit);
@@ -81,13 +89,22 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
       return [];
     }
     
-    return snapshot.docs.map(toPost);
+    let posts = snapshot.docs.map(toPost);
+
+    if (searchQuery) {
+      const lowerCaseQuery = searchQuery.toLowerCase();
+      posts = posts.filter(post => 
+        post.title.toLowerCase().includes(lowerCaseQuery) || 
+        post.content.toLowerCase().includes(lowerCaseQuery)
+      );
+    }
+    
+    return posts;
+
   } catch (error: any) {
     if (error.code === 9 && error.message.includes('requires an index')) {
       console.warn(`Firestore query failed due to a missing index. Falling back to client-side filtering. Message: ${error.message}`);
       
-      // Fallback strategy: Fetch all documents and filter/sort in memory.
-      // This is less efficient but ensures the app doesn't crash.
       let fallbackQuery: Query = db.collection('posts');
       if (ids && ids.length > 0) {
          fallbackQuery = fallbackQuery.where('__name__', 'in', ids);
@@ -106,11 +123,16 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
       if (fromDate) {
         posts = posts.filter(post => post.createdAt.toDate() >= fromDate);
       }
+       if (searchQuery) {
+        const lowerCaseQuery = searchQuery.toLowerCase();
+        posts = posts.filter(post => 
+            post.title.toLowerCase().includes(lowerCaseQuery) || 
+            post.content.toLowerCase().includes(lowerCaseQuery)
+        );
+      }
       
-      // Manual sorting
       posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
-      // Manual limit
       return posts.slice(0, limit || 100);
     }
     console.error("Error fetching posts from Firestore:", error);
