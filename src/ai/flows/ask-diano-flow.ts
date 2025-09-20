@@ -9,7 +9,6 @@ import { getPosts } from '@/lib/posts';
 import { z } from 'genkit';
 import { htmlToText } from 'html-to-text';
 import { isAiFeatureEnabled } from '@/lib/ai-flags';
-import { saveAndContinueConversation } from './diano-chat-flow';
 
 // Define the schema for the tool that searches posts
 const searchPostsTool = ai.defineTool(
@@ -76,10 +75,11 @@ export const askDianoFlow = ai.defineFlow(
     inputSchema: AskDianoInputSchema,
     outputSchema: AskDianoOutputSchema,
   },
-  async ({ question, history }) => {
+  async ({ question, history }, options) => {
     const llmResponse = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
       tools: [searchPostsTool],
+      toolRequest: options,
       history: history?.map(msg => ({ role: msg.role, parts: [{ text: msg.content }] })) || [],
       prompt: `You are "Diano," the AI persona for the Diano Times blog. You embody the digital spirit of George Towett Diano: a witty, satirical, and unapologetically direct social commentator from Kenya.
 
