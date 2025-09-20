@@ -9,16 +9,49 @@ function createMagazineHtml(data: GenerateMagazineOutput): string {
     const sectionsHtml = data.sections.map(section => `
         <div class="mb-12 break-after-page">
             <h2 class="text-3xl font-bold font-headline text-primary border-b-2 border-primary pb-2 mb-4">${section.title}</h2>
-            <p class="text-lg text-gray-700 mb-6">${section.summary}</p>
-            <ul class="list-disc list-inside space-y-2">
+            <p class="text-lg text-gray-700 mb-8 whitespace-pre-line">${section.summary}</p>
+            <div class="space-y-8">
                 ${section.articles.map(article => `
-                    <li class="text-gray-800">
-                        <span class="font-semibold">${article.title}</span>
-                    </li>
+                    <div class="flex gap-4 items-start">
+                        <img src="${article.coverImage}" alt="${article.title}" class="w-32 h-32 object-cover rounded-lg shadow-md" />
+                        <div>
+                            <h3 class="font-semibold text-xl font-headline">${article.title}</h3>
+                        </div>
+                    </div>
                 `).join('')}
-            </ul>
+            </div>
         </div>
     `).join('');
+    
+    const sudokuBoard = (board: number[][]) => `
+        <table class="border-collapse border-2 border-black">
+            ${board.map((row, i) => `
+                <tr class="${(i + 1) % 3 === 0 && i < 8 ? 'border-b-2 border-black' : ''}">
+                    ${row.map((cell, j) => `
+                        <td class="w-12 h-12 text-center text-2xl border border-gray-400 ${(j + 1) % 3 === 0 && j < 8 ? 'border-r-2 border-black' : ''}">
+                            ${cell === 0 ? '' : cell}
+                        </td>
+                    `).join('')}
+                </tr>
+            `).join('')}
+        </table>
+    `;
+
+    const sudokuSection = `
+        <div class="break-after-page">
+            <h2 class="text-3xl font-bold font-headline text-primary mb-4">Puzzles & Brain Teasers</h2>
+            <div class="flex flex-col items-center justify-center gap-12">
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-center">Sudoku Challenge</h3>
+                    ${sudokuBoard(data.sudoku.puzzle)}
+                </div>
+                 <div class="mt-8">
+                    <h3 class="text-xl font-semibold mb-4 text-center">Last Week's Solution</h3>
+                    ${sudokuBoard(data.sudoku.solution)}
+                </div>
+            </div>
+        </div>
+    `;
 
     return `
         <!DOCTYPE html>
@@ -61,10 +94,12 @@ function createMagazineHtml(data: GenerateMagazineOutput): string {
                         ${data.highlights.map(highlight => `<li class="text-lg text-gray-800 before:content-['\\272A'] before:mr-2 before:text-primary">${highlight}</li>`).join('')}
                     </ul>
                 </div>
-                <p class="text-xl text-gray-800 mt-8">${data.introduction}</p>
+                <div class="text-xl text-gray-800 mt-8 text-left whitespace-pre-line">${data.introduction}</div>
             </div>
 
             ${sectionsHtml}
+            
+            ${sudokuSection}
 
             <div class="text-center pt-8">
                 <p class="text-gray-600">Thank you for reading Diano Weekly.</p>
