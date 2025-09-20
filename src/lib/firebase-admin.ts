@@ -1,10 +1,5 @@
 
-import * as admin from 'firebase-admin';
-
-let db: admin.firestore.Firestore | null = null;
-let auth: admin.auth.Auth | null = null;
-
-// Ensure this file is only run on the server
+import admin from 'firebase-admin';
 import 'server-only';
 
 const hasServiceAccount =
@@ -12,8 +7,10 @@ const hasServiceAccount =
   process.env.FIREBASE_CLIENT_EMAIL &&
   process.env.FIREBASE_PRIVATE_KEY;
 
+let db: admin.firestore.Firestore | null = null;
+let auth: admin.auth.Auth | null = null;
+
 if (hasServiceAccount) {
-  // Initialize on first import
   if (!admin.apps.length) {
     try {
       const serviceAccount: admin.ServiceAccount = {
@@ -27,14 +24,12 @@ if (hasServiceAccount) {
       });
       console.log('Firebase Admin SDK initialized successfully.');
     } catch (error: any) {
-      // This can happen in Next.js dev mode due to hot-reloading.
-      // We'll check if the app already exists.
-      if (error.code !== 'auth/invalid-credential' && !/already exists/i.test(error.message)) {
+      if (!/already exists/i.test(error.message)) {
         console.error('Firebase Admin SDK initialization error:', error);
       }
     }
   }
-  // Assign db and auth after initialization (or if already initialized)
+  
   db = admin.firestore();
   auth = admin.auth();
 } else {
