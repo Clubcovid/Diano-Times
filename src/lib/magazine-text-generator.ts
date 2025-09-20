@@ -106,3 +106,4 @@ export async function generateTextFromHtml(magazineData: GenerateMagazineOutput)
     });
     return text;
 }
+

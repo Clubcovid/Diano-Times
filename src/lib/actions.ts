@@ -16,7 +16,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { getPosts } from './posts';
-import { generateTextFromHtml } from './pdf';
+import { generateTextFromHtml } from './magazine-text-generator';
 import { subDays } from 'date-fns';
 import type { AiFeatureFlags } from './ai-flags';
 import { isAiFeatureEnabled } from './ai-flags';
@@ -606,3 +606,4 @@ export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ suc
         return { success: false, message };
     }
 }
+
