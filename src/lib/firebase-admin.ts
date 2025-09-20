@@ -13,7 +13,6 @@ if (!admin.apps.length) {
     try {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        storageBucket: "studio-2630134466-e06b1.appspot.com"
       });
       console.log('Firebase Admin SDK initialized successfully.');
     } catch (error) {
