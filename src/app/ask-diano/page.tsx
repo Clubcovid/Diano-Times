@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useTransition, useEffect, useCallback } from 'react';
+import { useState, useTransition, useEffect, useCallback, useRef } from 'react';
 import { Send, Sparkles, Loader2, Bot, User, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import { useAuth } from '@/components/auth-provider';
 import type { ChatMessage, ChatSession } from '@/lib/types';
 import { getUserChatSession, saveAndContinueConversation } from '@/ai/flows/diano-chat-flow';
 import { auth } from '@/lib/firebase';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function AskDianoPage() {
   const { toast } = useToast();
@@ -21,6 +22,7 @@ export default function AskDianoPage() {
   const [isAsking, startAsking] = useTransition();
   const [question, setQuestion] = useState('');
   const [chatSession, setChatSession] = useState<ChatSession | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const getAuthHeaders = useCallback(async () => {
     if (!auth.currentUser) return new Headers();
@@ -29,6 +31,10 @@ export default function AskDianoPage() {
     headers.append('Authorization', `Bearer ${token}`);
     return headers;
   }, []);
+
+  const scrollToBottom = () => {
+    chatContainerRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }
 
   useEffect(() => {
     if (user && !loading) {
@@ -48,6 +54,11 @@ export default function AskDianoPage() {
       fetchHistory();
     }
   }, [user, loading, getAuthHeaders, toast]);
+  
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatSession?.messages]);
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +66,6 @@ export default function AskDianoPage() {
 
     const userMessage: ChatMessage = { role: 'user', content: question };
     
-    // Optimistically update the UI
     setChatSession(prev => prev ? { ...prev, messages: [...prev.messages, userMessage] } : null);
     setQuestion('');
 
@@ -70,7 +80,6 @@ export default function AskDianoPage() {
           description: error.message || 'Failed to get an answer.',
           variant: 'destructive',
         });
-        // On error, revert the optimistic update
         setChatSession(prev => prev ? { ...prev, messages: prev.messages.slice(0, -1) } : null);
       }
     });
@@ -101,26 +110,32 @@ export default function AskDianoPage() {
       }
 
       return (
-        <>
-            <div className="space-y-6">
+        <div className="flex flex-col h-[60vh] bg-muted/20 rounded-lg">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <AnimatePresence>
                 {chatSession?.messages.map((msg, index) => (
-                <div key={index} className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                  <motion.div 
+                    key={index} 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : ''}`}
+                  >
                     {msg.role === 'model' && (
                     <Avatar>
                         <AvatarFallback><Bot /></AvatarFallback>
                     </Avatar>
                     )}
-                    <div className={`rounded-lg p-4 max-w-[80%] ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
+                    <div className={`rounded-lg p-4 max-w-[80%] shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                     {msg.sources && msg.sources.length > 0 && (
-                        <div className="mt-4">
+                        <div className="mt-4 border-t border-primary-foreground/20 pt-3">
                             <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
                             <BookOpen className="h-4 w-4" />
                             Sources from Diano Times:
                             </h4>
                             <div className="space-y-2">
                             {msg.sources.map(source => (
-                                <Button asChild variant="link" size="sm" key={source.slug} className="p-0 h-auto block w-full text-left">
+                                <Button asChild variant="link" size="sm" key={source.slug} className="p-0 h-auto block w-full text-left text-primary-foreground/80 hover:text-primary-foreground">
                                     <Link href={`/posts/${source.slug}`} target="_blank">
                                         {source.title}
                                     </Link>
@@ -135,34 +150,40 @@ export default function AskDianoPage() {
                         <AvatarFallback><User /></AvatarFallback>
                     </Avatar>
                     )}
-                </div>
+                  </motion.div>
                 ))}
+                </AnimatePresence>
                 {isAsking && (
-                    <div className="flex items-start gap-4">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-start gap-4"
+                    >
                         <Avatar>
                             <AvatarFallback><Bot /></AvatarFallback>
                         </Avatar>
-                        <div className="rounded-lg p-4 bg-background flex items-center gap-2">
+                        <div className="rounded-lg p-4 bg-background flex items-center gap-2 shadow-sm">
                             <Loader2 className="h-5 w-5 animate-spin"/>
                             <span>Diano is thinking...</span>
                         </div>
-                    </div>
+                    </motion.div>
                 )}
+                 <div ref={chatContainerRef} />
             </div>
 
-            <form onSubmit={handleSubmit} className="sticky bottom-6 mt-8">
+            <form onSubmit={handleSubmit} className="p-4 border-t bg-background rounded-b-lg">
                 <div className="relative">
                 <Input
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     placeholder="e.g., What are the best places to visit in Mombasa?"
-                    className="h-14 pr-16 text-base"
+                    className="h-12 pr-14 text-base"
                     disabled={isAsking || !user}
                 />
                 <Button
                     type="submit"
                     size="icon"
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-10"
                     disabled={isAsking || !question.trim() || !user}
                 >
                     <Send className="h-5 w-5" />
@@ -170,7 +191,7 @@ export default function AskDianoPage() {
                 </Button>
                 </div>
             </form>
-        </>
+        </div>
       )
   }
 

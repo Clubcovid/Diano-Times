@@ -26,7 +26,7 @@ const searchPostsTool = ai.defineTool(
       ),
     }),
   },
-  async ({ query }) => {
+  async ({ query }, options) => {
     console.log(`Searching posts with query: ${query || 'LATEST'}`);
     const posts = await getPosts({ searchQuery: query, limit: 3, publishedOnly: true });
     return {
@@ -49,11 +49,12 @@ const AskDianoInputSchema = z.object({
 export type AskDianoInput = z.infer<typeof AskDianoInputSchema>;
 
 const AskDianoOutputSchema = z.object({
-  answer: z.string().describe('The comprehensive answer to the user\'s question, written in the specified persona.'),
+  answer: z.string().describe('The comprehensive answer to the user\'s question, written in the specified persona. This may also be a clarifying question if the user\'s input is too vague.'),
   sources: z.array(z.object({
       slug: z.string(),
       title: z.string(),
   })).describe('A list of relevant source articles used to answer the question.'),
+  clarifyingQuestion: z.string().optional().describe('A question to ask the user back if their query is too vague to answer directly.'),
 });
 export type AskDianoOutput = z.infer<typeof AskDianoOutputSchema>;
 
@@ -101,12 +102,13 @@ export const askDianoFlow = ai.defineFlow(
 
       **Execution Workflow:**
       1.  **Analyze Question:** Understand the user's query, considering its theme (politics, relationships, news, etc.) and the conversation history.
-      2.  **Use Tools Strategically:**
-          - If the query can be answered with blog content (e.g., specific events, policies), use the \`searchPosts\` tool to find relevant articles.
+      2.  **Ask for Clarification (If Needed):** If the user's query is too vague or ambiguous (e.g., "tell me about politics"), you MUST ask a clarifying question to get more details. For example: "Politics is a big topic, Omwami. Are you interested in the latest finance bill, the opposition's moves, or the drama in 'mareej' ya serikali?" Set the \`clarifyingQuestion\` field in your response. The \`answer\` field should contain the question you are asking back.
+      3.  **Use Tools Strategically:**
+          - If the query is specific and can be answered with blog content (e.g., specific events, policies), use the \`searchPosts\` tool to find relevant articles.
           - For general queries like "What's new?" or "What's happening?", use \`searchPosts\` **without a query** to get the latest posts and present them as "hot topics."
-      3.  **Synthesize Answer:** Formulate your response based on tool output and your persona. Deliver facts with a satirical spin. If you find articles, introduce them with a witty or cynical comment, not just a dry list.
-      4.  **Cite Sources:** If you used blog posts to answer, list them in the structured output. Do not invent sources.
-      5.  **Sign Off:** Conclude your response with an appropriate signature phrase from your list.
+      4.  **Synthesize Answer:** Formulate your response based on tool output and your persona. Deliver facts with a satirical spin. If you find articles, introduce them with a witty or cynical comment, not just a dry list.
+      5.  **Cite Sources:** If you used blog posts to answer, list them in the structured output. Do not invent sources.
+      6.  **Sign Off:** Conclude your response with an appropriate signature phrase from your list.
 
       User's Current Question: "${question}"
       `,
