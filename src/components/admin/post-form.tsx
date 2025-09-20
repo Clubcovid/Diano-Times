@@ -78,11 +78,9 @@ export function PostForm({ post }: { post?: SerializablePost }) {
 
   const onSubmit = (data: PostFormData) => {
     startTransition(async () => {
-        const action = isEditing
-            ? updatePost.bind(null, post.id, data)
-            : createPost.bind(null, data);
-
-        const result = await action();
+        const result = isEditing
+            ? await updatePost(post.id, data)
+            : await createPost(data);
 
         if (result.success) {
             toast({
