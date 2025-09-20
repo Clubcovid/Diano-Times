@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Link from 'next/link';
 
 interface Message {
-  role: 'user' | 'bot';
+  role: 'user' | 'model'; // 'model' corresponds to the bot
   content: string;
   sources?: AskDianoOutput['sources'];
 }
@@ -29,14 +29,18 @@ export default function AskDianoPage() {
     if (!question.trim() || isAsking) return;
 
     const userMessage: Message = { role: 'user', content: question };
-    setConversation((prev) => [...prev, userMessage]);
+    const newConversation = [...conversation, userMessage];
+    setConversation(newConversation);
     setQuestion('');
 
     startAsking(async () => {
       try {
-        const result = await askDiano({ question: userMessage.content });
+        const result = await askDiano({ 
+            question: userMessage.content,
+            history: conversation, // Pass previous messages
+        });
         const botMessage: Message = {
-          role: 'bot',
+          role: 'model',
           content: result.answer,
           sources: result.sources,
         };
@@ -47,6 +51,7 @@ export default function AskDianoPage() {
           description: error.message || 'Failed to get an answer.',
           variant: 'destructive',
         });
+        // On error, remove the user message that caused it to allow retry
         setConversation((prev) =>
           prev.filter((msg) => msg.content !== userMessage.content)
         );
@@ -72,7 +77,7 @@ export default function AskDianoPage() {
           <div className="space-y-6">
             {conversation.map((msg, index) => (
               <div key={index} className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                {msg.role === 'bot' && (
+                {msg.role === 'model' && (
                   <Avatar>
                     <AvatarFallback><Bot /></AvatarFallback>
                   </Avatar>

@@ -39,7 +39,11 @@ const searchPostsTool = ai.defineTool(
 );
 
 const AskDianoInputSchema = z.object({
-  question: z.string().describe('The user\'s question.'),
+  question: z.string().describe('The user\'s current question.'),
+  history: z.array(z.object({
+      role: z.enum(['user', 'model']),
+      content: z.string(),
+  })).optional().describe('The previous conversation history.'),
 });
 export type AskDianoInput = z.infer<typeof AskDianoInputSchema>;
 
@@ -64,19 +68,20 @@ const askDianoFlow = ai.defineFlow(
     inputSchema: AskDianoInputSchema,
     outputSchema: AskDianoOutputSchema,
   },
-  async ({ question }) => {
+  async ({ question, history }) => {
     const llmResponse = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
       tools: [searchPostsTool],
+      history: history?.map(msg => ({ role: msg.role, parts: [{ text: msg.content }] })) || [],
       prompt: `You are "Diano," an expert AI assistant for the Diano Times blog. Your persona is based on George Towett Diano, a social media personality and online activist from Kitale, Kenya. You are Kipsigis, based in Nairobi, and are vocal on political and social issues.
 
-      Your role is to answer the user's question with this persona.
+      Your role is to answer the user's question with this persona, considering the conversation history.
 
-      1.  **Analyze the Question**: Understand what the user is asking.
+      1.  **Analyze the Question**: Understand what the user is asking in the context of the conversation.
       2.  **Use Tools**:
           - If the question can be answered using information from the blog, use the \`searchPosts\` tool to find relevant articles. You can use multiple tool calls if needed.
           - If the user asks a general question like "What's new?", "What's happening today?", or "Suggest some articles", use the \`searchPosts\` tool without providing a query to get the latest posts.
-      3.  **Synthesize and Answer**: Based on the information from the tools and your own knowledge, provide a comprehensive, clear, and friendly answer that reflects your persona. If you retrieve recent posts for a general query, present them to the user as the latest news.
+      3.  **Synthesize and Answer**: Based on the information from the tools, the conversation history, and your own knowledge, provide a comprehensive, clear, and friendly answer that reflects your persona. If you retrieve recent posts for a general query, present them to the user as the latest news.
       4.  **Cite Sources**: If you used any blog posts to formulate your answer, list them as sources in the final output. Do not make up sources.
 
       User's Question: "${question}"
