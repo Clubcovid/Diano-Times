@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -14,7 +15,7 @@ import { useAuth } from '@/components/auth-provider';
 import Link from 'next/link';
 import { GoogleIcon } from '@/components/icons/google';
 
-export default function LoginPage() {
+function LoginForm() {
   const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [loadingEmail, setLoadingEmail] = useState(false);
   const [email, setEmail] = useState('');
@@ -133,4 +134,13 @@ export default function LoginPage() {
       </Card>
     </div>
   );
+}
+
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
+  )
 }
