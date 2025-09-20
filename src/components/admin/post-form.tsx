@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Wand2, Save } from 'lucide-react';
 
 const initialState = {
@@ -36,6 +37,8 @@ const initialState = {
   message: '',
   errors: [],
 };
+
+const availableTags = ['Fashion', 'Gadgets', 'Lifestyle', 'Technology', 'Wellness'];
 
 export function PostForm({ post }: { post?: Post }) {
   const router = useRouter();
@@ -49,7 +52,7 @@ export function PostForm({ post }: { post?: Post }) {
       slug: post?.slug || '',
       content: post?.content || '',
       coverImage: post?.coverImage || 'https://picsum.photos/seed/diano-blog-1/1200/800',
-      tags: post?.tags?.join(', ') || '',
+      tags: post?.tags || [],
       status: post?.status || 'draft',
     },
   });
@@ -145,9 +148,25 @@ export function PostForm({ post }: { post?: Post }) {
             {form.formState.errors.coverImage && <p className="text-sm text-destructive">{form.formState.errors.coverImage.message}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="tags">Tags</Label>
-            <Input id="tags" {...form.register('tags')} placeholder="e.g., tech, design, marketing" />
-            <p className="text-sm text-muted-foreground">Separate tags with commas.</p>
+            <Label>Tags</Label>
+            <div className="flex flex-wrap gap-4">
+                {availableTags.map((tag) => (
+                    <div key={tag} className="flex items-center gap-2">
+                        <Checkbox
+                            id={`tag-${tag}`}
+                            onCheckedChange={(checked) => {
+                                const currentTags = form.getValues('tags') || [];
+                                const newTags = checked
+                                    ? [...currentTags, tag]
+                                    : currentTags.filter((t) => t !== tag);
+                                form.setValue('tags', newTags);
+                            }}
+                            checked={form.watch('tags')?.includes(tag)}
+                        />
+                        <Label htmlFor={`tag-${tag}`} className="font-normal">{tag}</Label>
+                    </div>
+                ))}
+            </div>
             {form.formState.errors.tags && <p className="text-sm text-destructive">{form.formState.errors.tags.message}</p>}
           </div>
           <div className="space-y-2">
