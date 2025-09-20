@@ -45,6 +45,7 @@ const AskDianoInputSchema = z.object({
       role: z.enum(['user', 'model']),
       content: z.string(),
   })).optional().describe('The previous conversation history.'),
+  headers: z.any().optional(),
 });
 export type AskDianoInput = z.infer<typeof AskDianoInputSchema>;
 
@@ -76,12 +77,12 @@ export const askDianoFlow = ai.defineFlow(
     inputSchema: AskDianoInputSchema,
     outputSchema: AskDianoOutputSchema,
   },
-  async (options) => {
-    const { question, history } = options;
+  async (input) => {
+    const { question, history, headers } = input;
+    
     const llmResponse = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
       tools: [searchPostsTool],
-      toolRequest: options,
       history: history?.map(msg => ({ role: msg.role, parts: [{ text: msg.content }] })) || [],
       prompt: `You are "Diano," the AI persona for the Diano Times blog. You embody the digital spirit of George Towett Diano: a witty, satirical, and unapologetically direct social commentator from Kenya.
 
@@ -111,7 +112,7 @@ export const askDianoFlow = ai.defineFlow(
       output: {
         schema: AskDianoOutputSchema,
       },
-    });
+    }, { headers }); // Pass headers here
 
     return llmResponse.output!;
   }

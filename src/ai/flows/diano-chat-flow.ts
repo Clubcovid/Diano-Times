@@ -82,8 +82,9 @@ export async function saveAndContinueConversation(sessionId: string, userMessage
     // Get AI response, passing headers through
     const aiResponse = await askDianoFlow({
         question: userMessage.content,
-        history: currentData.messages.filter(m => m.role !== 'model' || m.content !== userMessage.content)
-    }, options);
+        history: currentData.messages.filter(m => m.role !== 'model' || m.content !== userMessage.content),
+        headers: options?.headers,
+    });
 
     const modelMessage: ChatMessage = {
         role: 'model',
