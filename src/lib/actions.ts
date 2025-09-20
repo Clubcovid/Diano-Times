@@ -5,10 +5,10 @@ import { revalidatePath } from 'next/cache';
 import { db, auth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
 import { generatePost as generatePostAI } from '@/ai/flows/generate-post';
-import { postSchema, adSchema, videoSchema } from './schemas';
+import { postSchema, adSchema, videoSchema, type PostFormData } from './schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
-import type { AdminUser, Ad, Video } from './types';
+import type { AdminUser, Ad, Video, Post } from './types';
 import { headers } from 'next/headers';
 import { mockPosts, mockAds, mockVideos } from './mock-data';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -54,32 +54,6 @@ export async function generateSlug(title: string): Promise<{ success: boolean; s
   }
 }
 
-async function uploadImageAndGetURL(base64Image: string, slug: string): Promise<string> {
-    const bucket = getStorage().bucket();
-    const mimeTypeMatch = base64Image.match(/^data:(image\/\w+);base64,/);
-    if (!mimeTypeMatch) {
-        throw new Error('Invalid Base64 image format.');
-    }
-    const mimeType = mimeTypeMatch[1];
-    const extension = mimeType.split('/')[1];
-    
-    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '');
-    const buffer = Buffer.from(base64Data, 'base64');
-    
-    const fileName = `post-covers/${slug}-${uuidv4()}.${extension}`;
-    const file = bucket.file(fileName);
-
-    await file.save(buffer, {
-        metadata: {
-            contentType: mimeType,
-        },
-        public: true, // Make file publicly readable
-    });
-    
-    // Return the public URL
-    return file.publicUrl();
-}
-
 type FormState = {
   success: boolean;
   message: string;
@@ -87,21 +61,12 @@ type FormState = {
   postId?: string;
 };
 
-export async function createPost(formData: FormData): Promise<FormState> {
+export async function createPost(data: PostFormData): Promise<FormState> {
   if (!db) {
     return { success: false, message: 'Database not connected. Is the admin SDK configured correctly?' };
   }
 
-  const rawData = {
-    title: formData.get('title'),
-    slug: formData.get('slug'),
-    content: formData.get('content'),
-    coverImage: formData.get('coverImage'),
-    tags: formData.getAll('tags'),
-    status: formData.get('status'),
-  };
-  
-  const validatedFields = postSchema.safeParse(rawData);
+  const validatedFields = postSchema.safeParse(data);
 
   if (!validatedFields.success) {
     return {
@@ -111,9 +76,9 @@ export async function createPost(formData: FormData): Promise<FormState> {
     };
   }
 
-  let data = validatedFields.data;
+  let validatedData = validatedFields.data;
 
-  if (!(await isSlugUnique(data.slug))) {
+  if (!(await isSlugUnique(validatedData.slug))) {
     return {
       success: false,
       message: 'This slug is already in use. Please choose a different one.',
@@ -121,15 +86,8 @@ export async function createPost(formData: FormData): Promise<FormState> {
   }
   
   try {
-    let imageUrl = data.coverImage;
-    // Check if coverImage is a base64 string
-    if (imageUrl.startsWith('data:image')) {
-      imageUrl = await uploadImageAndGetURL(imageUrl, data.slug);
-    }
-
     const postToSave = {
-      ...data,
-      coverImage: imageUrl,
+      ...validatedData,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     };
@@ -147,21 +105,12 @@ export async function createPost(formData: FormData): Promise<FormState> {
   }
 }
 
-export async function updatePost(postId: string, formData: FormData): Promise<FormState> {
+export async function updatePost(postId: string, data: PostFormData): Promise<FormState> {
   if (!db) {
     return { success: false, message: 'Database not connected.' };
   }
-
-  const rawData = {
-    title: formData.get('title'),
-    slug: formData.get('slug'),
-    content: formData.get('content'),
-    coverImage: formData.get('coverImage'),
-    tags: formData.getAll('tags'),
-    status: formData.get('status'),
-  };
-
-  const validatedFields = postSchema.safeParse(rawData);
+  
+  const validatedFields = postSchema.safeParse(data);
 
   if (!validatedFields.success) {
     return {
@@ -170,9 +119,9 @@ export async function updatePost(postId: string, formData: FormData): Promise<Fo
     };
   }
   
-  let data = validatedFields.data;
+  let validatedData = validatedFields.data;
 
-  if (!(await isSlugUnique(data.slug, postId))) {
+  if (!(await isSlugUnique(validatedData.slug, postId))) {
     return {
       success: false,
       message: 'This slug is already in use. Please choose a different one.',
@@ -180,20 +129,14 @@ export async function updatePost(postId: string, formData: FormData): Promise<Fo
   }
 
   try {
-    let imageUrl = data.coverImage;
-    if (imageUrl.startsWith('data:image')) {
-        imageUrl = await uploadImageAndGetURL(imageUrl, data.slug);
-    }
-    
     const postRef = db.collection('posts').doc(postId);
     await postRef.update({
-      ...data,
-      coverImage: imageUrl,
+      ...validatedData,
       updatedAt: FieldValue.serverTimestamp(),
     });
 
     revalidatePath('/');
-    revalidatePath(`/posts/${data.slug}`);
+    revalidatePath(`/posts/${validatedData.slug}`);
     revalidatePath('/admin/posts');
 
     return { success: true, message: 'Post updated successfully.', postId };
