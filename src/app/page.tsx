@@ -16,6 +16,7 @@ import { BlogHeader } from '@/components/blog-header';
 import { BackToTop } from '@/components/back-to-top';
 import { getAds } from '@/lib/actions';
 import type { Ad } from '@/lib/types';
+import { NewsletterPopup } from '@/components/newsletter-popup';
 
 function PostsSkeleton() {
   return (
@@ -317,6 +318,7 @@ export default function HomePage() {
         </div>
       </footer>
       <BackToTop />
+      <NewsletterPopup />
     </div>
   );
 }
