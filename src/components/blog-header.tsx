@@ -31,6 +31,7 @@ export function BlogHeader() {
       <Link href="/world-politics" className="text-muted-foreground hover:text-primary transition-colors">World Politics</Link>
       <Link href="/world-security" className="text-muted-foreground hover:text-primary transition-colors">World Security</Link>
       <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
+      <Link href="/story-time" className="text-muted-foreground hover:text-primary transition-colors">Story Time</Link>
       <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
     </>
   );
