@@ -17,27 +17,27 @@ const hasServiceAccount =
   serviceAccount.clientEmail &&
   serviceAccount.privateKey;
 
-if (hasServiceAccount && !admin.apps.length) {
+let db: admin.firestore.Firestore | null = null;
+let auth: admin.auth.Auth | null = null;
+
+if (hasServiceAccount) {
+  if (!admin.apps.length) {
     try {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
       console.log('Firebase Admin SDK initialized successfully.');
-    } catch (error) {
-      console.error('Firebase Admin SDK initialization error:', error);
+    } catch (error: any) {
+      // This can happen in environments where the SDK is initialized multiple times.
+      if (error.code !== 'auth/already-exists') {
+          console.error('Firebase Admin SDK initialization error:', error);
+      }
     }
-} else if (!hasServiceAccount) {
-    console.warn('Firebase Admin SDK credentials are not available in environment variables. Server-side Firebase features will be disabled.');
+  }
+  db = admin.firestore();
+  auth = admin.auth();
+} else {
+  console.warn('Firebase Admin SDK credentials are not available. Server-side Firebase features will be disabled.');
 }
-
-// Get the initialized app.
-const app = admin.apps.length > 0 ? admin.app() : null;
-
-// Initialize services if the app was initialized.
-// If not, these will be objects that will cause errors if used,
-// which is intended to make it clear that the Admin SDK is not configured.
-const db = app ? admin.firestore() : ({} as admin.firestore.Firestore);
-const auth = app ? admin.auth() : ({} as admin.auth.Auth);
-
 
 export { db, auth };

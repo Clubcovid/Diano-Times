@@ -1,6 +1,6 @@
 
 import 'server-only';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase-admin';
 import {
   collection,
   getDocs,
@@ -12,9 +12,6 @@ import {
   QueryConstraint,
 } from 'firebase/firestore';
 import type { Post } from './types';
-import { mockPosts } from './mock-data';
-
-const postsCollection = collection(db, 'posts');
 
 function toPost(doc: any): Post {
   const data = doc.data();
@@ -25,6 +22,12 @@ function toPost(doc: any): Post {
 }
 
 export async function getPosts(options: { publishedOnly?: boolean, tag?: string } = {}): Promise<Post[]> {
+  if (!db) {
+      console.error("Firestore is not initialized. Check your Firebase Admin credentials.");
+      return [];
+  }
+  const postsCollection = collection(db, 'posts');
+
   const constraints: QueryConstraint[] = [];
   
   if (options.publishedOnly) {
@@ -42,19 +45,22 @@ export async function getPosts(options: { publishedOnly?: boolean, tag?: string 
   try {
     const snapshot = await getDocs(q);
     if (snapshot.empty) {
-        // If you are in a dev environment and expect mock data, you can uncomment the line below
-        // return mockPosts;
         return [];
     }
     return snapshot.docs.map(toPost);
   } catch (error) {
     console.error("Error fetching posts from Firestore. Is the Admin SDK configured correctly?", error);
-    // Return empty array on error to avoid showing mock data in production
+    // Return empty array on error
     return [];
   }
 }
 
 export async function getTags(): Promise<string[]> {
+    if (!db) {
+        console.error("Firestore is not initialized. Check your Firebase Admin credentials.");
+        return [];
+    }
+    const postsCollection = collection(db, 'posts');
   try {
     const q = query(postsCollection, where('status', '==', 'published'));
     const snapshot = await getDocs(q);
@@ -76,6 +82,11 @@ export async function getTags(): Promise<string[]> {
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
+    if (!db) {
+        console.error("Firestore is not initialized. Check your Firebase Admin credentials.");
+        return null;
+    }
+    const postsCollection = collection(db, 'posts');
   try {
     const q = query(postsCollection, where('slug', '==', slug));
     const snapshot = await getDocs(q);
@@ -90,6 +101,10 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 }
 
 export async function getPostById(id: string): Promise<Post | null> {
+    if (!db) {
+        console.error("Firestore is not initialized. Check your Firebase Admin credentials.");
+        return null;
+    }
   try {
     const postDocRef = doc(db, 'posts', id);
     const postDoc = await getDoc(postDocRef);

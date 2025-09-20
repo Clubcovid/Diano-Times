@@ -13,6 +13,7 @@ import { headers } from 'next/headers';
 
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
+  if (!db) return false;
   const q = query(collection(db, 'posts'), where('slug', '==', slug));
   const snapshot = await getDocs(q);
   if (snapshot.empty) {
@@ -54,6 +55,7 @@ type FormState = {
 };
 
 export async function createPost(prevState: FormState, formData: FormData): Promise<FormState> {
+  if (!db) return { success: false, message: 'Database not connected.' };
   const validatedFields = postSchema.safeParse(Object.fromEntries(formData.entries()));
 
   if (!validatedFields.success) {
@@ -92,6 +94,7 @@ export async function createPost(prevState: FormState, formData: FormData): Prom
 }
 
 export async function updatePost(postId: string, prevState: FormState, formData: FormData): Promise<FormState> {
+  if (!db) return { success: false, message: 'Database not connected.' };
   const validatedFields = postSchema.safeParse(Object.fromEntries(formData.entries()));
 
   if (!validatedFields.success) {
@@ -131,6 +134,7 @@ export async function updatePost(postId: string, prevState: FormState, formData:
 }
 
 export async function deletePost(postId: string): Promise<{ success: boolean, message: string }> {
+  if (!db) return { success: false, message: 'Database not connected.' };
   try {
     await deleteDoc(doc(db, 'posts', postId));
     revalidatePath('/');
@@ -155,18 +159,25 @@ function mapUser(user: UserRecord): AdminUser {
 
 
 export async function getUsers(): Promise<AdminUser[]> {
+    if (!auth) {
+        console.error("Firebase Auth is not initialized. Check your Firebase Admin credentials.");
+        return [];
+    }
     try {
         const userRecords = await auth.listUsers();
         return userRecords.users.map(mapUser);
     } catch (error) {
         console.error('Error fetching users:', error);
-        // This might happen if the admin SDK is not initialized, e.g. missing credentials.
         return [];
     }
 }
 
 
 export async function getAds(): Promise<Ad[]> {
+  if (!db) {
+      console.error("Firestore is not initialized. Check your Firebase Admin credentials.");
+      return [];
+  }
   try {
     const adsCollection = collection(db, 'advertisements');
     const q = query(adsCollection, orderBy('createdAt', 'desc'));
@@ -190,6 +201,8 @@ type AdActionState = {
 }
 
 export async function createOrUpdateAd(prevState: AdActionState, formData: FormData): Promise<AdActionState> {
+  if (!db) return { success: false, message: 'Database not connected.', ad: null };
+
   const id = formData.get('id') as string;
   const isEditing = !!id;
 
@@ -229,6 +242,7 @@ export async function createOrUpdateAd(prevState: AdActionState, formData: FormD
 }
 
 export async function deleteAd(adId: string): Promise<{ success: boolean, message: string }> {
+  if (!db) return { success: false, message: 'Database not connected.' };
   try {
     await deleteDoc(doc(db, 'advertisements', adId));
     revalidatePath('/admin/advertisements');
@@ -241,6 +255,10 @@ export async function deleteAd(adId: string): Promise<{ success: boolean, messag
 
 
 export async function getVideos(): Promise<Video[]> {
+  if (!db) {
+      console.error("Firestore is not initialized. Check your Firebase Admin credentials.");
+      return [];
+  }
   try {
     const videosCollection = collection(db, 'videos');
     const q = query(videosCollection, orderBy('createdAt', 'desc'));
@@ -264,6 +282,7 @@ type VideoActionState = {
 }
 
 export async function createOrUpdateVideo(prevState: VideoActionState, formData: FormData): Promise<VideoActionState> {
+  if (!db) return { success: false, message: 'Database not connected.', video: null };
   const id = formData.get('id') as string;
   const isEditing = !!id;
 
@@ -304,6 +323,7 @@ export async function createOrUpdateVideo(prevState: VideoActionState, formData:
 }
 
 export async function deleteVideo(videoId: string): Promise<{ success: boolean, message: string }> {
+  if (!db) return { success: false, message: 'Database not connected.' };
   try {
     await deleteDoc(doc(db, 'videos', videoId));
     revalidatePath('/admin/videos');
@@ -321,6 +341,7 @@ type ProfileActionState = {
 }
 
 async function getUserIdFromSession(): Promise<string | null> {
+    if (!auth) return null;
     const authHeader = headers().get('Authorization');
     if (!authHeader) return null;
 
@@ -337,6 +358,7 @@ async function getUserIdFromSession(): Promise<string | null> {
 }
 
 export async function updateUserProfile(prevState: ProfileActionState, formData: FormData): Promise<ProfileActionState> {
+    if (!auth) return { success: false, message: 'Authentication service not connected.' };
     const displayName = formData.get('displayName') as string;
     
     if (!displayName || displayName.length < 3) {
