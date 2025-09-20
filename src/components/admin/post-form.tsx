@@ -34,7 +34,12 @@ import { Wand2, Save } from 'lucide-react';
 
 const availableTags = ['Fashion', 'Gadgets', 'Lifestyle', 'Technology', 'Wellness', 'Travel', 'Food', 'Business', 'Culture', 'Art', 'Reviews', 'Tips', 'Nairobi', 'Kenya'];
 
-export function PostForm({ post }: { post?: Post }) {
+type SerializablePost = Omit<Post, 'createdAt' | 'updatedAt'> & {
+  createdAt: string;
+  updatedAt: string;
+};
+
+export function PostForm({ post }: { post?: SerializablePost }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isGeneratingSlug, startSlugGeneration] = useTransition();
