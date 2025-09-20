@@ -26,15 +26,11 @@ export async function getPosts(options: { publishedOnly?: boolean, tag?: string 
   const postsCollection = db.collection('posts');
   let query: Query = postsCollection;
   
-  // If a tag is specified, we perform a simpler query to avoid needing a composite index.
-  // We will filter by status in the application code after fetching.
   if (options.tag) {
     query = query.where('tags', 'array-contains', options.tag);
   } else if (options.publishedOnly) {
     query = query.where('status', '==', 'published');
   }
-  
-  query = query.orderBy('createdAt', 'desc');
 
   try {
     const snapshot = await query.get();
@@ -44,7 +40,13 @@ export async function getPosts(options: { publishedOnly?: boolean, tag?: string 
     
     let posts = snapshot.docs.map(toPost);
 
-    // If filtering by tag, we also need to manually filter by status if required.
+    // Manually sort by date since we removed it from the query to avoid index issues
+    posts.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+        return dateB - dateA;
+    });
+
     if (options.tag && options.publishedOnly) {
       posts = posts.filter(post => post.status === 'published');
     }
@@ -118,5 +120,3 @@ export async function getPostById(id: string): Promise<Post | null> {
     return null;
   }
 }
-
-    
