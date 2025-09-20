@@ -83,7 +83,7 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
     
     return snapshot.docs.map(toPost);
   } catch (error: any) {
-    if (error.code === 'FAILED_PRECONDITION' && error.message.includes('requires an index')) {
+    if (error.code === 9 && error.message.includes('requires an index')) {
       console.warn(`Firestore query failed due to a missing index. Falling back to client-side filtering. Message: ${error.message}`);
       
       // Fallback strategy: Fetch all documents and filter/sort in memory.
