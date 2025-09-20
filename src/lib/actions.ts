@@ -4,6 +4,7 @@
 import { revalidatePath } from 'next/cache';
 import { db, auth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
+import { generatePost as generatePostAI } from '@/ai/flows/generate-post';
 import { postSchema, adSchema, videoSchema } from './schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
@@ -460,5 +461,55 @@ export async function seedDatabase(): Promise<{ success: boolean, message: strin
     const message = error instanceof Error ? error.message : "An unknown error occurred.";
     console.error("Error seeding database:", error);
     return { success: false, message: `Failed to seed database: ${message}` };
+  }
+}
+
+type GeneratePostResult = {
+  success: boolean;
+  message: string;
+};
+
+export async function generateAndSavePost(topic: string): Promise<GeneratePostResult> {
+  if (!db) {
+    return { success: false, message: "Database not connected. Cannot save post." };
+  }
+  if (!topic) {
+    return { success: false, message: "Topic is required." };
+  }
+
+  try {
+    // 1. Generate post content with AI
+    const postData = await generatePostAI({ topic });
+
+    // 2. Ensure slug is unique
+    let finalSlug = postData.slug;
+    let count = 1;
+    while (!(await isSlugUnique(finalSlug))) {
+      finalSlug = `${postData.slug}-${count}`;
+      count++;
+    }
+
+    // 3. Save to Firestore as a draft
+    const postToSave = {
+      title: postData.title,
+      slug: finalSlug,
+      content: postData.content,
+      coverImage: postData.coverImage,
+      tags: postData.tags,
+      status: 'draft' as const, // Save as draft by default
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    await db.collection('posts').add(postToSave);
+
+    // 4. Revalidate path to show the new post
+    revalidatePath('/admin/posts');
+
+    return { success: true, message: `Successfully generated and saved a draft for: "${postData.title}"` };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "An unknown error occurred.";
+    console.error("Error generating and saving post:", error);
+    return { success: false, message: `Failed to generate post: ${message}` };
   }
 }

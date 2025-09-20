@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
 import type { Post } from '@/lib/types';
+import { GeneratePostDialog } from '@/components/admin/generate-post-dialog';
 
 export default async function PostsPage() {
   const posts: Post[] = await getPosts();
@@ -23,12 +24,15 @@ export default async function PostsPage() {
             View, create, and manage all your blog posts.
           </p>
         </div>
-        <Button asChild>
-            <Link href="/admin/create">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Create Post
-            </Link>
-        </Button>
+        <div className="flex gap-2">
+            <GeneratePostDialog />
+            <Button asChild>
+                <Link href="/admin/create">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Create Post
+                </Link>
+            </Button>
+        </div>
       </div>
       <PostsTable posts={serializablePosts} />
     </div>
