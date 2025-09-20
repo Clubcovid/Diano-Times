@@ -26,11 +26,12 @@ export async function getPosts(options: { publishedOnly?: boolean, tag?: string 
   const postsCollection = db.collection('posts');
   let query: Query = postsCollection;
   
-  if (options.publishedOnly) {
-    query = query.where('status', '==', 'published');
-  }
+  // If a tag is specified, we perform a simpler query to avoid needing a composite index.
+  // We will filter by status in the application code after fetching.
   if (options.tag) {
     query = query.where('tags', 'array-contains', options.tag);
+  } else if (options.publishedOnly) {
+    query = query.where('status', '==', 'published');
   }
   
   query = query.orderBy('createdAt', 'desc');
@@ -40,7 +41,15 @@ export async function getPosts(options: { publishedOnly?: boolean, tag?: string 
     if (snapshot.empty) {
         return [];
     }
-    return snapshot.docs.map(toPost);
+    
+    let posts = snapshot.docs.map(toPost);
+
+    // If filtering by tag, we also need to manually filter by status if required.
+    if (options.tag && options.publishedOnly) {
+      posts = posts.filter(post => post.status === 'published');
+    }
+
+    return posts;
   } catch (error) {
     console.error("Error fetching posts from Firestore:", error);
     return [];
