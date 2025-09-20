@@ -55,7 +55,7 @@ export async function generateSlug(title: string): Promise<{ success: boolean; s
 }
 
 async function uploadImageAndGetURL(base64Image: string, slug: string): Promise<string> {
-    const bucket = getStorage().bucket('gs://studio-2630134466-e06b1.appspot.com');
+    const bucket = getStorage().bucket();
     const mimeTypeMatch = base64Image.match(/^data:(image\/\w+);base64,/);
     if (!mimeTypeMatch) {
         throw new Error('Invalid Base64 image format.');
