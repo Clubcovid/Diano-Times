@@ -170,6 +170,7 @@ export async function getAds(): Promise<Ad[]> {
     const adsCollection = collection(db, 'advertisements');
     const q = query(adsCollection, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
+    if (snapshot.empty) return [];
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
@@ -200,23 +201,26 @@ export async function createOrUpdateAd(prevState: AdActionState, formData: FormD
   const data = validatedFields.data;
 
   try {
+    let adToReturn: Ad;
     if (isEditing) {
       const adRef = doc(db, 'advertisements', id);
       await updateDoc(adRef, data);
       const updatedDoc = await getDoc(adRef);
-      const updatedAd = { id, ...updatedDoc.data() } as Ad;
-      revalidatePath('/admin/advertisements');
-      return { success: true, message: 'Ad updated.', ad: updatedAd };
+      adToReturn = { id, ...updatedDoc.data() } as Ad;
     } else {
       const docRef = await addDoc(collection(db, 'advertisements'), {
         ...data,
         createdAt: serverTimestamp(),
       });
       const newDoc = await getDoc(docRef);
-      const newAd = { id: newDoc.id, ...newDoc.data() } as Ad;
-      revalidatePath('/admin/advertisements');
-      return { success: true, message: 'Ad created.', ad: newAd };
+      adToReturn = { id: newDoc.id, ...newDoc.data() } as Ad;
     }
+    revalidatePath('/admin/advertisements');
+    return { 
+        success: true, 
+        message: `Ad ${isEditing ? 'updated' : 'created'}.`, 
+        ad: adToReturn 
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
     return { success: false, message: `Failed to ${isEditing ? 'update' : 'create'} ad. ${message}`, ad: null };
@@ -240,6 +244,7 @@ export async function getVideos(): Promise<Video[]> {
     const videosCollection = collection(db, 'videos');
     const q = query(videosCollection, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
+    if (snapshot.empty) return [];
     return snapshot.docs.map(doc => ({ 
       id: doc.id,
       ...doc.data(),
@@ -270,25 +275,27 @@ export async function createOrUpdateVideo(prevState: VideoActionState, formData:
   const data = validatedFields.data;
 
   try {
+     let videoToReturn: Video;
     if (isEditing) {
       const videoRef = doc(db, 'videos', id);
       await updateDoc(videoRef, data);
       const updatedDoc = await getDoc(videoRef);
-      const updatedVideo = { id: updatedDoc.id, ...updatedDoc.data() } as Video;
-      revalidatePath('/admin/videos');
-      revalidatePath('/video');
-      return { success: true, message: 'Video updated.', video: updatedVideo };
+      videoToReturn = { id: updatedDoc.id, ...updatedDoc.data() } as Video;
     } else {
       const docRef = await addDoc(collection(db, 'videos'), {
         ...data,
         createdAt: serverTimestamp(),
       });
       const newDoc = await getDoc(docRef);
-      const newVideo = { id: newDoc.id, ...newDoc.data() } as Video;
-      revalidatePath('/admin/videos');
-      revalidatePath('/video');
-      return { success: true, message: 'Video created.', video: newVideo };
+      videoToReturn = { id: newDoc.id, ...newDoc.data() } as Video;
     }
+    revalidatePath('/admin/videos');
+    revalidatePath('/video');
+    return { 
+        success: true, 
+        message: `Video ${isEditing ? 'updated' : 'created'}.`, 
+        video: videoToReturn 
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
     return { success: false, message: `Failed to ${isEditing ? 'update' : 'create'} video. ${message}`, video: null };
@@ -336,18 +343,12 @@ export async function updateUserProfile(prevState: ProfileActionState, formData:
     }
 
     try {
-        // This is a placeholder for getting the user ID from a session or token.
-        // In a real app, you would need a robust way to get the authenticated user's ID on the server.
-        // For this example, we'll try to get it from the header, but this may not always work
-        // depending on how the client sends requests.
         const userId = await getUserIdFromSession();
         
         if (!userId) {
-            // This is a simulated path because we cannot securely get the user ID on the server
-            // without a proper session management setup.
             console.log(`(Simulated) Updating user profile with display name: ${displayName}`);
             revalidatePath('/profile');
-            return { success: true, message: "Profile updated successfully! (Note: This is simulated as user session is not fully configured)" };
+            return { success: true, message: "Profile updated successfully! (Simulated as user session is not fully configured for server actions)" };
         }
         
         await auth.updateUser(userId, { displayName });
@@ -360,5 +361,3 @@ export async function updateUserProfile(prevState: ProfileActionState, formData:
         return { success: false, message: `Failed to update profile: ${message}` };
     }
 }
-
-    
