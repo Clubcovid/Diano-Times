@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -13,6 +14,7 @@ import {
   Video,
   DatabaseZap,
   Newspaper,
+  Bot,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { auth } from '@/lib/firebase';
@@ -60,9 +62,18 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
               {item.label}
             </Link>
           ))}
-           <div className="px-3 py-2">
-                <span className="text-xs font-semibold text-muted-foreground">Tools</span>
+           <div className="px-3 py-2 mt-2">
+                <span className="text-xs font-semibold text-muted-foreground uppercase">Tools</span>
             </div>
+             <Link
+                href="/admin/autopilot"
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
+                    pathname === '/admin/autopilot' ? 'bg-muted text-primary' : 'text-muted-foreground'
+                }`}
+            >
+                <Bot className="h-4 w-4" />
+                Auto-Pilot
+            </Link>
             <Link
                 href="/admin/settings/seed"
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${

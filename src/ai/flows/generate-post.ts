@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { createPost, generateSlug } from '@/lib/actions';
 
 const GeneratePostInputSchema = z.object({
   topic: z.string().describe('The topic for the blog post.'),
@@ -29,6 +30,33 @@ export type GeneratePostOutput = z.infer<typeof GeneratePostOutputSchema>;
 export async function generatePost(input: GeneratePostInput): Promise<GeneratePostOutput> {
   return generatePostFlow(input);
 }
+
+export async function generateDraftPost(topic: string): Promise<{success: boolean, message: string, postId?: string}> {
+    try {
+        const postData = await generatePost({ topic });
+        const { success: slugSuccess, slug } = await generateSlug(postData.slug);
+
+        if (!slugSuccess || !slug) {
+            return { success: false, message: 'Failed to generate a unique slug.' };
+        }
+
+        const result = await createPost({
+            ...postData,
+            slug,
+            status: 'draft',
+        });
+
+        if (result.success) {
+            return { success: true, message: 'Draft created', postId: result.postId };
+        } else {
+            return { success: false, message: result.message };
+        }
+
+    } catch (e: any) {
+        return { success: false, message: e.message || 'An unknown error occurred.' };
+    }
+}
+
 
 const prompt = ai.definePrompt({
   name: 'generatePostPrompt',
