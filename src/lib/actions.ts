@@ -160,6 +160,7 @@ export async function getUsers(): Promise<AdminUser[]> {
         return userRecords.users.map(mapUser);
     } catch (error) {
         console.error('Error fetching users:', error);
+        // This might happen if the admin SDK is not initialized, e.g. missing credentials.
         return [];
     }
 }
