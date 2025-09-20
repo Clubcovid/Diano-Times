@@ -416,7 +416,7 @@ export async function seedDatabase(): Promise<{ success: boolean, message: strin
       const docRef = doc(postsCollection, post.id);
       // We remove the `id` from the object that gets written to the document fields
       const { id, ...postData } = post;
-      batch.set(docRef, postData);
+      batch.set(docRef, { ...postData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
     });
 
     // Seed Ads
@@ -431,8 +431,9 @@ export async function seedDatabase(): Promise<{ success: boolean, message: strin
     const videosCollection = collection(db, 'videos');
     mockVideos.forEach(video => {
       // Let Firestore generate an ID for videos
-      const docRef = doc(videosCollection);
-       batch.set(docRef, { ...video, createdAt: serverTimestamp() });
+      const docRef = doc(videosCollection, video.id);
+      const { id, ...videoData } = video;
+      batch.set(docRef, { ...videoData, createdAt: serverTimestamp() });
     });
 
     await batch.commit();

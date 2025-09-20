@@ -389,10 +389,12 @@ export const mockAds = [
 
 export const mockVideos = [
     {
+        id: 'video-1',
         title: 'Exploring the Maasai Mara',
         youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
     },
     {
+        id: 'video-2',
         title: 'Nairobi City Tour',
         youtubeUrl: 'https://www.youtube.com/watch?v=VIDEO_ID_2'
     }
