@@ -1,3 +1,4 @@
+
 'use client';
 
 import { format, formatDistanceToNow } from 'date-fns';
@@ -54,7 +55,7 @@ export function UsersTable({ users }: { users: AdminUser[] }) {
               <TableCell>
                 <div className="flex items-center gap-3">
                     <Avatar>
-                        <AvatarImage src={user.photoURL} alt={user.displayName} />
+                        <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName} />
                         <AvatarFallback>{user.displayName?.[0]}</AvatarFallback>
                     </Avatar>
                     <span className="font-medium">{user.displayName}</span>
