@@ -96,7 +96,7 @@ const generateMagazineFlow = ai.defineFlow(
 
     const {output} = await ai.generate({
       prompt,
-      model: 'gemini-2.5-flash',
+      model: 'googleai/gemini-2.5-flash',
       output: {
         schema: GenerateMagazineOutputSchema,
       },
