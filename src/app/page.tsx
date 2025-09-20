@@ -1,4 +1,5 @@
 
+
 import { PostCard } from '@/components/post-card';
 import { getPosts } from '@/lib/posts';
 import type { Post } from '@/lib/types';
@@ -8,11 +9,13 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, LogIn, UserPlus, LayoutDashboard } from 'lucide-react';
-import { mockTrendingTopics, mockAds, mockMarketData, mockWeatherData } from '@/lib/mock-data';
+import { mockTrendingTopics, mockMarketData, mockWeatherData } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getWeatherForecast, type WeatherForecast } from '@/ai/flows/get-weather-forecast';
 import { BlogHeader } from '@/components/blog-header';
 import { BackToTop } from '@/components/back-to-top';
+import { getAds } from '@/lib/actions';
+import type { Ad } from '@/lib/types';
 
 function PostsSkeleton() {
   return (
@@ -47,6 +50,42 @@ function TrendingTopics() {
             </CardContent>
         </Card>
     );
+}
+
+async function Advertisement() {
+  const ads: Ad[] = await getAds();
+
+  if (ads.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Advertisement</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {ads.slice(0, 1).map(ad => (
+          <Link href={ad.linkUrl} key={ad.id} target="_blank" rel="noopener noreferrer" className="block group">
+             <div className="relative aspect-square rounded-lg overflow-hidden">
+              <Image
+                src={ad.imageUrl}
+                alt={ad.title}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                data-ai-hint="advertisement marketing"
+              />
+              <div className="absolute inset-0 bg-black/40" />
+               <div className="absolute bottom-4 left-4 text-white">
+                  <h3 className="font-bold font-headline">{ad.title}</h3>
+                  <p className="text-xs">{ad.description}</p>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </CardContent>
+    </Card>
+  );
 }
 
 async function PostsSection() {
@@ -119,31 +158,9 @@ async function PostsSection() {
       </div>
       <aside className="hidden lg:block lg:col-span-1 space-y-8">
           <TrendingTopics />
-          <Card>
-            <CardHeader>
-              <CardTitle>Advertisement</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {mockAds.map(ad => (
-                <Link href={ad.linkUrl} key={ad.id} target="_blank" rel="noopener noreferrer" className="block group">
-                   <div className="relative aspect-square rounded-lg overflow-hidden">
-                    <Image
-                      src={ad.imageUrl}
-                      alt={ad.alt}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      data-ai-hint="advertisement marketing"
-                    />
-                    <div className="absolute inset-0 bg-black/40" />
-                     <div className="absolute bottom-4 left-4 text-white">
-                        <h3 className="font-bold font-headline">{ad.title}</h3>
-                        <p className="text-xs">{ad.description}</p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </CardContent>
-          </Card>
+          <Suspense>
+            <Advertisement />
+          </Suspense>
       </aside>
     </div>
   );
