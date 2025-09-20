@@ -415,3 +415,5 @@ export const mockWeatherData: WeatherForecast[] = [
     { location: 'Kisumu, Kenya', temperature: '26°C', condition: 'Chance of Rain', icon: 'CloudRain' },
     { location: 'Eldoret, Kenya', temperature: '20°C', condition: 'Cloudy', icon: 'Cloud' },
 ];
+
+    

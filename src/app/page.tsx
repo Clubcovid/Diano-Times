@@ -12,6 +12,7 @@ import { mockTrendingTopics, mockAds, mockMarketData, mockWeatherData } from '@/
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getWeatherForecast, type WeatherForecast } from '@/ai/flows/get-weather-forecast';
 import { BlogHeader } from '@/components/blog-header';
+import { BackToTop } from '@/components/back-to-top';
 
 function PostsSkeleton() {
   return (
@@ -27,6 +28,25 @@ function PostsSkeleton() {
       ))}
     </div>
   );
+}
+
+function TrendingTopics() {
+    return (
+        <Card>
+            <CardHeader>
+              <CardTitle>Trending Topics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {mockTrendingTopics.map((topic, index) => (
+                  <li key={index} className="text-sm font-medium text-primary hover:underline">
+                    <Link href="#">{topic}</Link>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+        </Card>
+    );
 }
 
 async function PostsSection() {
@@ -77,6 +97,10 @@ async function PostsSection() {
             </Link>
           </section>
         )}
+        
+        <div className="lg:hidden mb-8">
+            <TrendingTopics />
+        </div>
 
         {otherPosts.length > 0 ? (
           <div className="grid gap-8 md:grid-cols-2">
@@ -93,28 +117,15 @@ async function PostsSection() {
             </div>
         )}
       </div>
-      <aside className="lg:col-span-1 space-y-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Trending Topics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {mockTrendingTopics.map((topic, index) => (
-                  <li key={index} className="text-sm font-medium text-primary hover:underline">
-                    <Link href="#">{topic}</Link>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+      <aside className="hidden lg:block lg:col-span-1 space-y-8">
+          <TrendingTopics />
           <Card>
             <CardHeader>
               <CardTitle>Advertisement</CardTitle>
             </CardHeader>
             <CardContent>
               {mockAds.map(ad => (
-                <Link href={ad.link} key={ad.id} target="_blank" rel="noopener noreferrer" className="block group">
+                <Link href={ad.linkUrl} key={ad.id} target="_blank" rel="noopener noreferrer" className="block group">
                    <div className="relative aspect-square rounded-lg overflow-hidden">
                     <Image
                       src={ad.imageUrl}
@@ -288,6 +299,9 @@ export default function HomePage() {
           &copy; {new Date().getFullYear()} Diano Times. All rights reserved.
         </div>
       </footer>
+      <BackToTop />
     </div>
   );
 }
+
+    
