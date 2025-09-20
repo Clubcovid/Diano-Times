@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Generates a URL-friendly slug from a blog post title using an LLM.
@@ -9,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { isAiFeatureEnabled } from '@/lib/ai-flags';
 
 const GenerateUrlFriendlySlugInputSchema = z.object({
   title: z.string().describe('The title of the blog post.'),
@@ -21,6 +23,9 @@ const GenerateUrlFriendlySlugOutputSchema = z.object({
 export type GenerateUrlFriendlySlugOutput = z.infer<typeof GenerateUrlFriendlySlugOutputSchema>;
 
 export async function generateUrlFriendlySlug(input: GenerateUrlFriendlySlugInput): Promise<GenerateUrlFriendlySlugOutput> {
+  if (!(await isAiFeatureEnabled('isUrlSlugGenerationEnabled'))) {
+    throw new Error('AI-powered slug generation is disabled by the administrator.');
+  }
   return generateUrlFriendlySlugFlow(input);
 }
 

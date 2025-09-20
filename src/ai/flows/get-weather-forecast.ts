@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A weather forecasting AI agent.
@@ -9,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { isAiFeatureEnabled } from '@/lib/ai-flags';
 
 const GetWeatherForecastInputSchema = z.object({
   location: z.string().describe('The city and country for which to get the weather forecast, e.g., "Nairobi, Kenya".'),
@@ -24,6 +26,9 @@ const WeatherForecastSchema = z.object({
 export type WeatherForecast = z.infer<typeof WeatherForecastSchema>;
 
 export async function getWeatherForecast(input: GetWeatherForecastInput): Promise<WeatherForecast> {
+  if (!(await isAiFeatureEnabled('isWeatherForecastEnabled'))) {
+    throw new Error('AI-powered weather forecast is disabled by the administrator.');
+  }
   return getWeatherForecastFlow(input);
 }
 

@@ -18,6 +18,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { getPosts } from './posts';
 import { generateTextFromHtml } from './pdf';
 import { subDays } from 'date-fns';
+import type { AiFeatureFlags } from './ai-flags';
+import { isAiFeatureEnabled } from './ai-flags';
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
   if (!db) {
@@ -37,6 +39,9 @@ async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> 
 }
 
 export async function generateSlug(title: string): Promise<{ success: boolean; slug?: string; error?: string }> {
+  if (!(await isAiFeatureEnabled('isUrlSlugGenerationEnabled'))) {
+    return { success: false, error: 'AI slug generation is currently disabled by the admin.' };
+  }
   if (!title) {
     return { success: false, error: 'Title is required.' };
   }
@@ -458,6 +463,9 @@ type GeneratePostResult = {
 };
 
 export async function generateAndSavePost(topic: string): Promise<GeneratePostResult> {
+  if (!(await isAiFeatureEnabled('isPostGenerationEnabled'))) {
+    return { success: false, message: 'AI Post Generation is currently disabled by the admin.' };
+  }
   if (!db) {
     return { success: false, message: "Database not connected. Cannot save post." };
   }
@@ -522,6 +530,9 @@ export async function getMagazines(): Promise<Magazine[]> {
 }
 
 export async function generateMagazineText(): Promise<{ success: boolean; message: string; fileUrl?: string; }> {
+    if (!(await isAiFeatureEnabled('isMagazineGenerationEnabled'))) {
+      return { success: false, message: 'AI Magazine Generation is currently disabled by the admin.' };
+    }
     if (!db) {
         return { success: false, message: 'Database not connected.' };
     }
@@ -576,5 +587,22 @@ export async function generateMagazineText(): Promise<{ success: boolean; messag
         const message = error instanceof Error ? error.message : "An unknown error occurred.";
         console.error("Error generating magazine file:", error);
         return { success: false, message: `Failed to generate magazine: ${message}` };
+    }
+}
+
+
+export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ success: boolean, message?: string }> {
+    const docRef = db?.collection('ai_settings').doc('feature_flags');
+    if (!docRef) {
+        return { success: false, message: 'Database not available.' };
+    }
+    try {
+        await docRef.set(flags, { merge: true });
+        revalidatePath('/admin/settings/ai');
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating AI feature flags:', error);
+        const message = error instanceof Error ? error.message : "An unknown error occurred.";
+        return { success: false, message };
     }
 }

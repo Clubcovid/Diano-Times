@@ -8,6 +8,7 @@ import { ai } from '@/ai/genkit';
 import { getPosts } from '@/lib/posts';
 import { z } from 'genkit';
 import { htmlToText } from 'html-to-text';
+import { isAiFeatureEnabled } from '@/lib/ai-flags';
 
 // Define the schema for the tool that searches posts
 const searchPostsTool = ai.defineTool(
@@ -58,6 +59,12 @@ export type AskDianoOutput = z.infer<typeof AskDianoOutputSchema>;
 
 
 export async function askDiano(input: AskDianoInput): Promise<AskDianoOutput> {
+    if (!(await isAiFeatureEnabled('isAskDianoEnabled'))) {
+        return {
+            answer: 'The "Ask Diano" feature is currently disabled by the administrator.',
+            sources: [],
+        };
+    }
     return askDianoFlow(input);
 }
 
@@ -110,4 +117,3 @@ const askDianoFlow = ai.defineFlow(
     return llmResponse.output!;
   }
 );
-

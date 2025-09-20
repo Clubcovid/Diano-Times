@@ -9,6 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { isAiFeatureEnabled } from '@/lib/ai-flags';
 
 const SuggestTopicsOutputSchema = z.object({
   topics: z.array(z.string()).describe('A list of 5 engaging and SEO-friendly blog post topics.'),
@@ -16,6 +17,9 @@ const SuggestTopicsOutputSchema = z.object({
 export type SuggestTopicsOutput = z.infer<typeof SuggestTopicsOutputSchema>;
 
 export async function suggestTopics(): Promise<SuggestTopicsOutput> {
+  if (!(await isAiFeatureEnabled('isTopicSuggestionEnabled'))) {
+    throw new Error('AI-powered topic suggestion is disabled by the administrator.');
+  }
   return suggestTopicsFlow();
 }
 

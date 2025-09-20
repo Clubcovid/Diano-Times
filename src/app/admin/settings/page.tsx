@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ThemeToggle } from '@/components/theme-toggle';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { DatabaseZap } from 'lucide-react';
+import { DatabaseZap, Bot } from 'lucide-react';
 
 
 export default function SettingsPage() {
@@ -38,10 +38,24 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>Site Tools</CardTitle>
           <CardDescription>
-            Advanced tools for managing your site data.
+            Advanced tools for managing your site data and AI features.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                    <p className="font-semibold">AI Feature Management</p>
+                    <p className="text-sm text-muted-foreground">
+                        Enable or disable individual AI-powered features.
+                    </p>
+                </div>
+                 <Button asChild>
+                    <Link href="/admin/settings/ai">
+                        <Bot className="mr-2 h-4 w-4" />
+                        Manage AI Features
+                    </Link>
+                </Button>
+            </div>
             <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                     <p className="font-semibold">Seed Database</p>

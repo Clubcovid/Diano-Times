@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Generates a weekly magazine from recent blog posts.
@@ -7,6 +8,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {getPosts} from '@/lib/posts';
 import {format} from 'date-fns';
+import { isAiFeatureEnabled } from '@/lib/ai-flags';
 
 const GenerateMagazineInputSchema = z.object({
   postIds: z.array(z.string()).describe('An array of post IDs to include in the magazine.'),
@@ -40,6 +42,10 @@ export type GenerateMagazineOutput = z.infer<typeof GenerateMagazineOutputSchema
 
 
 export async function generateMagazine(input: {postIds: string[]}): Promise<GenerateMagazineOutput> {
+  if (!(await isAiFeatureEnabled('isMagazineGenerationEnabled'))) {
+    throw new Error('AI-powered magazine generation is disabled by the administrator.');
+  }
+
   const posts = await getPosts({ids: input.postIds});
 
   if (posts.length === 0) {

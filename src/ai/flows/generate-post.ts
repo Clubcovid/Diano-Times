@@ -11,6 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { createPost, generateSlug } from '@/lib/actions';
+import { isAiFeatureEnabled } from '@/lib/ai-flags';
 
 const GeneratePostInputSchema = z.object({
   topic: z.string().describe('The topic for the blog post.'),
@@ -28,16 +29,22 @@ export type GeneratePostOutput = z.infer<typeof GeneratePostOutputSchema>;
 
 
 export async function generatePost(input: GeneratePostInput): Promise<GeneratePostOutput> {
+  if (!(await isAiFeatureEnabled('isPostGenerationEnabled'))) {
+    throw new Error('AI-powered post generation is disabled by the administrator.');
+  }
   return generatePostFlow(input);
 }
 
 export async function generateDraftPost(topic: string): Promise<{success: boolean, message: string, postId?: string}> {
     try {
+        if (!(await isAiFeatureEnabled('isPostGenerationEnabled'))) {
+            return { success: false, message: 'AI-powered post generation is disabled by the administrator.' };
+        }
         const postData = await generatePost({ topic });
-        const { success: slugSuccess, slug } = await generateSlug(postData.slug);
+        const { success: slugSuccess, slug, error: slugError } = await generateSlug(postData.slug);
 
         if (!slugSuccess || !slug) {
-            return { success: false, message: 'Failed to generate a unique slug.' };
+            return { success: false, message: slugError || 'Failed to generate a unique slug.' };
         }
 
         const result = await createPost({
