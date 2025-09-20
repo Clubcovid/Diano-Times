@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { db, auth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
 import { generatePost as generatePostAI } from '@/ai/flows/generate-post';
-import { postSchema, adSchema, videoSchema } from './schemas';
+import { postSchema, adSchema, videoSchema, type PostFormData } from './schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
 import type { AdminUser, Ad, Video, Post } from './types';
@@ -60,19 +60,10 @@ type FormState = {
   postId?: string;
 };
 
-export async function createPost(prevState: FormState, formData: FormData): Promise<FormState> {
+export async function createPost(rawData: PostFormData): Promise<FormState> {
   if (!db) {
     return { success: false, message: 'Database not connected. Is the admin SDK configured correctly?' };
   }
-
-  const rawData = {
-    title: formData.get('title'),
-    slug: formData.get('slug'),
-    content: formData.get('content'),
-    coverImage: formData.get('coverImage'),
-    tags: formData.getAll('tags'),
-    status: formData.get('status'),
-  };
 
   const validatedFields = postSchema.safeParse(rawData);
 
@@ -111,19 +102,10 @@ export async function createPost(prevState: FormState, formData: FormData): Prom
   }
 }
 
-export async function updatePost(postId: string, prevState: FormState, formData: FormData): Promise<FormState> {
+export async function updatePost(postId: string, rawData: PostFormData): Promise<FormState> {
   if (!db) {
     return { success: false, message: 'Database not connected.' };
   }
-
-   const rawData = {
-    title: formData.get('title'),
-    slug: formData.get('slug'),
-    content: formData.get('content'),
-    coverImage: formData.get('coverImage'),
-    tags: formData.getAll('tags'),
-    status: formData.get('status'),
-  };
 
   const validatedFields = postSchema.safeParse(rawData);
 

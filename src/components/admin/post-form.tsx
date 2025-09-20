@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useTransition, useActionState } from 'react';
+import { useEffect, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -32,18 +32,14 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Wand2, Save } from 'lucide-react';
 
-const initialState = {
-  success: false,
-  message: '',
-  errors: [],
-};
-
-const availableTags = ['Fashion', 'Gadgets', 'Lifestyle', 'Technology', 'Wellness'];
+const availableTags = ['Fashion', 'Gadgets', 'Lifestyle', 'Technology', 'Wellness', 'Travel', 'Food', 'Business', 'Culture', 'Art', 'Reviews', 'Tips', 'Nairobi', 'Kenya'];
 
 export function PostForm({ post }: { post?: Post }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isGeneratingSlug, startSlugGeneration] = useTransition();
+  const [isSubmitting, startTransition] = useTransition();
+  const isEditing = !!post;
 
   const form = useForm<PostFormData>({
     resolver: zodResolver(postSchema),
@@ -57,32 +53,6 @@ export function PostForm({ post }: { post?: Post }) {
     },
   });
 
-  const action = post ? updatePost.bind(null, post.id) : createPost;
-  const [state, formAction] = useActionState(action, initialState);
-
-  useEffect(() => {
-    if (state.success) {
-      toast({
-        title: 'Success!',
-        description: state.message,
-      });
-      router.push('/admin/posts');
-    } else if (state.message) {
-      toast({
-        title: 'Error',
-        description: state.message,
-        variant: 'destructive',
-      });
-    }
-
-    if (state.errors) {
-        state.errors.forEach(error => {
-            form.setError(error.path[0] as keyof PostFormData, { message: error.message });
-        });
-    }
-
-  }, [state, router, toast, form]);
-
   const handleGenerateSlug = () => {
     const title = form.getValues('title');
     if (!title) {
@@ -94,6 +64,7 @@ export function PostForm({ post }: { post?: Post }) {
         if (result.success && result.slug) {
             form.setValue('slug', result.slug);
             form.clearErrors('slug');
+            toast({ title: 'Success', description: 'Slug generated successfully.' });
         } else {
             toast({ title: 'Error', description: result.error, variant: 'destructive' });
         }
@@ -101,15 +72,32 @@ export function PostForm({ post }: { post?: Post }) {
   }
 
   const onSubmit = (data: PostFormData) => {
-    const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-        if (key === 'tags' && Array.isArray(value)) {
-            value.forEach(tag => formData.append('tags', tag));
+    startTransition(async () => {
+        const action = isEditing
+            ? updatePost.bind(null, post.id, data)
+            : createPost.bind(null, data);
+
+        const result = await action();
+
+        if (result.success) {
+            toast({
+                title: 'Success!',
+                description: result.message,
+            });
+            router.push('/admin/posts');
         } else {
-            formData.append(key, value as string);
+            toast({
+                title: 'Error',
+                description: result.message,
+                variant: 'destructive',
+            });
+            if (result.errors) {
+                result.errors.forEach(error => {
+                    form.setError(error.path[0] as keyof PostFormData, { message: error.message });
+                });
+            }
         }
     });
-    formAction(formData);
   };
 
   return (
@@ -161,7 +149,7 @@ export function PostForm({ post }: { post?: Post }) {
           </div>
           <div className="space-y-2">
             <Label>Tags</Label>
-            <div className="flex flex-wrap gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {availableTags.map((tag) => (
                     <div key={tag} className="flex items-center gap-2">
                         <Checkbox
@@ -183,7 +171,7 @@ export function PostForm({ post }: { post?: Post }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select {...form.register('status')} defaultValue={form.getValues('status')} onValueChange={(value) => form.setValue('status', value as 'draft' | 'published')}>
+            <Select onValueChange={(value) => form.setValue('status', value as 'draft' | 'published')} defaultValue={form.getValues('status')}>
                 <SelectTrigger id="status">
                     <SelectValue placeholder="Select status" />
                 </SelectTrigger>
@@ -196,9 +184,9 @@ export function PostForm({ post }: { post?: Post }) {
           </div>
         </CardContent>
         <CardFooter>
-            <Button type="submit" disabled={form.formState.isSubmitting}>
+            <Button type="submit" disabled={isSubmitting}>
               <Save className="mr-2 h-4 w-4" />
-              {form.formState.isSubmitting ? 'Saving...' : (post ? 'Update Post' : 'Create Post')}
+              {isSubmitting ? 'Saving...' : (post ? 'Update Post' : 'Create Post')}
             </Button>
         </CardFooter>
       </Card>
