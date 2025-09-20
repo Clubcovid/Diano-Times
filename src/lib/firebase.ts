@@ -4,41 +4,35 @@ import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
+// Your web app's Firebase configuration
 const firebaseConfig: FirebaseOptions = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  apiKey: "AIzaSyD-hGBE5N3gzZHIwvq1bsTtegURUlZUt7w",
+  authDomain: "studio-2630134466-e06b1.firebaseapp.com",
+  databaseURL: "https://studio-2630134466-e06b1-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "studio-2630134466-e06b1",
+  storageBucket: "studio-2630134466-e06b1.firebasestorage.app",
+  messagingSenderId: "1036795142239",
+  appId: "1:1036795142239:web:1a32fd0ddba4ff2fe97bea"
 };
 
-const hasClientConfig = firebaseConfig.apiKey && firebaseConfig.projectId;
-
-if (!hasClientConfig) {
-    console.warn('Firebase client credentials are not available. Client-side Firebase features will be disabled. Please check your NEXT_PUBLIC_FIREBASE environment variables.');
-}
 
 // Singleton pattern to initialize and get Firebase services
-let app: FirebaseApp | null = null;
-let auth: Auth | null = null;
-let db: Firestore | null = null;
+let app: FirebaseApp;
+if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+} else {
+    app = getApp();
+}
 
-if (hasClientConfig) {
-    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-    
-    if (app) {
-        auth = getAuth(app);
-        db = getFirestore(app);
-        if (typeof window !== 'undefined') {
-            isSupported().then(yes => {
-                if (yes && firebaseConfig.measurementId) {
-                    getAnalytics(app as FirebaseApp);
-                }
-            });
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
+
+if (typeof window !== 'undefined') {
+    isSupported().then(yes => {
+        if (yes && firebaseConfig.measurementId) {
+            getAnalytics(app);
         }
-    }
+    });
 }
 
 
