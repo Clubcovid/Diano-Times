@@ -4,7 +4,7 @@
 import { db, auth } from '@/lib/firebase-admin';
 import type { ChatSession, ChatMessage } from '@/lib/types';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
-import { askDianoFlow } from './ask-diano-flow';
+import { askDiano } from './ask-diano-flow';
 
 async function getUserIdFromSession(headers?: Headers): Promise<string | null> {
     const authHeader = headers?.get('Authorization');
@@ -59,7 +59,7 @@ export async function getUserChatSession(options?: { headers?: Headers }): Promi
     }
 }
 
-export async function saveAndContinueConversation(sessionId: string, userMessage: ChatMessage, options?: { headers?: Headers }): Promise<ChatSession> {
+export async function saveAndContinueConversation(sessionId: string, userMessage: ChatMessage, options: { headers: Headers }): Promise<ChatSession> {
     if (!db) throw new Error('Database not connected.');
     
     const userId = await getUserIdFromSession(options?.headers);
@@ -79,11 +79,10 @@ export async function saveAndContinueConversation(sessionId: string, userMessage
     const currentData = currentSession.data() as Omit<ChatSession, 'id'>;
 
     // Get AI response, passing headers through
-    const aiResponse = await askDianoFlow({
+    const aiResponse = await askDiano({
         question: userMessage.content,
         history: currentData.messages,
-        headers: options?.headers,
-    });
+    }, { headers: options.headers });
 
     const modelMessage: ChatMessage = {
         role: 'model',

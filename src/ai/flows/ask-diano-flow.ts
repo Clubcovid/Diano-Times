@@ -26,7 +26,7 @@ const searchPostsTool = ai.defineTool(
       ),
     }),
   },
-  async ({ query }) => {
+  async ({ query }, context) => {
     console.log(`Searching posts with query: ${query || 'LATEST'}`);
     const posts = await getPosts({ searchQuery: query, limit: 3, publishedOnly: true });
     return {
@@ -45,7 +45,6 @@ const AskDianoInputSchema = z.object({
       role: z.enum(['user', 'model']),
       content: z.string(),
   })).optional().describe('The previous conversation history.'),
-  headers: z.any().optional(),
 });
 export type AskDianoInput = z.infer<typeof AskDianoInputSchema>;
 
@@ -60,14 +59,14 @@ const AskDianoOutputSchema = z.object({
 export type AskDianoOutput = z.infer<typeof AskDianoOutputSchema>;
 
 
-export async function askDiano(input: AskDianoInput): Promise<AskDianoOutput> {
+export async function askDiano(input: AskDianoInput, options: { headers: any }): Promise<AskDianoOutput> {
     if (!(await isAiFeatureEnabled('isAskDianoEnabled'))) {
         return {
             answer: 'The "Ask Diano" feature is currently disabled by the administrator.',
             sources: [],
         };
     }
-    return askDianoFlow(input);
+    return askDianoFlow(input, options);
 }
 
 
@@ -77,8 +76,8 @@ export const askDianoFlow = ai.defineFlow(
     inputSchema: AskDianoInputSchema,
     outputSchema: AskDianoOutputSchema,
   },
-  async (input) => {
-    const { question, history, headers } = input;
+  async (input, context) => {
+    const { question, history } = input;
     
     const llmResponse = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
@@ -112,7 +111,7 @@ export const askDianoFlow = ai.defineFlow(
       output: {
         schema: AskDianoOutputSchema,
       },
-    }, { headers }); // Pass headers here
+    }, context); // Pass headers here
 
     return llmResponse.output!;
   }

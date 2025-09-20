@@ -3,9 +3,6 @@
 
 import { db } from './firebase-admin';
 
-// This is now defined in the component that uses it: ai-feature-form.tsx
-// export const AI_FEATURES = { ... }
-
 export type AiFeature = 
   | 'isUrlSlugGenerationEnabled'
   | 'isWeatherForecastEnabled'

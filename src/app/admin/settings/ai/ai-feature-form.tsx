@@ -15,8 +15,7 @@ interface AiFeatureFormProps {
     initialFlags: AiFeatureFlags;
 }
 
-// Moved from ai-flags.ts to resolve "use server" build error
-const AI_FEATURES = {
+const AI_FEATURES: Record<keyof AiFeatureFlags, string> = {
   isUrlSlugGenerationEnabled: 'URL Slug Generation',
   isWeatherForecastEnabled: 'Weather Ticker',
   isPostGenerationEnabled: 'AI Post Generation (Manual & Auto-Pilot)',
@@ -54,15 +53,15 @@ export function AiFeatureForm({ initialFlags }: AiFeatureFormProps) {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-6">
-                {Object.entries(AI_FEATURES).map(([key, label]) => (
+                {(Object.keys(AI_FEATURES) as Array<keyof AiFeatureFlags>).map((key) => (
                     <Controller
                         key={key}
-                        name={key as keyof AiFeatureFlags}
+                        name={key}
                         control={control}
                         render={({ field }) => (
                             <div className="flex items-center justify-between rounded-lg border p-4">
                                 <Label htmlFor={key} className="flex flex-col space-y-1">
-                                    <span>{label}</span>
+                                    <span>{AI_FEATURES[key]}</span>
                                     <span className="font-normal leading-snug text-muted-foreground">
                                         Toggle this feature on or off globally.
                                     </span>
