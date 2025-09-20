@@ -114,21 +114,16 @@ function createMagazineHtml(data: GenerateMagazineOutput): string {
 export async function generatePdfFromHtml(magazineData: GenerateMagazineOutput): Promise<Buffer> {
     const htmlContent = createMagazineHtml(magazineData);
     
-    // Check if running in a serverless environment where sandbox might be restricted
-    const isServerless = !!process.env.NEXT_PUBLIC_VERCEL_URL || !!process.env.FUNCTION_TARGET;
-
     const browser = await puppeteer.launch({
-        args: isServerless ? ['--no-sandbox', '--disable-setuid-sandbox'] : [],
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
         headless: true,
     });
 
     const page = await browser.newPage();
     
-    // Set a realistic viewport and wait for network activity to settle
     await page.setViewport({ width: 1080, height: 1024 });
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
-    // Give fonts and styles a moment to load
     await page.evaluateHandle('document.fonts.ready');
 
     const pdfBuffer = await page.pdf({
