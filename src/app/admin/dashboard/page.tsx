@@ -2,20 +2,13 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { getPosts } from '@/lib/posts';
 import { getUsers } from '@/lib/actions.tsx';
-import { DashboardCharts, type PostCategoryData, type EngagementData, type TrafficData } from '@/components/admin/dashboard-charts';
+import { DashboardCharts, type PostCategoryData, type EngagementData } from '@/components/admin/dashboard-charts';
 import type { Post } from '@/lib/types';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { FileText, Users, CheckCircle, Edit, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format, subMonths, getMonth, getYear } from 'date-fns';
-
-const trafficData: TrafficData = [
-  { name: 'Direct', value: 400, fill: 'hsl(var(--chart-1))' },
-  { name: 'Organic', value: 300, fill: 'hsl(var(--chart-2))' },
-  { name: 'Referral', value: 200, fill: 'hsl(var(--chart-3))' },
-  { name: 'Social', value: 278, fill: 'hsl(var(--chart-4))' },
-];
 
 function getEngagementData(posts: Post[]): EngagementData {
     const last6Months = Array.from({ length: 6 }).map((_, i) => {
@@ -59,7 +52,7 @@ async function getCategoryData(posts: Post[]): Promise<PostCategoryData> {
 
     return Object.entries(categoryCounts).map(([name, count], index) => ({
         name,
-        posts: count,
+        value: count,
         fill: chartColors[index % chartColors.length]
     }));
 }
@@ -179,7 +172,6 @@ export default async function DashboardPage() {
       <DashboardCharts
         postsData={postsData}
         engagementData={engagementData}
-        trafficData={trafficData}
       />
     </div>
   );
