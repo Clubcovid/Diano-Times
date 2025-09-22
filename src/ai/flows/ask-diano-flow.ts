@@ -111,7 +111,7 @@ export const askDianoFlow = ai.defineFlow(
       output: {
         schema: AskDianoOutputSchema,
       },
-    }, context); // Pass headers here
+    }, context); // Pass context here
 
     return llmResponse.output!;
   }
