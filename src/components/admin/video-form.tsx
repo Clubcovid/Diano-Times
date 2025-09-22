@@ -18,8 +18,10 @@ import { Label } from '@/components/ui/label';
 import { Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+type SerializableVideo = Omit<Video, 'createdAt'> & { createdAt: string };
+
 interface VideoFormProps {
-  video?: Video | null;
+  video?: SerializableVideo | null;
   onSuccess?: () => void;
 }
 
@@ -90,5 +92,3 @@ export function VideoForm({ video, onSuccess }: VideoFormProps) {
     </form>
   );
 }
-
-    

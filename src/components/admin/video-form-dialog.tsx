@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,8 +13,10 @@ import {
 } from '@/components/ui/dialog';
 import { VideoForm } from './video-form';
 
+type SerializableVideo = Omit<Video, 'createdAt'> & { createdAt: string };
+
 interface VideoFormDialogProps {
-  video?: Video | null;
+  video?: SerializableVideo | null;
   children: React.ReactNode;
 }
 

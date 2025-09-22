@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -29,13 +30,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { Ad } from '@/lib/types';
 import { AdFormDialog } from './ad-form-dialog';
 import { deleteAd } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
-export function AdCard({ ad }: { ad: Ad }) {
+type SerializableAd = {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  linkUrl: string;
+  createdAt: string;
+}
+
+export function AdCard({ ad }: { ad: SerializableAd }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isDeleting, startDeleteTransition] = useTransition();

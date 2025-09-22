@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -31,13 +32,15 @@ import { deleteVideo } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
+type SerializableVideo = Omit<Video, 'createdAt'> & { createdAt: string };
+
 function getYouTubeId(url: string) {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
 }
 
-export function VideoCard({ video }: { video: Video }) {
+export function VideoCard({ video }: { video: SerializableVideo }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isDeleting, startDeleteTransition] = useTransition();

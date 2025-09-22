@@ -10,10 +10,15 @@ import { AdCard } from '@/components/admin/ad-card';
 import type { Ad } from '@/lib/types';
 import { getAds } from '@/lib/actions';
 
+// This is a type guard to check if the ad has serializable dates
+type SerializableAd = Omit<Ad, 'createdAt'> & {
+  createdAt: string;
+};
+
 export default async function AdvertisementsPage() {
   const ads: Ad[] = await getAds();
   
-  const serializableAds = ads.map(ad => ({
+  const serializableAds: SerializableAd[] = ads.map(ad => ({
     ...ad,
     createdAt: ad.createdAt?.toDate ? ad.createdAt.toDate().toISOString() : new Date().toISOString(),
   }));

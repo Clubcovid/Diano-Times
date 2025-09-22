@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/use-toast';
 import { adSchema, type AdFormData } from '@/lib/schemas';
-import type { Ad } from '@/lib/types';
 import { createOrUpdateAd } from '@/lib/actions';
 import {
   DialogFooter,
@@ -18,18 +17,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import type { Ad } from '@/lib/types';
 
+type SerializableAd = Omit<Ad, 'createdAt'> & { createdAt: string };
 
 interface AdFormProps {
-  ad?: Ad | null;
+  ad?: SerializableAd | null;
   onSuccess?: () => void;
 }
-
-const initialState = {
-  success: false,
-  message: '',
-  ad: null,
-};
 
 export function AdForm({ ad, onSuccess }: AdFormProps) {
   const router = useRouter();
@@ -51,7 +46,7 @@ export function AdForm({ ad, onSuccess }: AdFormProps) {
     },
   });
 
-  const [state, formAction] = useFormState(createOrUpdateAd, initialState);
+  const [state, formAction] = useFormState(createOrUpdateAd, { success: false, message: '', ad: null });
 
   useEffect(() => {
     if (state.success && state.ad) {
@@ -111,5 +106,3 @@ export function AdForm({ ad, onSuccess }: AdFormProps) {
     </form>
   );
 }
-
-    

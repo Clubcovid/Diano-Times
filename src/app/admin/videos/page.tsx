@@ -10,10 +10,15 @@ import { getVideos } from '@/lib/actions';
 import { VideoFormDialog } from '@/components/admin/video-form-dialog';
 import { VideoCard } from '@/components/admin/video-card';
 
+// This is a type guard to check if the video has serializable dates
+type SerializableVideo = Omit<Video, 'createdAt'> & {
+  createdAt: string;
+};
+
 export default async function VideosPage() {
   const videos: Video[] = await getVideos();
 
-  const serializableVideos = videos.map(video => ({
+  const serializableVideos: SerializableVideo[] = videos.map(video => ({
     ...video,
     createdAt: video.createdAt?.toDate ? video.createdAt.toDate().toISOString() : new Date().toISOString(),
   }));

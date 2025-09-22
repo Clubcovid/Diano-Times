@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,8 +13,10 @@ import {
 } from '@/components/ui/dialog';
 import { AdForm } from './ad-form';
 
+type SerializableAd = Omit<Ad, 'createdAt'> & { createdAt: string };
+
 interface AdFormDialogProps {
-  ad?: Ad | null;
+  ad?: SerializableAd | null;
   children: React.ReactNode;
 }
 
