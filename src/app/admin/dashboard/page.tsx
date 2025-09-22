@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { FileText, Users, CheckCircle, Edit, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import { format, subMonths, getMonth, getYear } from 'date-fns';
 
 const trafficData: TrafficData = [
   { name: 'Direct', value: 400, fill: 'hsl(var(--chart-1))' },
@@ -17,15 +17,31 @@ const trafficData: TrafficData = [
   { name: 'Social', value: 278, fill: 'hsl(var(--chart-4))' },
 ];
 
-const engagementData: EngagementData = [
-  { name: 'Jan', uv: 4000, pv: 2400, amt: 2400 },
-  { name: 'Feb', uv: 3000, pv: 1398, amt: 2210 },
-  { name: 'Mar', uv: 2000, pv: 9800, amt: 2290 },
-  { name: 'Apr', uv: 2780, pv: 3908, amt: 2000 },
-  { name: 'May', uv: 1890, pv: 4800, amt: 2181 },
-  { name: 'Jun', uv: 2390, pv: 3800, amt: 2500 },
-  { name: 'Jul', uv: 3490, pv: 4300, amt: 2100 },
-];
+function getEngagementData(posts: Post[]): EngagementData {
+    const last6Months = Array.from({ length: 6 }).map((_, i) => {
+        const d = subMonths(new Date(), i);
+        return { year: getYear(d), month: getMonth(d), name: format(d, 'MMM'), published: 0, drafts: 0 };
+    }).reverse();
+
+    posts.forEach(post => {
+        const postDate = post.createdAt.toDate();
+        const postYear = getYear(postDate);
+        const postMonth = getMonth(postDate);
+
+        const monthData = last6Months.find(m => m.year === postYear && m.month === postMonth);
+
+        if (monthData) {
+            if (post.status === 'published') {
+                monthData.published += 1;
+            } else {
+                monthData.drafts += 1;
+            }
+        }
+    });
+
+    return last6Months.map(({ name, published, drafts }) => ({ name, published, drafts }));
+}
+
 
 async function getCategoryData(posts: Post[]): Promise<PostCategoryData> {
     const categoryCounts = posts.reduce((acc, post) => {
@@ -95,6 +111,7 @@ export default async function DashboardPage() {
   const recentDrafts = draftPosts.slice(0,5);
 
   const postsData = await getCategoryData(publishedPosts);
+  const engagementData = getEngagementData(posts);
 
   return (
     <div className="space-y-6">

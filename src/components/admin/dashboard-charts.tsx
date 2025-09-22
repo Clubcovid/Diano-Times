@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export type PostCategoryData = { name: string; posts: number; fill: string; }[];
 export type TrafficData = { name: string; value: number; fill: string; }[];
-export type EngagementData = { name: string; uv: number; pv: number; amt: number; }[];
+export type EngagementData = { name: string; published?: number; drafts?: number; }[];
 
 
 interface DashboardChartsProps {
@@ -21,7 +21,7 @@ export function DashboardCharts({ postsData, trafficData, engagementData }: Dash
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="lg:col-span-4">
                 <CardHeader>
-                    <CardTitle>Engagement Overview (Mock Data)</CardTitle>
+                    <CardTitle>Content Creation Overview</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
@@ -31,8 +31,8 @@ export function DashboardCharts({ postsData, trafficData, engagementData }: Dash
                         <YAxis />
                         <Tooltip />
                         <Legend />
-                        <Line type="monotone" dataKey="pv" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
-                        <Line type="monotone" dataKey="uv" stroke="hsl(var(--secondary-foreground))" />
+                        <Line type="monotone" dataKey="published" name="Published" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
+                        <Line type="monotone" dataKey="drafts" name="Drafts" stroke="hsl(var(--secondary-foreground))" />
                     </LineChart>
                     </ResponsiveContainer>
                 </CardContent>
