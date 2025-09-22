@@ -122,7 +122,7 @@ export default function AskDianoPage() {
                     <div className={`rounded-lg p-4 max-w-[80%] shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                     {msg.sources && msg.sources.length > 0 && (
-                        <div className="mt-4 border-t pt-3 ${msg.role === 'user' ? 'border-primary-foreground/20' : 'border-border' }`}>
+                        <div className={`mt-4 border-t pt-3 ${msg.role === 'user' ? 'border-primary-foreground/20' : 'border-border' }`}>
                             <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
                             <BookOpen className="h-4 w-4" />
                             Sources from Diano Times:
