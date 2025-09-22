@@ -5,7 +5,6 @@
 import { useEffect, useState } from 'react';
 import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
 import { getMagazine } from '@/lib/actions';
-import type { Magazine } from '@/lib/types';
 import MagazineLayout from '@/components/magazine/magazine-layout';
 import { BlogHeader } from '@/components/blog-header';
 import { Button } from '@/components/ui/button';
@@ -29,8 +28,10 @@ export default function MagazineViewerPage({ params }: { params: { id: string } 
     const [magazineData, setMagazineData] = useState<GenerateMagazineOutput | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
+        setIsClient(true);
         const fetchMagazine = async () => {
             try {
                 setIsLoading(true);
@@ -59,6 +60,23 @@ export default function MagazineViewerPage({ params }: { params: { id: string } 
                         <FileWarning className="mx-auto h-12 w-12 text-destructive mb-4" />
                         <h1 className="text-2xl font-bold font-headline text-destructive">Error Loading Magazine</h1>
                         <p className="text-muted-foreground mt-2">{error}</p>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+    
+    // PDFViewer should only render on the client
+    if (!isClient) {
+        return (
+             <div className="flex flex-col min-h-screen bg-muted/40">
+                <div className="bg-background">
+                    <BlogHeader />
+                </div>
+                 <main className="flex-1 flex items-center justify-center p-4">
+                     <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                        <p className="text-muted-foreground">Loading magazine viewer...</p>
                     </div>
                 </main>
             </div>

@@ -524,10 +524,11 @@ export async function generateAndSavePost(topic: string): Promise<{
 
 
 export async function generateDraftPost(topic: string): Promise<{success: boolean, message: string, postId?: string}> {
+    if (!(await isAiFeatureEnabled('isPostGenerationEnabled'))) {
+        return { success: false, message: 'AI-powered post generation is disabled by the administrator.' };
+    }
+    
     try {
-        if (!(await isAiFeatureEnabled('isPostGenerationEnabled'))) {
-            return { success: false, message: 'AI-powered post generation is disabled by the administrator.' };
-        }
         const postData = await generatePostAI({ topic });
         const { success: slugSuccess, slug, error: slugError } = await generateSlug(postData.slug);
 
@@ -542,6 +543,7 @@ export async function generateDraftPost(topic: string): Promise<{success: boolea
         });
 
         if (result.success) {
+            revalidatePath('/admin/autopilot');
             return { success: true, message: 'Draft created', postId: result.data?.id };
         } else {
             return { success: false, message: result.message };
@@ -584,13 +586,17 @@ export async function getMagazine(id: string): Promise<Magazine | null> {
         const data = doc.data();
         if (!data) return null;
         
+        // The magazineData might be stored as a plain object after Firestore serialization.
+        // We just need to cast it correctly on the client.
+        const magazineData = data.magazineData ? JSON.parse(JSON.stringify(data.magazineData)) : null;
+
         return {
             id: doc.id,
             title: data.title,
             fileUrl: data.fileUrl,
             createdAt: data.createdAt,
             postIds: data.postIds,
-            magazineData: data.magazineData,
+            magazineData: magazineData,
         } as Magazine;
     } catch (error) {
         console.error("Error fetching magazine:", error);
@@ -611,15 +617,19 @@ export async function generateMagazinePdf(postIds: string[]): Promise<{ success:
     }
 
     try {
+        // 1. Generate the structured content from the AI
         const magazineContent: GenerateMagazineOutput = await generateMagazineAI({ postIds });
 
-        const pdfBuffer = await renderToBuffer(<MagazineLayout data={magazineContent} />);
+        // 2. Render the PDF to a buffer on the server.
+        // This step is where the error likely happened. Let's ensure data is clean.
+        const buffer = await renderToBuffer(<MagazineLayout data={magazineContent} />);
         
+        // 3. Upload the PDF to Firebase Storage
         const bucket = getStorage().bucket();
         const fileName = `magazines/diano-weekly-${uuidv4()}.pdf`;
         const file = bucket.file(fileName);
 
-        await file.save(pdfBuffer, {
+        await file.save(buffer, {
             metadata: {
                 contentType: 'application/pdf',
             },
@@ -627,15 +637,16 @@ export async function generateMagazinePdf(postIds: string[]): Promise<{ success:
 
         const [fileUrl] = await file.getSignedUrl({
             action: 'read',
-            expires: '03-09-2491',
+            expires: '03-09-2491', // A far-future expiration date
         });
         
+        // 4. Save the metadata to Firestore, including the structured content
         const magazineData = {
             title: magazineContent.title,
             fileUrl: fileUrl,
             createdAt: FieldValue.serverTimestamp(),
             postIds: postIds,
-            magazineData: magazineContent,
+            magazineData: magazineContent, // Store the raw JSON object
         };
         const docRef = await db.collection('magazines').add(magazineData);
 
@@ -646,7 +657,7 @@ export async function generateMagazinePdf(postIds: string[]): Promise<{ success:
 
     } catch (error) {
         const message = error instanceof Error ? error.message : "An unknown error occurred.";
-        console.error("Error generating magazine file:", error);
+        console.error("Error generating magazine PDF:", error);
         return { success: false, message: `Failed to generate magazine: ${message}` };
     }
 }
