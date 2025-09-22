@@ -69,7 +69,12 @@ export default function AskDianoPage() {
           description: error.message || 'Failed to get an answer.',
           variant: 'destructive',
         });
-        setChatSession(prev => prev ? { ...prev, messages: prev.messages.slice(0, -1) } : null);
+        // Revert the optimistic update on error
+        setChatSession(prev => {
+            if (!prev) return null;
+            const newMessages = prev.messages.filter(msg => msg !== userMessage);
+            return { ...prev, messages: newMessages };
+        });
       }
     });
   };
@@ -117,14 +122,14 @@ export default function AskDianoPage() {
                     <div className={`rounded-lg p-4 max-w-[80%] shadow-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                     {msg.sources && msg.sources.length > 0 && (
-                        <div className="mt-4 border-t border-primary-foreground/20 pt-3">
+                        <div className="mt-4 border-t pt-3 ${msg.role === 'user' ? 'border-primary-foreground/20' : 'border-border' }`}>
                             <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
                             <BookOpen className="h-4 w-4" />
                             Sources from Diano Times:
                             </h4>
                             <div className="space-y-2">
                             {msg.sources.map(source => (
-                                <Button asChild variant="link" size="sm" key={source.slug} className="p-0 h-auto block w-full text-left text-primary-foreground/80 hover:text-primary-foreground">
+                                <Button asChild variant="link" size="sm" key={source.slug} className={`p-0 h-auto block w-full text-left ${msg.role === 'user' ? 'text-primary-foreground/80 hover:text-primary-foreground' : 'text-primary hover:underline'}`}>
                                     <Link href={`/posts/${source.slug}`} target="_blank">
                                         {source.title}
                                     </Link>

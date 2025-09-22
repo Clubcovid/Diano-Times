@@ -21,7 +21,7 @@ import { isAiFeatureEnabled } from './ai-flags';
 import { renderToBuffer } from '@react-pdf/renderer';
 import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
-import { askDiano } from '@/ai/flows/ask-diano-flow';
+import { askDianoFlow, type AskDianoOutput } from '@/ai/flows/ask-diano-flow';
 
 type SerializableAd = Omit<Ad, 'createdAt'> & {
   createdAt: string;
@@ -644,6 +644,30 @@ export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ suc
     }
 }
 
+export async function askDiano(
+    input: { question: string; history: ChatMessage[] }
+): Promise<AskDianoOutput> {
+    if (!(await isAiFeatureEnabled('isAskDianoEnabled'))) {
+        return {
+            answer: 'The "Ask Diano" feature is currently disabled by the administrator.',
+            sources: [],
+        };
+    }
+    const headersList = headers();
+    const headersObject = {} as Record<string, string>;
+    headersList.forEach((value, key) => {
+        headersObject[key] = value;
+    });
+
+    const typedHistory = input.history.map(m => ({role: m.role, content: m.content}));
+
+    return askDianoFlow({
+        question: input.question,
+        history: typedHistory,
+    }, { headers: headersObject });
+}
+
+
 export async function getUserChatSession(): Promise<ChatSession> {
     if (!db) throw new Error('Database not connected.');
     
@@ -692,17 +716,11 @@ export async function saveAndContinueConversation(sessionId: string, userMessage
     const currentSession = await sessionRef.get();
     const currentData = currentSession.data() as Omit<ChatSession, 'id'>;
 
-    const headersList = headers();
-    const headersObject = {} as Record<string, string>;
-    headersList.forEach((value, key) => {
-        headersObject[key] = value;
-    });
-
-    // Get AI response, passing headers through
+    // Get AI response
     const aiResponse = await askDiano({
         question: userMessage.content,
-        history: currentData.messages.map(m => ({role: m.role, content: m.content})),
-    }, { headers: headersObject });
+        history: currentData.messages,
+    });
 
     const modelMessage: ChatMessage = {
         role: 'model',
