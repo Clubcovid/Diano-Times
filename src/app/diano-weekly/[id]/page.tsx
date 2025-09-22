@@ -9,10 +9,8 @@ import MagazineLayout from '@/components/magazine/magazine-layout';
 import { BlogHeader } from '@/components/blog-header';
 import { Button } from '@/components/ui/button';
 import { Loader2, Download, FileWarning } from 'lucide-react';
-import { generateMagazine } from '@/ai/flows/generate-magazine';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
 
-// Mock data for initial render to avoid error with react-pdf
 const mockSudoku = {
     puzzle: Array(9).fill(Array(9).fill(0)),
     solution: Array(9).fill(Array(9).fill(0)),
@@ -27,8 +25,7 @@ const mockMagazineData: GenerateMagazineOutput = {
 
 
 export default function MagazineViewerPage({ params }: { params: { id: string } }) {
-    const [magazine, setMagazine] = useState<Magazine | null>(null);
-    const [magazineData, setMagazineData] = useState<GenerateMagazineOutput>(mockMagazineData);
+    const [magazineData, setMagazineData] = useState<GenerateMagazineOutput | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -37,16 +34,12 @@ export default function MagazineViewerPage({ params }: { params: { id: string } 
             try {
                 setIsLoading(true);
                 const mag = await getMagazine(params.id);
-                if (!mag) {
-                    setError('Magazine not found.');
+                if (!mag || !mag.magazineData) {
+                    setError('Magazine not found or is missing content.');
+                    setIsLoading(false);
                     return;
                 }
-                setMagazine(mag);
-                // Since we don't store the structured content, we need to regenerate it for viewing.
-                // This is not ideal for production but works for this demo.
-                // A better approach would be to store the JSON output of the AI.
-                const data = await generateMagazine({ postIds: mag.postIds });
-                setMagazineData(data);
+                setMagazineData(mag.magazineData);
             } catch (e: any) {
                 setError(e.message || 'Failed to load magazine content.');
             } finally {
@@ -80,9 +73,9 @@ export default function MagazineViewerPage({ params }: { params: { id: string } 
             <header className="bg-background border-b sticky top-0 z-10">
                 <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
                     <h1 className="text-xl font-bold font-headline text-primary truncate">
-                        {isLoading ? 'Loading...' : magazineData.title}
+                        {isLoading || !magazineData ? 'Loading...' : magazineData.title}
                     </h1>
-                     {isLoading ? (
+                     {isLoading || !magazineData ? (
                         <Button disabled>
                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Loading...
@@ -108,7 +101,7 @@ export default function MagazineViewerPage({ params }: { params: { id: string } 
             </header>
             
             <main className="flex-1 flex items-center justify-center p-4">
-                 {isLoading ? (
+                 {isLoading || !magazineData ? (
                     <div className="flex flex-col items-center gap-4">
                         <Loader2 className="h-16 w-16 animate-spin text-primary" />
                         <p className="text-muted-foreground">Preparing your magazine...</p>
@@ -122,4 +115,3 @@ export default function MagazineViewerPage({ params }: { params: { id: string } 
         </div>
     );
 }
-

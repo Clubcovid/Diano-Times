@@ -1,5 +1,6 @@
 
 import type { Timestamp } from 'firebase/firestore';
+import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
 
 export interface Post {
   id: string;
@@ -47,6 +48,7 @@ export interface Magazine {
   fileUrl: string;
   createdAt: Timestamp;
   postIds: string[];
+  magazineData: GenerateMagazineOutput;
 }
 
 export interface ChatMessage {

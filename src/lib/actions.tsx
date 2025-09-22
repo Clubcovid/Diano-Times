@@ -593,7 +593,17 @@ export async function getMagazine(id: string): Promise<Magazine | null> {
         if (!doc.exists) {
             return null;
         }
-        return { id: doc.id, ...doc.data() } as Magazine;
+        const data = doc.data();
+        if (!data) return null;
+        
+        return {
+            id: doc.id,
+            title: data.title,
+            fileUrl: data.fileUrl,
+            createdAt: data.createdAt,
+            postIds: data.postIds,
+            magazineData: data.magazineData,
+        } as Magazine;
     } catch (error) {
         console.error("Error fetching magazine:", error);
         return null;
@@ -613,20 +623,10 @@ export async function generateMagazinePdf(postIds: string[]): Promise<{ success:
     }
 
     try {
-        // 1. Fetch selected posts
-        const selectedPosts = await getPosts({ ids: postIds, publishedOnly: true });
+        const magazineContent: GenerateMagazineOutput = await generateMagazineAI({ postIds });
 
-        if (selectedPosts.length === 0) {
-            return { success: false, message: 'None of the selected posts could be found or they are not published.' };
-        }
-
-        // 2. Generate magazine content with AI
-        const magazineContent: GenerateMagazineOutput = await generateMagazineAI({ postIds: selectedPosts.map(p => p.id) });
-
-        // 3. Render PDF to a buffer on the server
         const pdfBuffer = await renderToBuffer(<MagazineLayout data={magazineContent} />);
         
-        // 4. Upload PDF to Firebase Storage
         const bucket = getStorage().bucket();
         const fileName = `magazines/diano-weekly-${uuidv4()}.pdf`;
         const file = bucket.file(fileName);
@@ -639,19 +639,18 @@ export async function generateMagazinePdf(postIds: string[]): Promise<{ success:
 
         const [fileUrl] = await file.getSignedUrl({
             action: 'read',
-            expires: '03-09-2491', // Far future expiration date
+            expires: '03-09-2491',
         });
         
-        // 5. Save magazine metadata to Firestore
         const magazineData = {
             title: magazineContent.title,
             fileUrl: fileUrl,
             createdAt: FieldValue.serverTimestamp(),
-            postIds: selectedPosts.map(p => p.id),
+            postIds: postIds,
+            magazineData: magazineContent,
         };
         const docRef = await db.collection('magazines').add(magazineData);
 
-        // 6. Revalidate paths
         revalidatePath('/diano-weekly');
         revalidatePath('/admin/magazine');
 
