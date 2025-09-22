@@ -1,95 +1,77 @@
 
-'use client';
-
-import { useState, useTransition } from 'react';
-import { generateMagazinePdf } from '@/lib/actions';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Newspaper, Loader2, Download, Eye } from 'lucide-react';
+import { BlogHeader } from '@/components/blog-header';
+import { getMagazines } from '@/lib/actions';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Download, Eye, Newspaper, PlusCircle } from 'lucide-react';
+import { format } from 'date-fns';
 
-export default function MagazineGeneratorPage() {
-    const [isGenerating, startTransition] = useTransition();
-    const { toast } = useToast();
-    const [lastGeneratedId, setLastGeneratedId] = useState<string | null>(null);
-    const router = useRouter();
+async function MagazineList() {
+    const magazines = await getMagazines();
 
-    const handleGenerate = () => {
-        startTransition(async () => {
-            setLastGeneratedId(null);
-            const result = await generateMagazinePdf();
-            if (result.success && result.magazineId) {
-                toast({
-                    title: 'Magazine Generated!',
-                    description: 'The weekly magazine PDF file has been created.',
-                });
-                setLastGeneratedId(result.magazineId);
-                router.refresh();
-            } else {
-                toast({
-                    title: 'Error',
-                    description: result.message || 'An unknown error occurred during generation.',
-                    variant: 'destructive',
-                });
-            }
-        });
-    };
+    if (magazines.length === 0) {
+        return (
+            <div className="text-center py-16">
+                <Newspaper className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h2 className="mt-4 text-2xl font-bold font-headline">No Issues Yet</h2>
+                <p className="mt-2 text-muted-foreground">Click the button above to create the first issue of Diano Weekly.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold font-headline">Weekly Magazine Generator</h1>
-                <p className="text-muted-foreground">
-                    Use AI to generate a downloadable PDF of the weekly magazine.
-                </p>
-            </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Generate New Issue</CardTitle>
-                    <CardDescription>
-                        Click the button below to start the AI generation process. The AI will collect the latest posts from the past 7 days, create a magazine layout, and save it as a PDF file.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                        This process can take up to a minute to complete. Please do not navigate away from the page after starting.
-                    </p>
-                </CardContent>
-                <CardFooter className="flex-col items-start gap-4">
-                    <Button onClick={handleGenerate} disabled={isGenerating}>
-                        {isGenerating ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Generating...
-                            </>
-                        ) : (
-                            <>
-                                <Newspaper className="mr-2 h-4 w-4" />
-                                Generate Diano Weekly PDF
-                            </>
-                        )}
-                    </Button>
-                    {lastGeneratedId && (
-                        <div className="p-4 bg-secondary rounded-lg w-full flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div>
-                                <p className="font-semibold">Generation Complete!</p>
-                                <p className="text-sm text-muted-foreground">Your new issue is ready.</p>
-                            </div>
-                            <div className='flex gap-2'>
-                                <Button asChild>
-                                    <Link href={`/diano-weekly/${lastGeneratedId}`} target="_blank">
-                                        <Eye className="mr-2 h-4 w-4" />
-                                        View Issue
-                                    </Link>
-                                </Button>
-                            </div>
+            {magazines.map((magazine) => (
+                <Card key={magazine.id}>
+                    <CardHeader>
+                        <CardTitle>{magazine.title}</CardTitle>
+                        <CardDescription>
+                            Published on {format(magazine.createdAt.toDate(), 'MMMM d, yyyy')}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <p className="text-sm text-muted-foreground">View the issue online or download the PDF.</p>
+                        <div className="flex gap-2">
+                             <Button asChild variant="secondary">
+                                <Link href={`/diano-weekly/${magazine.id}`} target="_blank">
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Online
+                                </Link>
+                            </Button>
+                            <Button asChild>
+                                <Link href={magazine.fileUrl} target="_blank" download={`diano-weekly-${magazine.id}.pdf`}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download PDF
+                                </Link>
+                            </Button>
                         </div>
-                    )}
-                </CardFooter>
-            </Card>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    );
+}
+
+
+export default function DianoWeeklyPage() {
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold font-headline">Diano Weekly</h1>
+                    <p className="text-muted-foreground mt-2">
+                        Your weekly digest of news, culture, and technology.
+                    </p>
+                </div>
+                 <Button asChild>
+                    <Link href="/admin/magazine/create">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create New Issue
+                    </Link>
+                </Button>
+            </div>
+            <MagazineList />
         </div>
     );
 }

@@ -17,7 +17,6 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { getPosts } from './posts';
-import { subDays } from 'date-fns';
 import type { AiFeatureFlags } from './ai-flags';
 import { isAiFeatureEnabled } from './ai-flags';
 import { renderToBuffer } from '@react-pdf/renderer';
@@ -509,6 +508,8 @@ export async function generateAndSavePost(topic: string): Promise<GeneratePostRe
       coverImage: postData.coverImage,
       tags: postData.tags,
       status: 'draft' as const, // Save as draft by default
+      authorName: 'Diano Times Staff',
+      authorImage: 'https://picsum.photos/seed/diano-author/100/100',
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     };
@@ -561,7 +562,7 @@ export async function getMagazine(id: string): Promise<Magazine | null> {
     }
 }
 
-export async function generateMagazinePdf(): Promise<{ success: boolean; message: string; magazineId?: string; }> {
+export async function generateMagazinePdf(postIds: string[]): Promise<{ success: boolean; message: string; magazineId?: string; }> {
     if (!(await isAiFeatureEnabled('isMagazineGenerationEnabled'))) {
       return { success: false, message: 'AI Magazine Generation is currently disabled by the admin.' };
     }
@@ -569,17 +570,20 @@ export async function generateMagazinePdf(): Promise<{ success: boolean; message
         return { success: false, message: 'Database not connected.' };
     }
 
-    try {
-        // 1. Fetch posts from the last 7 days
-        const sevenDaysAgo = subDays(new Date(), 7);
-        const recentPosts = await getPosts({ fromDate: sevenDaysAgo, publishedOnly: true });
+    if (postIds.length === 0) {
+        return { success: false, message: 'No posts were selected to generate a magazine.' };
+    }
 
-        if (recentPosts.length === 0) {
-            return { success: false, message: 'No new posts in the last 7 days to generate a magazine.' };
+    try {
+        // 1. Fetch selected posts
+        const selectedPosts = await getPosts({ ids: postIds, publishedOnly: true });
+
+        if (selectedPosts.length === 0) {
+            return { success: false, message: 'None of the selected posts could be found or they are not published.' };
         }
 
         // 2. Generate magazine content with AI
-        const magazineContent: GenerateMagazineOutput = await generateMagazineAI({ postIds: recentPosts.map(p => p.id) });
+        const magazineContent: GenerateMagazineOutput = await generateMagazineAI({ postIds: selectedPosts.map(p => p.id) });
 
         // 3. Render PDF to a buffer on the server
         const pdfBuffer = await renderToBuffer(<MagazineLayout data={magazineContent} />);
@@ -605,7 +609,7 @@ export async function generateMagazinePdf(): Promise<{ success: boolean; message
             title: magazineContent.title,
             fileUrl: fileUrl,
             createdAt: FieldValue.serverTimestamp(),
-            postIds: recentPosts.map(p => p.id),
+            postIds: selectedPosts.map(p => p.id),
         };
         const docRef = await db.collection('magazines').add(magazineData);
 
@@ -638,7 +642,3 @@ export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ suc
         return { success: false, message };
     }
 }
-
-    
-
-    
