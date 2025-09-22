@@ -22,10 +22,12 @@ import { renderToBuffer } from '@react-pdf/renderer';
 import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
 import { askDianoFlow, type AskDianoOutput } from '@/ai/flows/ask-diano-flow';
+import { format } from 'date-fns';
 
-type SerializablePost = Omit<Post, 'createdAt' | 'updatedAt'> & {
+type SerializablePostForMagazine = {
+  id: string;
+  title: string;
   createdAt: string;
-  updatedAt: string;
 };
 
 type SerializableAd = Omit<Ad, 'createdAt'> & {
@@ -783,11 +785,11 @@ export async function saveAndContinueConversation(sessionId: string, userMessage
 }
 
 
-export async function getPublishedPostsForMagazine(): Promise<SerializablePost[]> {
+export async function getPublishedPostsForMagazine(): Promise<SerializablePostForMagazine[]> {
   const posts = await getPosts({ publishedOnly: true });
   return posts.map(post => ({
-    ...post,
-    createdAt: post.createdAt.toDate().toISOString(),
-    updatedAt: post.updatedAt.toDate().toISOString(),
+    id: post.id,
+    title: post.title,
+    createdAt: format(post.createdAt.toDate(), 'PPP'),
   }));
 }

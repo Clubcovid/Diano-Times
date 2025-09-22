@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition, useEffect } from 'react';
@@ -9,26 +10,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Loader2, Newspaper } from 'lucide-react';
-import { format } from 'date-fns';
 
-type SerializablePost = {
+type SerializablePostForMagazine = {
   id: string;
   title: string;
-  slug: string;
-  content: string;
-  coverImage: string;
-  tags: string[];
-  status: 'draft' | 'published';
-  authorName: string;
-  authorImage: string;
-  galleryImages?: string[] | undefined;
   createdAt: string;
-  updatedAt: string;
 };
 
 
 export default function CreateMagazinePage() {
-    const [posts, setPosts] = useState<SerializablePost[]>([]);
+    const [posts, setPosts] = useState<SerializablePostForMagazine[]>([]);
     const [selectedPosts, setSelectedPosts] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isGenerating, startGenerating] = useTransition();
@@ -112,7 +103,7 @@ export default function CreateMagazinePage() {
                                     <Label htmlFor={`post-${post.id}`} className="flex-1 cursor-pointer">
                                         <p className="font-semibold">{post.title}</p>
                                         <p className="text-xs text-muted-foreground">
-                                            Published on {format(new Date(post.createdAt), 'PPP')}
+                                            Published on {post.createdAt}
                                         </p>
                                     </Label>
                                 </div>
