@@ -167,6 +167,23 @@ export async function getTags(): Promise<string[]> {
   }
 }
 
+export async function getTrendingTags(limit: number = 5): Promise<string[]> {
+  const posts = await getPosts({ publishedOnly: true, limit: 50 }); // Fetch recent 50 posts
+  const tagCounts: Record<string, number> = {};
+
+  posts.forEach(post => {
+    post.tags.forEach(tag => {
+      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+    });
+  });
+
+  return Object.entries(tagCounts)
+    .sort(([, countA], [, countB]) => countB - countA)
+    .slice(0, limit)
+    .map(([tag]) => tag);
+}
+
+
 export async function getPostBySlug(slug: string): Promise<Post | null> {
     if (!db) {
       console.error(`Firebase Admin is not initialized. Cannot fetch post by slug: ${slug}.`);

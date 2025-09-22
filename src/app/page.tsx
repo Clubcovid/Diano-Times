@@ -1,7 +1,7 @@
 
 
 import { PostCard } from '@/components/post-card';
-import { getPosts } from '@/lib/posts';
+import { getPosts, getTrendingTags } from '@/lib/posts';
 import type { Post } from '@/lib/types';
 import { Suspense } from 'react';
 import Link from 'next/link';
@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, LogIn, UserPlus, LayoutDashboard, Zap } from 'lucide-react';
-import { mockTrendingTopics, mockMarketData, mockWeatherData } from '@/lib/mock-data';
+import { mockMarketData, mockWeatherData } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getWeatherForecast, type WeatherForecast } from '@/ai/flows/get-weather-forecast';
 import { BlogHeader } from '@/components/blog-header';
@@ -35,7 +35,13 @@ function PostsSkeleton() {
   );
 }
 
-function TrendingTicker() {
+async function TrendingTicker() {
+    const trendingTopics = await getTrendingTags(5);
+
+    if (trendingTopics.length === 0) {
+        return null;
+    }
+
     return (
         <div className="bg-background border-b">
             <div className="container mx-auto px-4 md:px-6 py-2 flex items-center gap-4">
@@ -46,13 +52,13 @@ function TrendingTicker() {
                  <div className="flex-1 relative flex overflow-hidden">
                     <div className="marquee">
                         <div className="marquee-content text-sm">
-                            {mockTrendingTopics.map((topic, index) => (
-                              <Link key={index} href="#" className="font-medium text-muted-foreground hover:text-primary transition-colors px-4">
+                            {trendingTopics.map((topic, index) => (
+                              <Link key={index} href={`/search?q=${encodeURIComponent(topic)}`} className="font-medium text-muted-foreground hover:text-primary transition-colors px-4">
                                 {topic}
                               </Link>
                             ))}
-                             {mockTrendingTopics.map((topic, index) => (
-                              <Link key={`${index}-clone`} href="#" className="font-medium text-muted-foreground hover:text-primary transition-colors px-4">
+                             {trendingTopics.map((topic, index) => (
+                              <Link key={`${index}-clone`} href={`/search?q=${encodeURIComponent(topic)}`} className="font-medium text-muted-foreground hover:text-primary transition-colors px-4">
                                 {topic}
                               </Link>
                             ))}
@@ -294,7 +300,9 @@ export default function HomePage() {
           <WeatherTicker />
       </Suspense>
       <MarketTicker />
-      <TrendingTicker />
+      <Suspense>
+        <TrendingTicker />
+      </Suspense>
 
       <main className="flex-1">
         <div className="container mx-auto px-4 md:px-6 py-8">
