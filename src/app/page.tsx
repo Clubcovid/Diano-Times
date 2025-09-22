@@ -14,10 +14,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getWeatherForecast, type WeatherForecast } from '@/ai/flows/get-weather-forecast';
 import { BlogHeader } from '@/components/blog-header';
 import { BackToTop } from '@/components/back-to-top';
-import { getAds } from '@/lib/actions.tsx';
-import type { Ad } from '@/lib/types';
 import { NewsletterPopup } from '@/components/newsletter-popup';
 import { SearchForm } from '@/components/search-form';
+import { AdPopup } from '@/components/ad-popup';
 
 function PostsSkeleton() {
   return (
@@ -70,44 +69,6 @@ async function TrendingTicker() {
     );
 }
 
-async function Advertisement() {
-  const ads: Ad[] = await getAds();
-
-  if (ads.length === 0) {
-    return null;
-  }
-  
-  // Randomly select one ad to display
-  const adToDisplay = ads[Math.floor(Math.random() * ads.length)];
-
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Advertisement</CardTitle>
-      </CardHeader>
-      <CardContent>
-          <Link href={adToDisplay.linkUrl} key={adToDisplay.id} target="_blank" rel="noopener noreferrer" className="block group">
-             <div className="relative aspect-square rounded-lg overflow-hidden">
-              <Image
-                src={adToDisplay.imageUrl}
-                alt={adToDisplay.title}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                data-ai-hint="advertisement marketing"
-              />
-              <div className="absolute inset-0 bg-black/40" />
-               <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="font-bold font-headline">{adToDisplay.title}</h3>
-                  <p className="text-xs">{adToDisplay.description}</p>
-              </div>
-            </div>
-          </Link>
-      </CardContent>
-    </Card>
-  );
-}
-
 async function PostsSection() {
   let allPosts = await getPosts({ publishedOnly: true });
 
@@ -126,7 +87,7 @@ async function PostsSection() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-       <div className="lg:col-span-3">
+       <div className="lg:col-span-4">
         {featuredPost && (
           <section className="mb-12">
             <div className="relative aspect-video lg:aspect-[2/1] rounded-lg overflow-hidden group">
@@ -168,12 +129,6 @@ async function PostsSection() {
              <SearchForm />
         </div>
         
-        <div className="mb-8 lg:hidden">
-          <Suspense>
-            <Advertisement />
-          </Suspense>
-        </div>
-        
         {otherPosts.length > 0 ? (
           <div className="grid gap-8 md:grid-cols-2">
             {otherPosts.slice(0, 4).map((post) => (
@@ -189,11 +144,6 @@ async function PostsSection() {
             </div>
         )}
       </div>
-      <aside className="hidden lg:block lg:col-span-1 space-y-8">
-          <Suspense>
-            <Advertisement />
-          </Suspense>
-      </aside>
     </div>
   );
 }
@@ -353,6 +303,7 @@ export default function HomePage() {
       </footer>
       <BackToTop />
       <NewsletterPopup />
+      <AdPopup />
     </div>
   );
 }
