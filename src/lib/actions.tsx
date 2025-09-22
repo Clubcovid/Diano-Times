@@ -644,23 +644,6 @@ export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ suc
     }
 }
 
-async function createNewChatSession(userId: string): Promise<ChatSession> {
-    if (!db) throw new Error('Database not connected.');
-    
-    const newSessionData: Omit<ChatSession, 'id'> = {
-        userId,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        messages: [{
-            role: 'model',
-            content: 'Karibu to Diano Times! I am Diano, your AI assistant. Ask me anything about Kenyan news, politics, lifestyle... or what\'s on your mind. Let\'s talk, Omwami.'
-        }]
-    };
-    const docRef = await db.collection('diano_chats').add(newSessionData);
-    
-    return { id: docRef.id, ...newSessionData };
-}
-
 export async function getUserChatSession(): Promise<ChatSession> {
     if (!db) throw new Error('Database not connected.');
     
@@ -673,7 +656,17 @@ export async function getUserChatSession(): Promise<ChatSession> {
     const snapshot = await chatCollection.where('userId', '==', userId).orderBy('createdAt', 'desc').limit(1).get();
     
     if (snapshot.empty) {
-        return createNewChatSession(userId);
+        const newSessionData: Omit<ChatSession, 'id'> = {
+            userId,
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+            messages: [{
+                role: 'model',
+                content: 'Karibu to Diano Times! I am Diano, your AI assistant. Ask me anything about Kenyan news, politics, lifestyle... or what\'s on your mind. Let\'s talk, Omwami.'
+            }]
+        };
+        const docRef = await db.collection('diano_chats').add(newSessionData);
+        return { id: docRef.id, ...newSessionData };
     } else {
         const doc = snapshot.docs[0];
         return { id: doc.id, ...doc.data() } as ChatSession;
