@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, Wand2, Sparkles, CheckCircle, XCircle, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { suggestTopics } from '@/ai/flows/suggest-topics';
-import { generateDraftPost } from '@/ai/flows/generate-post';
+import { generateDraftPost } from '@/lib/actions';
 import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
 

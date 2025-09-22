@@ -528,6 +528,36 @@ export async function generateAndSavePost(topic: string): Promise<GeneratePostRe
   }
 }
 
+export async function generateDraftPost(topic: string): Promise<{success: boolean, message: string, postId?: string}> {
+    try {
+        if (!(await isAiFeatureEnabled('isPostGenerationEnabled'))) {
+            return { success: false, message: 'AI-powered post generation is disabled by the administrator.' };
+        }
+        const postData = await generatePostAI({ topic });
+        const { success: slugSuccess, slug, error: slugError } = await generateSlug(postData.slug);
+
+        if (!slugSuccess || !slug) {
+            return { success: false, message: slugError || 'Failed to generate a unique slug.' };
+        }
+
+        const result = await createPost({
+            ...postData,
+            slug,
+            status: 'draft',
+        });
+
+        if (result.success) {
+            return { success: true, message: 'Draft created', postId: result.data?.id };
+        } else {
+            return { success: false, message: result.message };
+        }
+
+    } catch (e: any) {
+        return { success: false, message: e.message || 'An unknown error occurred.' };
+    }
+}
+
+
 export async function getMagazines(): Promise<Magazine[]> {
     if (!db) {
         console.error("Database not connected. Cannot fetch magazines.");
@@ -680,17 +710,26 @@ export async function getUserChatSession(): Promise<ChatSession> {
     const snapshot = await chatCollection.where('userId', '==', userId).orderBy('createdAt', 'desc').limit(1).get();
     
     if (snapshot.empty) {
-        const newSessionData: Omit<ChatSession, 'id'> = {
+        const newSessionData = {
             userId,
-            createdAt: Timestamp.now(),
-            updatedAt: Timestamp.now(),
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
             messages: [{
-                role: 'model',
+                role: 'model' as const,
                 content: 'Karibu to Diano Times! I am Diano, your AI assistant. Ask me anything about Kenyan news, politics, lifestyle... or what\'s on your mind. Let\'s talk, Omwami.'
             }]
         };
         const docRef = await db.collection('diano_chats').add(newSessionData);
-        return { id: docRef.id, ...newSessionData };
+        const newDoc = await docRef.get();
+        const data = newDoc.data()!;
+
+        return {
+             id: docRef.id,
+             userId: data.userId,
+             createdAt: data.createdAt,
+             updatedAt: data.updatedAt,
+             messages: data.messages,
+        };
     } else {
         const doc = snapshot.docs[0];
         return { id: doc.id, ...doc.data() } as ChatSession;
