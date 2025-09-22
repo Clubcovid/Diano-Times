@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -480,12 +481,10 @@ export async function seedDatabase(): Promise<{ success: boolean, message: strin
   }
 }
 
-type GeneratePostResult = {
+export async function generateAndSavePost(topic: string): Promise<{
   success: boolean;
   message: string;
-};
-
-export async function generateAndSavePost(topic: string): Promise<GeneratePostResult> {
+}> {
   if (!(await isAiFeatureEnabled('isPostGenerationEnabled'))) {
     return { success: false, message: 'AI Post Generation is currently disabled by the admin.' };
   }
@@ -497,43 +496,32 @@ export async function generateAndSavePost(topic: string): Promise<GeneratePostRe
   }
 
   try {
-    // 1. Generate post content with AI
     const postData = await generatePostAI({ topic });
+    const { success, slug, error } = await generateSlug(postData.slug);
 
-    // 2. Ensure slug is unique
-    let finalSlug = postData.slug;
-    let count = 1;
-    while (!(await isSlugUnique(finalSlug))) {
-      finalSlug = `${postData.slug}-${count}`;
-      count++;
+    if (!success || !slug) {
+      return { success: false, message: error || 'Failed to generate a unique slug.' };
     }
 
-    // 3. Save to Firestore as a draft
-    const postToSave = {
-      title: postData.title,
-      slug: finalSlug,
-      content: postData.content,
-      coverImage: postData.coverImage,
-      tags: postData.tags,
-      status: 'draft' as const, // Save as draft by default
-      authorName: 'Diano Times Staff',
-      authorImage: 'https://picsum.photos/seed/diano-author/100/100',
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    };
+    const result = await createPost({
+      ...postData,
+      slug,
+      status: 'draft',
+    });
 
-    await db.collection('posts').add(postToSave);
-
-    // 4. Revalidate path to show the new post
-    revalidatePath('/admin/posts');
-
-    return { success: true, message: `Successfully generated and saved a draft for: "${postData.title}"` };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "An unknown error occurred.";
-    console.error("Error generating and saving post:", error);
+    if (result.success) {
+      revalidatePath('/admin/posts');
+      return { success: true, message: `Successfully generated and saved a draft for: "${postData.title}"` };
+    } else {
+      return { success: false, message: result.message };
+    }
+  } catch (e: any) {
+    const message = e.message || "An unknown error occurred.";
+    console.error("Error generating and saving post:", e);
     return { success: false, message: `Failed to generate post: ${message}` };
   }
 }
+
 
 export async function generateDraftPost(topic: string): Promise<{success: boolean, message: string, postId?: string}> {
     try {
@@ -792,3 +780,4 @@ export async function getPublishedPostsForMagazine(): Promise<SerializablePostFo
     createdAt: format(post.createdAt.toDate(), 'PPP'),
   }));
 }
+

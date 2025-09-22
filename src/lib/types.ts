@@ -64,3 +64,4 @@ export interface ChatSession {
     updatedAt: Timestamp;
     messages: ChatMessage[];
 }
+
