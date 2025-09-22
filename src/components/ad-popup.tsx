@@ -7,6 +7,9 @@ import Link from 'next/link';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from './ui/button';
 import { getAds } from '@/lib/actions';
@@ -56,6 +59,10 @@ export function AdPopup() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+        <DialogHeader>
+            <DialogTitle className="sr-only">{ad.title}</DialogTitle>
+            <DialogDescription className="sr-only">{ad.description}</DialogDescription>
+        </DialogHeader>
         <div className="relative">
             <button 
                 onClick={handleClose}
@@ -89,5 +96,3 @@ export function AdPopup() {
     </Dialog>
   );
 }
-
-    
