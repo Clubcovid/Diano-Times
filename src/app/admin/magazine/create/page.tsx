@@ -3,7 +3,6 @@
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { generateMagazinePdf, getPublishedPostsForMagazine } from '@/lib/actions';
-import type { Post } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,10 +11,21 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Newspaper } from 'lucide-react';
 import { format } from 'date-fns';
 
-type SerializablePost = Omit<Post, 'createdAt' | 'updatedAt'> & {
+type SerializablePost = {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  coverImage: string;
+  tags: string[];
+  status: 'draft' | 'published';
+  authorName: string;
+  authorImage: string;
+  galleryImages?: string[] | undefined;
   createdAt: string;
   updatedAt: string;
 };
+
 
 export default function CreateMagazinePage() {
     const [posts, setPosts] = useState<SerializablePost[]>([]);
@@ -29,12 +39,7 @@ export default function CreateMagazinePage() {
         const fetchPosts = async () => {
             setIsLoading(true);
             const fetchedPosts = await getPublishedPostsForMagazine();
-            const serializablePosts = fetchedPosts.map(post => ({
-                ...post,
-                createdAt: post.createdAt,
-                updatedAt: post.updatedAt,
-            }));
-            setPosts(serializablePosts);
+            setPosts(fetchedPosts);
             setIsLoading(false);
         };
         fetchPosts();
