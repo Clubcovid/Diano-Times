@@ -15,24 +15,40 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile } from '@/lib/actions';
 import { BlogHeader } from '@/components/blog-header';
-import { useFormState } from 'react-dom';
+import { useFormState, useFormStatus } from 'react-dom';
 
 const ADMIN_EMAIL = 'georgedianoh@gmail.com';
+
+function SubmitButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" disabled={pending}>
+            {pending ? (
+                <>
+                    <Save className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                </>
+            ) : (
+                <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                </>
+            )}
+        </Button>
+    )
+}
+
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const [displayName, setDisplayName] = useState('');
-
+  
   const [state, formAction] = useFormState(updateUserProfile, undefined);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
-    }
-    if (user) {
-      setDisplayName(user.displayName || '');
     }
   }, [user, loading, router]);
   
@@ -101,8 +117,7 @@ export default function ProfilePage() {
                         <Input 
                             id="displayName" 
                             name="displayName"
-                            value={displayName}
-                            onChange={(e) => setDisplayName(e.target.value)}
+                            defaultValue={user.displayName || ''}
                         />
                     </div>
                 </div>
@@ -113,10 +128,7 @@ export default function ProfilePage() {
                         <Input value={user.email || ''} disabled />
                     </div>
                 </div>
-                <Button type="submit">
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Changes
-                </Button>
+                <SubmitButton />
             </form>
           </CardContent>
           <CardFooter className="flex justify-between items-center border-t pt-6">
@@ -135,5 +147,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

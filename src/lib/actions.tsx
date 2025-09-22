@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -10,10 +9,10 @@ import { generateMagazine as generateMagazineAI } from '@/ai/flows/generate-maga
 import { postSchema, adSchema, videoSchema, type PostFormData } from './schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
-import type { AdminUser, Ad, Video, Post, Magazine } from './types';
+import type { AdminUser, Ad, Video, Post, Magazine, ChatSession, ChatMessage } from './types';
 import { headers } from 'next/headers';
 import { mockPosts, mockAds, mockVideos } from './mock-data';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { getPosts } from './posts';
@@ -22,6 +21,7 @@ import { isAiFeatureEnabled } from './ai-flags';
 import { renderToBuffer } from '@react-pdf/renderer';
 import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
+import { askDiano } from '@/ai/flows/ask-diano-flow';
 
 type SerializableAd = Omit<Ad, 'createdAt'> & {
   createdAt: string;
@@ -383,9 +383,8 @@ type ProfileActionState = {
 }
 
 async function getUserIdFromSession(): Promise<string | null> {
-    // This function needs to be adapted if used client-side or without direct header access.
-    // For server actions, this is fine.
-    const authHeader = headers().get('Authorization');
+    const headersList = headers();
+    const authHeader = headersList.get('Authorization');
     if (!authHeader || !auth) return null;
 
     const token = authHeader.split('Bearer ')[1];
@@ -405,15 +404,17 @@ export async function updateUserProfile(prevState: ProfileActionState | undefine
         return { success: false, message: "Authentication service is not available." };
     }
     const displayName = formData.get('displayName') as string;
-    const uid = formData.get('uid') as string; // Assuming UID is passed in the form
+    
+    // This is a server action, so we can get the UID from the session token
+    const uid = await getUserIdFromSession();
+
+    if (!uid) {
+        return { success: false, message: "User not authenticated." };
+    }
     
     if (!displayName || displayName.length < 3) {
         return { success: false, message: "Display name must be at least 3 characters." };
     }
-     if (!uid) {
-        return { success: false, message: "User ID is missing." };
-    }
-
 
     try {
         await auth.updateUser(uid, { displayName });
@@ -641,4 +642,87 @@ export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ suc
         const message = error instanceof Error ? error.message : "An unknown error occurred.";
         return { success: false, message };
     }
+}
+
+async function createNewChatSession(userId: string): Promise<ChatSession> {
+    if (!db) throw new Error('Database not connected.');
+    
+    const newSessionData: Omit<ChatSession, 'id'> = {
+        userId,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        messages: [{
+            role: 'model',
+            content: 'Karibu to Diano Times! I am Diano, your AI assistant. Ask me anything about Kenyan news, politics, lifestyle... or what\'s on your mind. Let\'s talk, Omwami.'
+        }]
+    };
+    const docRef = await db.collection('diano_chats').add(newSessionData);
+    
+    return { id: docRef.id, ...newSessionData };
+}
+
+export async function getUserChatSession(): Promise<ChatSession> {
+    if (!db) throw new Error('Database not connected.');
+    
+    const userId = await getUserIdFromSession();
+    if (!userId) {
+        throw new Error('User not authenticated.');
+    }
+
+    const chatCollection = db.collection('diano_chats');
+    const snapshot = await chatCollection.where('userId', '==', userId).orderBy('createdAt', 'desc').limit(1).get();
+    
+    if (snapshot.empty) {
+        return createNewChatSession(userId);
+    } else {
+        const doc = snapshot.docs[0];
+        return { id: doc.id, ...doc.data() } as ChatSession;
+    }
+}
+
+export async function saveAndContinueConversation(sessionId: string, userMessage: ChatMessage): Promise<ChatSession> {
+    if (!db) throw new Error('Database not connected.');
+    
+    const userId = await getUserIdFromSession();
+    if (!userId) {
+        throw new Error('User not authenticated.');
+    }
+
+    const sessionRef = db.collection('diano_chats').doc(sessionId);
+
+    // Save user message first
+    await sessionRef.update({
+        messages: FieldValue.arrayUnion(userMessage),
+        updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    const currentSession = await sessionRef.get();
+    const currentData = currentSession.data() as Omit<ChatSession, 'id'>;
+
+    const headersList = headers();
+    const headersObject = {} as Record<string, string>;
+    headersList.forEach((value, key) => {
+        headersObject[key] = value;
+    });
+
+    // Get AI response, passing headers through
+    const aiResponse = await askDiano({
+        question: userMessage.content,
+        history: currentData.messages.map(m => ({role: m.role, content: m.content})),
+    }, { headers: headersObject });
+
+    const modelMessage: ChatMessage = {
+        role: 'model',
+        content: aiResponse.answer,
+        sources: aiResponse.sources
+    };
+
+    // Save AI response
+    await sessionRef.update({
+        messages: FieldValue.arrayUnion(modelMessage),
+        updatedAt: FieldValue.serverTimestamp(),
+    });
+    
+    const updatedSessionDoc = await sessionRef.get();
+    return { id: updatedSessionDoc.id, ...updatedSessionDoc.data() } as ChatSession;
 }

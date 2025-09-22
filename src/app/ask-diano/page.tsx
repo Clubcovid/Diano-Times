@@ -12,8 +12,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth-provider';
 import type { ChatMessage, ChatSession } from '@/lib/types';
-import { getUserChatSession, saveAndContinueConversation } from '@/ai/flows/diano-chat-flow';
-import { auth } from '@/lib/firebase';
+import { getUserChatSession, saveAndContinueConversation } from '@/lib/actions';
 import { AnimatePresence, motion } from 'framer-motion';
 
 export default function AskDianoPage() {
@@ -24,14 +23,6 @@ export default function AskDianoPage() {
   const [chatSession, setChatSession] = useState<ChatSession | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const getAuthHeaders = useCallback(async () => {
-    if (!auth.currentUser) return new Headers();
-    const token = await auth.currentUser.getIdToken();
-    const headers = new Headers();
-    headers.append('Authorization', `Bearer ${token}`);
-    return headers;
-  }, []);
-
   const scrollToBottom = () => {
     chatContainerRef.current?.scrollIntoView({ behavior: 'smooth' });
   }
@@ -40,8 +31,7 @@ export default function AskDianoPage() {
     if (user && !loading) {
       const fetchHistory = async () => {
         try {
-          const headers = await getAuthHeaders();
-          const session = await getUserChatSession({ headers });
+          const session = await getUserChatSession();
           setChatSession(session);
         } catch(e: any) {
              toast({
@@ -53,7 +43,7 @@ export default function AskDianoPage() {
       };
       fetchHistory();
     }
-  }, [user, loading, getAuthHeaders, toast]);
+  }, [user, loading, toast]);
   
   useEffect(() => {
     scrollToBottom();
@@ -71,8 +61,7 @@ export default function AskDianoPage() {
 
     startAsking(async () => {
       try {
-        const headers = await getAuthHeaders();
-        const updatedSession = await saveAndContinueConversation(chatSession.id, userMessage, { headers });
+        const updatedSession = await saveAndContinueConversation(chatSession.id, userMessage);
         setChatSession(updatedSession);
       } catch (error: any) {
         toast({
