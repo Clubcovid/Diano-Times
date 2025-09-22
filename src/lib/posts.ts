@@ -16,6 +16,9 @@ function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
     coverImage: data.coverImage,
     tags: data.tags || [],
     status: data.status,
+    authorName: data.authorName || 'Diano Times Staff',
+    authorImage: data.authorImage || '',
+    galleryImages: data.galleryImages || [],
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
   } as Post;
@@ -191,7 +194,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     }
   try {
     const postsCollection = db.collection('posts');
-    const snapshot = await postsCollection.where('slug', '==', slug).get();
+    const snapshot = await postsCollection.where('slug', '==', slug).limit(1).get();
     if (snapshot.empty) {
       return null;
     }

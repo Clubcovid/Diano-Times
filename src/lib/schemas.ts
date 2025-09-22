@@ -8,10 +8,11 @@ export const postSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { message: 'Slug must be URL-friendly (e.g., "my-first-post").' }),
   content: z.string().min(10, { message: 'Content must be at least 10 characters long.' }),
   coverImage: z.string().url({ message: 'Please enter a valid URL.' }).or(z.literal('')),
-  tags: z.array(z.string()).refine(value => value.length > 0, {
-    message: 'You have to select at least one tag.',
-  }),
+  tags: z.array(z.string()).min(1, { message: 'You have to select at least one tag.' }),
   status: z.enum(['draft', 'published']),
+  authorName: z.string().min(3, { message: 'Author name is required.' }),
+  authorImage: z.string().url({ message: 'Please enter a valid URL for the author image.' }).or(z.literal('')),
+  galleryImages: z.array(z.string().url({ message: 'Each gallery image must be a valid URL.' })).optional(),
 });
 
 export type PostFormData = z.infer<typeof postSchema>;

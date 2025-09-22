@@ -2,13 +2,13 @@
 'use client';
 
 import { useTransition } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { postSchema, type PostFormData } from '@/lib/schemas';
 import type { Post } from '@/lib/types';
-import { createPost, updatePost, generateSlug } from '@/lib/actions';
+import { createPost, updatePost, generateSlug } from '@/lib/actions.tsx';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Wand2, Save } from 'lucide-react';
+import { Wand2, Save, PlusCircle, Trash2 } from 'lucide-react';
 
 const availableTags = ['Fashion', 'Gadgets', 'Lifestyle', 'Technology', 'Wellness', 'Travel', 'Food', 'Business', 'Culture', 'Art', 'Reviews', 'Tips', 'Nairobi', 'Kenya', 'Global Affairs', 'Sports'];
 
@@ -55,7 +55,15 @@ export function PostForm({ post }: { post?: SerializablePost }) {
       coverImage: post?.coverImage || '',
       tags: post?.tags || [],
       status: post?.status || 'draft',
+      authorName: post?.authorName || 'Diano Times Staff',
+      authorImage: post?.authorImage || 'https://picsum.photos/seed/diano-author/100/100',
+      galleryImages: post?.galleryImages || [],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "galleryImages",
   });
 
   const handleGenerateSlug = () => {
@@ -135,7 +143,7 @@ export function PostForm({ post }: { post?: SerializablePost }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Metadata</CardTitle>
+          <CardTitle>Metadata & Author</CardTitle>
           <CardDescription>
             Add extra information to help organize your posts.
           </CardDescription>
@@ -145,6 +153,18 @@ export function PostForm({ post }: { post?: SerializablePost }) {
             <Label htmlFor="coverImage">Cover Image URL</Label>
             <Input id="coverImage" {...form.register('coverImage')} placeholder="https://example.com/image.png" />
             {form.formState.errors.coverImage && <p className="text-sm text-destructive">{form.formState.errors.coverImage.message}</p>}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="authorName">Author Name</Label>
+              <Input id="authorName" {...form.register('authorName')} />
+              {form.formState.errors.authorName && <p className="text-sm text-destructive">{form.formState.errors.authorName.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="authorImage">Author Image URL</Label>
+              <Input id="authorImage" {...form.register('authorImage')} />
+              {form.formState.errors.authorImage && <p className="text-sm text-destructive">{form.formState.errors.authorImage.message}</p>}
+            </div>
           </div>
           <div className="space-y-2">
             <Label>Tags</Label>
@@ -185,6 +205,35 @@ export function PostForm({ post }: { post?: SerializablePost }) {
             </Select>
             {form.formState.errors.status && <p className="text-sm text-destructive">{form.formState.errors.status.message}</p>}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Image Gallery</CardTitle>
+          <CardDescription>Add additional images to display in the post gallery.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {fields.map((field, index) => (
+            <div key={field.id} className="flex items-center gap-2">
+              <Input
+                {...form.register(`galleryImages.${index}` as const)}
+                placeholder="https://example.com/gallery-image.png"
+              />
+              <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+           {form.formState.errors.galleryImages && <p className="text-sm text-destructive">{form.formState.errors.galleryImages.message}</p>}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => append('')}
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Image
+          </Button>
         </CardContent>
         <CardFooter>
             <Button type="submit" disabled={isSubmitting}>

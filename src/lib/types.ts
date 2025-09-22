@@ -9,6 +9,9 @@ export interface Post {
   coverImage: string;
   tags: string[];
   status: 'draft' | 'published';
+  authorName: string;
+  authorImage: string;
+  galleryImages?: string[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
