@@ -1,9 +1,14 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { getPosts } from '@/lib/posts';
-import { getUsers } from '@/lib/actions';
+import { getUsers } from '@/lib/actions.tsx';
 import { DashboardCharts, type PostCategoryData, type EngagementData, type TrafficData } from '@/components/admin/dashboard-charts';
 import type { Post } from '@/lib/types';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { FileText, Users, CheckCircle, Edit, ArrowRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
 const trafficData: TrafficData = [
   { name: 'Direct', value: 400, fill: 'hsl(var(--chart-1))' },
@@ -43,11 +48,53 @@ async function getCategoryData(posts: Post[]): Promise<PostCategoryData> {
     }));
 }
 
+function RecentPosts({ posts }: { posts: Post[] }) {
+    if (posts.length === 0) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>No Posts Found</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground">There are no posts to display.</p>
+                </CardContent>
+            </Card>
+        )
+    }
+    return (
+        <div className="space-y-4">
+            {posts.map(post => (
+                <div key={post.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div>
+                        <p className="font-medium">{post.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                            {format(post.createdAt.toDate(), 'PPP')}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                         <Badge variant={post.status === 'published' ? 'default' : 'secondary'}>
+                            {post.status}
+                        </Badge>
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={`/admin/edit/${post.id}`}>Edit</Link>
+                        </Button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    )
+}
 
 export default async function DashboardPage() {
   const posts = await getPosts();
   const users = await getUsers();
-  const postsData = await getCategoryData(posts);
+  
+  const publishedPosts = posts.filter(p => p.status === 'published');
+  const draftPosts = posts.filter(p => p.status === 'draft');
+  const recentPublished = publishedPosts.slice(0, 5);
+  const recentDrafts = draftPosts.slice(0,5);
+
+  const postsData = await getCategoryData(publishedPosts);
 
   return (
     <div className="space-y-6">
@@ -59,33 +106,58 @@ export default async function DashboardPage() {
         </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
-          <CardHeader>
-            <CardTitle>Total Posts</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">{posts.length}</div>
+            <div className="text-2xl font-bold">{posts.length}</div>
             <p className="text-xs text-muted-foreground">All posts in the database.</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Users</CardTitle>
+         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Post Status</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">{users.length}</div>
+            <div className="text-2xl font-bold">{publishedPosts.length} Published</div>
+            <p className="text-xs text-muted-foreground">{draftPosts.length} Drafts</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{users.length}</div>
              <p className="text-xs text-muted-foreground">Total registered users.</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Page Views</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold">250,000</div>
-             <p className="text-xs text-muted-foreground">(Mock Data) +12% since last month</p>
-          </CardContent>
-        </Card>
       </div>
+
+       <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Published Posts</CardTitle>
+              <CardDescription>Your latest five articles that are live.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RecentPosts posts={recentPublished} />
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader>
+              <CardTitle>Drafts Awaiting Review</CardTitle>
+              <CardDescription>Your latest five drafts.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RecentPosts posts={recentDrafts} />
+            </CardContent>
+          </Card>
+        </div>
+
 
       <DashboardCharts
         postsData={postsData}
