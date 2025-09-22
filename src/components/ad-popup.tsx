@@ -26,14 +26,10 @@ export function AdPopup() {
     if (!hasBeenDismissed) {
       const fetchAndSetAd = async () => {
         try {
-          const ads: Ad[] = await getAds();
+          const ads = await getAds();
           if (ads.length > 0) {
             const randomAd = ads[Math.floor(Math.random() * ads.length)];
-            const serializableAd: SerializableAd = {
-                ...randomAd,
-                createdAt: randomAd.createdAt?.toDate ? randomAd.createdAt.toDate().toISOString() : new Date().toISOString(),
-            };
-            setAd(serializableAd);
+            setAd(randomAd);
 
             const timer = setTimeout(() => {
               setIsOpen(true);
@@ -93,3 +89,5 @@ export function AdPopup() {
     </Dialog>
   );
 }
+
+    

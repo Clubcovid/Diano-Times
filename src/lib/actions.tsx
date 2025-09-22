@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -22,6 +23,10 @@ import { isAiFeatureEnabled } from './ai-flags';
 import { renderToBuffer } from '@react-pdf/renderer';
 import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
+
+type SerializableAd = Omit<Ad, 'createdAt'> & {
+  createdAt: string;
+};
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
   if (!db) {
@@ -65,14 +70,14 @@ export async function generateSlug(title: string): Promise<{ success: boolean; s
   }
 }
 
-type FormState = {
+type FormState<T> = {
   success: boolean;
   message: string;
   errors?: z.ZodIssue[];
-  postId?: string;
+  data?: T;
 };
 
-export async function createPost(data: PostFormData): Promise<FormState> {
+export async function createPost(data: PostFormData): Promise<FormState<Post>> {
   if (!db) {
     return { success: false, message: 'Database not connected. Is the admin SDK configured correctly?' };
   }
@@ -104,11 +109,12 @@ export async function createPost(data: PostFormData): Promise<FormState> {
     };
 
     const docRef = await db.collection('posts').add(postToSave);
+    const newPost = await docRef.get();
 
     revalidatePath('/');
     revalidatePath('/admin/posts');
 
-    return { success: true, message: 'Post created successfully.', postId: docRef.id };
+    return { success: true, message: 'Post created successfully.', data: {id: newPost.id, ...newPost.data()} as Post };
   } catch (error) {
     console.error('Error creating post:', error);
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -116,7 +122,7 @@ export async function createPost(data: PostFormData): Promise<FormState> {
   }
 }
 
-export async function updatePost(postId: string, data: PostFormData): Promise<FormState> {
+export async function updatePost(postId: string, data: PostFormData): Promise<FormState<Post>> {
   if (!db) {
     return { success: false, message: 'Database not connected.' };
   }
@@ -146,11 +152,13 @@ export async function updatePost(postId: string, data: PostFormData): Promise<Fo
       updatedAt: FieldValue.serverTimestamp(),
     });
 
+    const updatedPost = await postRef.get();
+
     revalidatePath('/');
     revalidatePath(`/posts/${validatedData.slug}`);
     revalidatePath('/admin/posts');
 
-    return { success: true, message: 'Post updated successfully.', postId };
+    return { success: true, message: 'Post updated successfully.', data: {id: updatedPost.id, ...updatedPost.data()} as Post };
   } catch (error) {
     console.error('Error updating post:', error);
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -200,19 +208,24 @@ export async function getUsers(): Promise<AdminUser[]> {
 }
 
 
-export async function getAds(): Promise<Ad[]> {
+export async function getAds(): Promise<SerializableAd[]> {
   if (!db) {
       console.error("Database not connected. Cannot fetch ads.");
-      return mockAds;
+      return mockAds.map(ad => ({...ad, createdAt: new Date().toISOString()}));
   }
   try {
     const adsCollection = db.collection('advertisements');
     const snapshot = await adsCollection.orderBy('createdAt', 'desc').get();
     if (snapshot.empty) return [];
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    } as Ad));
+
+    return snapshot.docs.map(doc => {
+      const data = doc.data() as Ad;
+      return {
+        ...data,
+        id: doc.id,
+        createdAt: data.createdAt.toDate().toISOString(),
+      };
+    });
   } catch (error) {
     console.error('Error fetching ads:', error);
     return [];
@@ -285,7 +298,7 @@ export async function deleteAd(adId: string): Promise<{ success: boolean, messag
 export async function getVideos(): Promise<Video[]> {
   if (!db) {
     console.error("Database not connected. Cannot fetch videos.");
-    return mockVideos;
+    return mockVideos as Video[];
   }
   try {
     const videosCollection = db.collection('videos');
@@ -371,6 +384,8 @@ type ProfileActionState = {
 }
 
 async function getUserIdFromSession(): Promise<string | null> {
+    // This function needs to be adapted if used client-side or without direct header access.
+    // For server actions, this is fine.
     const authHeader = headers().get('Authorization');
     if (!authHeader || !auth) return null;
 
@@ -391,19 +406,18 @@ export async function updateUserProfile(prevState: ProfileActionState | undefine
         return { success: false, message: "Authentication service is not available." };
     }
     const displayName = formData.get('displayName') as string;
+    const uid = formData.get('uid') as string; // Assuming UID is passed in the form
     
     if (!displayName || displayName.length < 3) {
         return { success: false, message: "Display name must be at least 3 characters." };
     }
+     if (!uid) {
+        return { success: false, message: "User ID is missing." };
+    }
+
 
     try {
-        const userId = await getUserIdFromSession();
-        
-        if (!userId) {
-             return { success: false, message: "Could not authenticate user. Please log in again." };
-        }
-        
-        await auth.updateUser(userId, { displayName });
+        await auth.updateUser(uid, { displayName });
         
         revalidatePath('/profile');
         return { success: true, message: "Profile updated successfully!" };
@@ -624,5 +638,7 @@ export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ suc
         return { success: false, message };
     }
 }
+
+    
 
     
