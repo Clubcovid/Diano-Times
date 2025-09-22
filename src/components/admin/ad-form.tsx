@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormState } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,9 +15,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Save } from 'lucide-react';
+import { Save, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { Ad } from '@/lib/types';
+import Image from 'next/image';
 
 type SerializableAd = Omit<Ad, 'createdAt'> & { createdAt: string };
 
@@ -26,10 +27,19 @@ interface AdFormProps {
   onSuccess?: () => void;
 }
 
+const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+});
+
 export function AdForm({ ad, onSuccess }: AdFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const isEditing = !!ad;
+  const [imagePreview, setImagePreview] = useState<string | null>(ad?.imageUrl || null);
+
 
   const form = useForm<AdFormData>({
     resolver: zodResolver(adSchema),
@@ -65,6 +75,16 @@ export function AdForm({ ad, onSuccess }: AdFormProps) {
     }
   }, [state, isEditing, onSuccess, toast, router]);
 
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        const base64 = await toBase64(file);
+        setImagePreview(base64);
+        form.setValue('imageUrl', base64);
+        form.clearErrors('imageUrl');
+    }
+  }
+
 
   return (
     <form action={formAction} className="space-y-4 py-4">
@@ -84,8 +104,28 @@ export function AdForm({ ad, onSuccess }: AdFormProps) {
         )}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="imageUrl">Image URL</Label>
-        <Input id="imageUrl" placeholder="https://example.com/image.jpg" {...form.register('imageUrl')} />
+        <Label>Ad Image</Label>
+        {imagePreview && (
+          <div className="relative aspect-video w-full rounded-md overflow-hidden border">
+              <Image src={imagePreview} alt="Ad preview" fill className="object-cover" />
+          </div>
+        )}
+         <div className="relative">
+            <Button type="button" variant="outline" className="w-full" asChild>
+                <label htmlFor="imageUrl" className="cursor-pointer">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload Image
+                </label>
+            </Button>
+            <input 
+                id="imageUrl"
+                type="file"
+                accept="image/png, image/jpeg, image/gif"
+                onChange={handleImageChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+        </div>
+         <input type="hidden" {...form.register('imageUrl')} />
         {form.formState.errors.imageUrl && (
           <p className="text-sm text-destructive">{form.formState.errors.imageUrl.message}</p>
         )}

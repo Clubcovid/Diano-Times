@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -791,4 +790,3 @@ export async function getPublishedPostsForMagazine(): Promise<SerializablePostFo
     createdAt: format(post.createdAt.toDate(), 'PPP'),
   }));
 }
-
