@@ -29,6 +29,7 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
 import React from 'react';
+import { GoogleIcon } from './icons/google';
 
 const categories: { title: string; href: string; description: string }[] = [
   {
@@ -135,12 +136,14 @@ export function BlogHeader() {
         </nav>
         <div className="flex items-center gap-2">
            <ThemeToggle />
-           <Button variant="outline" size="icon" asChild>
-                <Link href="/search">
-                    <Search className="h-5 w-5" />
-                    <span className="sr-only">Search</span>
-                </Link>
-           </Button>
+           <div className="hidden sm:flex">
+             <Button variant="outline" size="icon" asChild>
+                  <Link href="/search">
+                      <Search className="h-5 w-5" />
+                      <span className="sr-only">Search</span>
+                  </Link>
+             </Button>
+           </div>
            {loading ? (
             <Skeleton className="h-10 w-24 rounded-md" />
           ) : user ? (
@@ -212,7 +215,7 @@ export function BlogHeader() {
                    {!user && !loading && (
                     <div className="mt-8 grid gap-4">
                       <SheetClose asChild>
-                         <Button asChild>
+                         <Button asChild className="w-full">
                            <Link href="/login">
                               <LogIn className="mr-2"/>
                               Login
@@ -220,13 +223,25 @@ export function BlogHeader() {
                          </Button>
                       </SheetClose>
                        <SheetClose asChild>
-                          <Button variant="outline" asChild>
+                          <Button variant="outline" asChild className="w-full">
                             <Link href="/register">
                               <UserPlus className="mr-2"/>
                               Register
                             </Link>
                           </Button>
                        </SheetClose>
+                        <div className="relative my-2">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-background px-2 text-muted-foreground">Or</span>
+                            </div>
+                        </div>
+                        <Button variant="outline" className="w-full">
+                            <GoogleIcon className="mr-2 h-4 w-4" />
+                            Sign in with Google
+                        </Button>
                     </div>
                   )}
                 </div>

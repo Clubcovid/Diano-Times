@@ -120,7 +120,7 @@ async function PostsSection() {
                 priority
                 data-ai-hint="kenyan landscape"
                 />
-                <div className="absolute inset-0 bg-black/50" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
                 
                 <div className="absolute inset-0 hidden flex-col items-center justify-center p-4 md:flex">
                     <div className="w-full max-w-2xl">
@@ -145,6 +145,10 @@ async function PostsSection() {
             </div>
           </section>
         )}
+
+        <div className="md:hidden -mt-6 mb-8 px-4">
+             <SearchForm />
+        </div>
         
         <div className="lg:hidden mb-8">
             <TrendingTopics />
