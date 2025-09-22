@@ -23,6 +23,11 @@ import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
 import { askDianoFlow, type AskDianoOutput } from '@/ai/flows/ask-diano-flow';
 
+type SerializablePost = Omit<Post, 'createdAt' | 'updatedAt'> & {
+  createdAt: string;
+  updatedAt: string;
+};
+
 type SerializableAd = Omit<Ad, 'createdAt'> & {
   createdAt: string;
 };
@@ -775,4 +780,14 @@ export async function saveAndContinueConversation(sessionId: string, userMessage
     
     const updatedSessionDoc = await sessionRef.get();
     return { id: updatedSessionDoc.id, ...updatedSessionDoc.data() } as ChatSession;
+}
+
+
+export async function getPublishedPostsForMagazine(): Promise<SerializablePost[]> {
+  const posts = await getPosts({ publishedOnly: true });
+  return posts.map(post => ({
+    ...post,
+    createdAt: post.createdAt.toDate().toISOString(),
+    updatedAt: post.updatedAt.toDate().toISOString(),
+  }));
 }

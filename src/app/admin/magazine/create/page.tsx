@@ -1,10 +1,8 @@
-
 'use client';
 
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { generateMagazinePdf } from '@/lib/actions';
-import { getPosts } from '@/lib/posts';
+import { generateMagazinePdf, getPublishedPostsForMagazine } from '@/lib/actions';
 import type { Post } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -30,11 +28,11 @@ export default function CreateMagazinePage() {
     useEffect(() => {
         const fetchPosts = async () => {
             setIsLoading(true);
-            const fetchedPosts = await getPosts({ publishedOnly: true });
+            const fetchedPosts = await getPublishedPostsForMagazine();
             const serializablePosts = fetchedPosts.map(post => ({
                 ...post,
-                createdAt: post.createdAt.toDate().toISOString(),
-                updatedAt: post.updatedAt.toDate().toISOString(),
+                createdAt: post.createdAt,
+                updatedAt: post.updatedAt,
             }));
             setPosts(serializablePosts);
             setIsLoading(false);
@@ -137,4 +135,3 @@ export default function CreateMagazinePage() {
         </div>
     );
 }
-
