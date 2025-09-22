@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getWeatherForecast, type WeatherForecast } from '@/ai/flows/get-weather-forecast';
 import { BlogHeader } from '@/components/blog-header';
 import { BackToTop } from '@/components/back-to-top';
-import { getAds } from '@/lib/actions';
+import { getAds } from '@/lib/actions.tsx';
 import type { Ad } from '@/lib/types';
 import { NewsletterPopup } from '@/components/newsletter-popup';
 import { SearchForm } from '@/components/search-form';
@@ -76,6 +76,10 @@ async function Advertisement() {
   if (ads.length === 0) {
     return null;
   }
+  
+  // Randomly select one ad to display
+  const adToDisplay = ads[Math.floor(Math.random() * ads.length)];
+
 
   return (
     <Card>
@@ -83,24 +87,22 @@ async function Advertisement() {
         <CardTitle>Advertisement</CardTitle>
       </CardHeader>
       <CardContent>
-        {ads.slice(0, 1).map(ad => (
-          <Link href={ad.linkUrl} key={ad.id} target="_blank" rel="noopener noreferrer" className="block group">
+          <Link href={adToDisplay.linkUrl} key={adToDisplay.id} target="_blank" rel="noopener noreferrer" className="block group">
              <div className="relative aspect-square rounded-lg overflow-hidden">
               <Image
-                src={ad.imageUrl}
-                alt={ad.title}
+                src={adToDisplay.imageUrl}
+                alt={adToDisplay.title}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
                 data-ai-hint="advertisement marketing"
               />
               <div className="absolute inset-0 bg-black/40" />
                <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="font-bold font-headline">{ad.title}</h3>
-                  <p className="text-xs">{ad.description}</p>
+                  <h3 className="font-bold font-headline">{adToDisplay.title}</h3>
+                  <p className="text-xs">{adToDisplay.description}</p>
               </div>
             </div>
           </Link>
-        ))}
       </CardContent>
     </Card>
   );
@@ -164,6 +166,12 @@ async function PostsSection() {
 
         <div className="md:hidden -mt-6 mb-8 px-4">
              <SearchForm />
+        </div>
+        
+        <div className="mb-8 lg:hidden">
+          <Suspense>
+            <Advertisement />
+          </Suspense>
         </div>
         
         {otherPosts.length > 0 ? (
@@ -348,5 +356,7 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
 
     
