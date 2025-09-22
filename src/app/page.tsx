@@ -8,7 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, LogIn, UserPlus, LayoutDashboard } from 'lucide-react';
+import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, LogIn, UserPlus, LayoutDashboard, Zap } from 'lucide-react';
 import { mockTrendingTopics, mockMarketData, mockWeatherData } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getWeatherForecast, type WeatherForecast } from '@/ai/flows/get-weather-forecast';
@@ -35,22 +35,32 @@ function PostsSkeleton() {
   );
 }
 
-function TrendingTopics() {
+function TrendingTicker() {
     return (
-        <Card>
-            <CardHeader>
-              <CardTitle>Trending Topics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {mockTrendingTopics.map((topic, index) => (
-                  <li key={index} className="text-sm font-medium text-primary hover:underline">
-                    <Link href="#">{topic}</Link>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-        </Card>
+        <div className="bg-background border-b">
+            <div className="container mx-auto px-4 md:px-6 py-2 flex items-center gap-4">
+                <div className="flex-shrink-0 flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-primary" />
+                    <h3 className="font-bold text-sm uppercase tracking-wider">Trending</h3>
+                </div>
+                 <div className="flex-1 relative flex overflow-hidden">
+                    <div className="marquee">
+                        <div className="marquee-content text-sm">
+                            {mockTrendingTopics.map((topic, index) => (
+                              <Link key={index} href="#" className="font-medium text-muted-foreground hover:text-primary transition-colors px-4">
+                                {topic}
+                              </Link>
+                            ))}
+                             {mockTrendingTopics.map((topic, index) => (
+                              <Link key={`${index}-clone`} href="#" className="font-medium text-muted-foreground hover:text-primary transition-colors px-4">
+                                {topic}
+                              </Link>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }
 
@@ -150,10 +160,6 @@ async function PostsSection() {
              <SearchForm />
         </div>
         
-        <div className="lg:hidden mb-8">
-            <TrendingTopics />
-        </div>
-
         {otherPosts.length > 0 ? (
           <div className="grid gap-8 md:grid-cols-2">
             {otherPosts.slice(0, 4).map((post) => (
@@ -170,7 +176,6 @@ async function PostsSection() {
         )}
       </div>
       <aside className="hidden lg:block lg:col-span-1 space-y-8">
-          <TrendingTopics />
           <Suspense>
             <Advertisement />
           </Suspense>
@@ -289,6 +294,7 @@ export default function HomePage() {
           <WeatherTicker />
       </Suspense>
       <MarketTicker />
+      <TrendingTicker />
 
       <main className="flex-1">
         <div className="container mx-auto px-4 md:px-6 py-8">
