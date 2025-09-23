@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { getPosts } from '@/lib/posts';
+import { getPosts } from '@/lib/actions';
 import { getUsers } from '@/lib/actions';
 import { DashboardCharts, type PostCategoryData, type EngagementData } from '@/components/admin/dashboard-charts';
 import type { Post } from '@/lib/types';

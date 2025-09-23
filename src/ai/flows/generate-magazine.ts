@@ -6,7 +6,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {getPosts} from '@/lib/posts';
+import {getPosts} from '@/lib/actions';
 import {format} from 'date-fns';
 import { isAiFeatureEnabled } from '@/lib/ai-flags';
 

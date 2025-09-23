@@ -1,6 +1,6 @@
 
 import { Suspense } from 'react';
-import { getPosts } from '@/lib/posts';
+import { getPosts } from '@/lib/actions';
 import { PostCard } from '@/components/post-card';
 import { BlogHeader } from '@/components/blog-header';
 import { SearchForm } from '@/components/search-form';
@@ -56,4 +56,3 @@ export default function SearchPage({ searchParams }: { searchParams: { q: string
         </div>
     );
 }
-

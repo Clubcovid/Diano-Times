@@ -1,10 +1,9 @@
 
 import Link from 'next/link';
-import { getPosts } from '@/lib/posts';
+import { getPosts, getTags } from '@/lib/actions';
 import { PostCard } from '@/components/post-card';
 import { Suspense } from 'react';
 import { TagList } from '@/components/tag-list';
-import { getTags } from '@/lib/posts';
 import { BlogHeader } from '@/components/blog-header';
 
 async function PostsData({ tag }: { tag?: string }) {

@@ -1,7 +1,7 @@
 
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { getPostBySlug, getPosts } from '@/lib/posts';
+import { getPostBySlug, getTags, getPosts } from '@/lib/actions';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import Link from 'next/link';

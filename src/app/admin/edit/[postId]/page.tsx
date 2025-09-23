@@ -1,5 +1,6 @@
+
 import { PostForm } from '@/components/admin/post-form';
-import { getPostById } from '@/lib/posts';
+import { getPostById } from '@/lib/actions';
 import { notFound } from 'next/navigation';
 import type { Post } from '@/lib/types';
 

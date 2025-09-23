@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { postSchema, type PostFormData } from '@/lib/schemas';
 import type { Post } from '@/lib/types';
-import { createPost, updatePost, generateSlug } from '@/lib/actions.tsx';
+import { createPost, updatePost, generateSlug } from '@/lib/actions';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

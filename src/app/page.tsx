@@ -3,7 +3,7 @@
 'use client';
 
 import { PostCard } from '@/components/post-card';
-import { getPosts, getTrendingTags } from '@/lib/posts';
+import { getPosts, getTrendingTags, getWeatherForecastAction } from '@/lib/actions';
 import type { Post } from '@/lib/types';
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, Zap } from 'lucide-react';
 import { mockMarketData, mockWeatherData } from '@/lib/mock-data';
-import { getWeatherForecastAction } from '@/lib/actions';
 import type { WeatherForecast } from '@/ai/flows/get-weather-forecast';
 import { BlogHeader } from '@/components/blog-header';
 import { BackToTop } from '@/components/back-to-top';
@@ -36,8 +35,17 @@ function PostsSkeleton() {
   );
 }
 
-async function TrendingTicker() {
-    const trendingTopics = await getTrendingTags(5);
+function TrendingTicker() {
+    const [trendingTopics, setTrendingTopics] = useState<string[]>([]);
+    
+    useEffect(() => {
+        async function fetchTrending() {
+            const topics = await getTrendingTags(5);
+            setTrendingTopics(topics);
+        }
+        fetchTrending();
+    }, []);
+
 
     if (trendingTopics.length === 0) {
         return null;
@@ -71,10 +79,29 @@ async function TrendingTicker() {
     );
 }
 
-async function PostsSection() {
-  let allPosts = await getPosts({ publishedOnly: true });
+function PostsSection() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (allPosts.length === 0) {
+  useEffect(() => {
+    async function loadPosts() {
+      try {
+        const fetchedPosts = await getPosts({ publishedOnly: true, limit: 5 });
+        setPosts(fetchedPosts);
+      } catch (error) {
+        console.error("Failed to fetch posts:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadPosts();
+  }, []);
+
+  if (isLoading) {
+    return <PostsSkeleton />;
+  }
+
+  if (posts.length === 0) {
      return (
        <div className="text-center py-16 col-span-full">
           <h2 className="text-2xl font-bold font-headline">No posts found</h2>
@@ -85,7 +112,7 @@ async function PostsSection() {
     );
   }
 
-  const [featuredPost, ...otherPosts] = allPosts;
+  const [featuredPost, ...otherPosts] = posts;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -336,9 +363,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
-
-    
-
-

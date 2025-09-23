@@ -1,6 +1,6 @@
 
 import { PostsTable } from '@/components/admin/posts-table';
-import { getPosts } from '@/lib/posts';
+import { getPosts } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';

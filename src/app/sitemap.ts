@@ -1,5 +1,6 @@
+
 import { MetadataRoute } from 'next';
-import { getPosts } from '@/lib/posts';
+import { getPosts } from '@/lib/actions';
 
 const BASE_URL = 'https://dianotimes.com'; 
 
