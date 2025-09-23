@@ -21,7 +21,7 @@ import { isAiFeatureEnabled } from './ai-flags';
 import { renderToBuffer } from '@react-pdf/renderer';
 import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
-import { askDianoFlow, type AskDianoOutput } from '@/ai/flows/ask-diano-flow';
+import { askDianoFlow } from '@/ai/flows/ask-diano-flow';
 import { format } from 'date-fns';
 
 type SerializablePostForMagazine = {
@@ -680,13 +680,17 @@ export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ suc
 
 export async function askDiano(
     input: { question: string; history: ChatMessage[] }
-): Promise<AskDianoOutput> {
+) {
     if (!(await isAiFeatureEnabled('isAskDianoEnabled'))) {
-        return {
-            answer: 'The "Ask Diano" feature is currently disabled by the administrator.',
-            sources: [],
-        };
+      const readableStream = new ReadableStream({
+        start(controller) {
+          controller.enqueue('The "Ask Diano" feature is currently disabled by the administrator.');
+          controller.close();
+        },
+      });
+      return readableStream;
     }
+    
     const headersList = headers();
     const headersObject = {} as Record<string, string>;
     headersList.forEach((value, key) => {
@@ -695,10 +699,20 @@ export async function askDiano(
 
     const typedHistory = input.history.map(m => ({role: m.role, content: m.content}));
 
-    return askDianoFlow({
+    const stream = await askDianoFlow({
         question: input.question,
         history: typedHistory,
     }, { headers: headersObject });
+
+    const encoder = new TextEncoder();
+    const transformStream = new TransformStream({
+      transform(chunk, controller) {
+        controller.enqueue(encoder.encode(chunk));
+      },
+    });
+
+    stream.pipeTo(transformStream.writable);
+    return transformStream.readable;
 }
 
 
@@ -711,9 +725,9 @@ export async function getUserChatSession(): Promise<ChatSession> {
     }
 
     const chatCollection = db.collection('diano_chats');
-    const snapshot = await chatCollection.where('userId', '==', userId).orderBy('createdAt', 'desc').limit(1).get();
+    let sessionDoc = (await chatCollection.where('userId', '==', userId).orderBy('createdAt', 'desc').limit(1).get()).docs[0];
     
-    if (snapshot.empty) {
+    if (!sessionDoc) {
         const newSessionData = {
             userId,
             createdAt: FieldValue.serverTimestamp(),
@@ -724,30 +738,27 @@ export async function getUserChatSession(): Promise<ChatSession> {
             }]
         };
         const docRef = await db.collection('diano_chats').add(newSessionData);
-        const newDoc = await docRef.get();
-        const data = newDoc.data()!;
-
-        return {
-             id: docRef.id,
-             userId: data.userId,
-             createdAt: data.createdAt,
-             updatedAt: data.updatedAt,
-             messages: data.messages,
-        };
-    } else {
-        const doc = snapshot.docs[0];
-        return { id: doc.id, ...doc.data() } as ChatSession;
+        sessionDoc = await docRef.get();
     }
+    
+    const data = sessionDoc.data()!;
+    return {
+        id: sessionDoc.id,
+        userId: data.userId,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+        messages: data.messages,
+    };
 }
 
-export async function saveAndContinueConversation(sessionId: string, userMessage: ChatMessage): Promise<ChatSession> {
-    if (!db) throw new Error('Database not connected.');
+export async function saveAndContinueConversation(sessionId: string, userMessage: ChatMessage): Promise<ReadableStream<Uint8Array>> {
+  if (!db) throw new Error('Database not connected.');
     
     const userId = await getUserIdFromSession();
     if (!userId) {
         throw new Error('User not authenticated.');
     }
-
+    
     const sessionRef = db.collection('diano_chats').doc(sessionId);
 
     // Save user message first
@@ -759,28 +770,47 @@ export async function saveAndContinueConversation(sessionId: string, userMessage
     const currentSession = await sessionRef.get();
     const currentData = currentSession.data() as Omit<ChatSession, 'id'>;
 
-    // Get AI response
-    const aiResponse = await askDiano({
+    const stream = await askDiano({
         question: userMessage.content,
         history: currentData.messages,
     });
 
-    const modelMessage: ChatMessage = {
-        role: 'model',
-        content: aiResponse.answer,
-        sources: aiResponse.sources
-    };
+    let fullText = '';
+    let sources: any = null;
 
-    // Save AI response
-    await sessionRef.update({
-        messages: FieldValue.arrayUnion(modelMessage),
-        updatedAt: FieldValue.serverTimestamp(),
+    const transformStream = new TransformStream<Uint8Array, Uint8Array>({
+      async transform(chunk, controller) {
+        const decodedChunk = new TextDecoder().decode(chunk);
+        if (decodedChunk.includes('__SOURCES_JSON__:')) {
+          const parts = decodedChunk.split('__SOURCES_JSON__:');
+          fullText += parts[0];
+          try {
+            sources = JSON.parse(parts[1]).sources;
+          } catch (e) {
+            console.error('Failed to parse sources JSON from stream', e);
+          }
+        } else {
+          fullText += decodedChunk;
+        }
+        controller.enqueue(chunk);
+      },
+      async flush() {
+        const modelMessage: ChatMessage = {
+          role: 'model',
+          content: fullText.trim(),
+          ...(sources && { sources }),
+        };
+
+        await sessionRef.update({
+          messages: FieldValue.arrayUnion(modelMessage),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      },
     });
-    
-    const updatedSessionDoc = await sessionRef.get();
-    return { id: updatedSessionDoc.id, ...updatedSessionDoc.data() } as ChatSession;
-}
 
+    stream.pipeTo(transformStream.writable);
+    return transformStream.readable;
+}
 
 export async function getPublishedPostsForMagazine(): Promise<SerializablePostForMagazine[]> {
   const posts = await getPosts({ publishedOnly: true });
