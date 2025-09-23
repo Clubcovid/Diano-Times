@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -22,6 +23,7 @@ import { renderToBuffer } from '@react-pdf/renderer';
 import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
 import { askDiano } from '@/ai/flows/ask-diano-flow';
+import { getWeatherForecast, GetWeatherForecastInput, WeatherForecast } from '@/ai/flows/get-weather-forecast';
 import { format } from 'date-fns';
 
 type SerializablePostForMagazine = {
@@ -676,6 +678,17 @@ export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ suc
         return { success: false, message };
     }
 }
+
+export async function getWeatherForecastAction(input: GetWeatherForecastInput): Promise<WeatherForecast | null> {
+    try {
+        const forecast = await getWeatherForecast(input);
+        return forecast;
+    } catch (error) {
+        console.error('Error in getWeatherForecastAction:', error);
+        return null;
+    }
+}
+
 
 export async function askDianoAction(
     input: { question: string; history: ChatMessage[] }

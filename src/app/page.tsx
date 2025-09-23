@@ -1,17 +1,19 @@
 
 
+'use client';
+
 import { PostCard } from '@/components/post-card';
 import { getPosts, getTrendingTags } from '@/lib/posts';
 import type { Post } from '@/lib/types';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, LogIn, UserPlus, LayoutDashboard, Zap } from 'lucide-react';
+import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, Zap } from 'lucide-react';
 import { mockMarketData, mockWeatherData } from '@/lib/mock-data';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getWeatherForecast, type WeatherForecast } from '@/ai/flows/get-weather-forecast';
+import { getWeatherForecastAction } from '@/lib/actions';
+import type { WeatherForecast } from '@/ai/flows/get-weather-forecast';
 import { BlogHeader } from '@/components/blog-header';
 import { BackToTop } from '@/components/back-to-top';
 import { NewsletterPopup } from '@/components/newsletter-popup';
@@ -148,14 +150,37 @@ async function PostsSection() {
   );
 }
 
+type Stock = { ticker: string; price: number; change: string };
+
 const MarketTicker = () => {
+    const [marketData, setMarketData] = useState<Stock[]>(mockMarketData);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setMarketData(currentData =>
+                currentData.map(stock => {
+                    const change = (Math.random() - 0.5) * (stock.price * 0.01);
+                    const newPrice = Math.max(0, stock.price + change);
+                    return {
+                        ...stock,
+                        price: newPrice,
+                        change: `${change >= 0 ? '+' : ''}${change.toFixed(2)}`
+                    };
+                })
+            );
+        }, 3000); // Update every 3 seconds
+
+        return () => clearInterval(interval);
+    }, []);
+
+
     return (
         <div className="bg-secondary text-secondary-foreground py-2 border-b-2 border-primary">
             <div className="container mx-auto px-4 md:px-6">
                 <div className="relative flex overflow-hidden group">
                     <div className="marquee">
                         <div className="marquee-content">
-                            {mockMarketData.map(stock => (
+                            {marketData.map(stock => (
                                 <div key={stock.ticker} className="flex items-center gap-4 text-sm font-medium">
                                     <span className="font-bold">{stock.ticker}</span>
                                     <span>${stock.price.toFixed(2)}</span>
@@ -165,7 +190,7 @@ const MarketTicker = () => {
                                     </span>
                                 </div>
                             ))}
-                             {mockMarketData.map(stock => (
+                             {marketData.map(stock => (
                                 <div key={stock.ticker +'-clone'} className="flex items-center gap-4 text-sm font-medium">
                                     <span className="font-bold">{stock.ticker}</span>
                                     <span>${stock.price.toFixed(2)}</span>
@@ -192,23 +217,27 @@ const iconMap: { [key: string]: LucideIcon } = {
   Snowflake,
 };
 
-const WeatherTicker = async () => {
-  // AI-based weather fetching disabled to avoid rate-limiting issues.
-  // const cities = ['Nairobi, Kenya', 'Mombasa, Kenya', 'Kisumu, Kenya', 'Eldoret, Kenya'];
-  // const weatherData: WeatherForecast[] = [];
-  // try {
-  //   for (const location of cities) {
-  //     const forecast = await getWeatherForecast({ location });
-  //     if (forecast) {
-  //       weatherData.push(forecast);
-  //     }
-  //   }
-  // } catch (error) {
-  //   console.error("Failed to fetch weather data:", error);
-  //   // You could return a fallback or empty component here
-  //   return null;
-  // }
-  const weatherData = mockWeatherData;
+const WeatherTicker = () => {
+  const [weatherData, setWeatherData] = useState<WeatherForecast[]>(mockWeatherData);
+
+  useEffect(() => {
+    async function fetchWeather() {
+      const cities = ['Nairobi, Kenya', 'Mombasa, Kenya', 'Kisumu, Kenya', 'Eldoret, Kenya'];
+      try {
+        const forecasts = await Promise.all(
+          cities.map(location => getWeatherForecastAction({ location }))
+        );
+        const validForecasts = forecasts.filter((f): f is WeatherForecast => !!f);
+        if (validForecasts.length > 0) {
+            setWeatherData(validForecasts);
+        }
+      } catch (error) {
+        console.error("Failed to fetch live weather data, using mock data.", error);
+      }
+    }
+
+    fetchWeather();
+  }, []);
 
   if (weatherData.length === 0) {
     return null;
@@ -311,3 +340,5 @@ export default function HomePage() {
     
 
     
+
+
