@@ -6,18 +6,18 @@ import { db, auth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
 import { generatePost as generatePostAI } from '@/ai/flows/generate-post';
 import { generateMagazine as generateMagazineAI } from '@/ai/flows/generate-magazine';
-import { postSchema, adSchema, videoSchema, type PostFormData } from './schemas';
+import { postSchema, adSchema, videoSchema, type PostFormData } from '@/lib/schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
-import type { AdminUser, Ad, Video, Post, Magazine, ChatSession, ChatMessage } from './types';
+import type { AdminUser, Ad, Video, Post, Magazine, ChatSession, ChatMessage } from '@/lib/types';
 import { headers } from 'next/headers';
-import { mockPosts, mockAds, mockVideos } from './mock-data';
+import { mockPosts, mockAds, mockVideos } from '@/lib/mock-data';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { v4 as uuidv4 } from 'uuid';
-import { getPosts } from './posts';
-import type { AiFeatureFlags } from './ai-flags';
-import { isAiFeatureEnabled } from './ai-flags';
+import { getPosts } from '@/lib/posts';
+import type { AiFeatureFlags } from '@/lib/ai-flags';
+import { isAiFeatureEnabled } from '@/lib/ai-flags';
 import { renderToBuffer } from '@react-pdf/renderer';
 import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
@@ -620,7 +620,6 @@ export async function generateMagazinePdf(postIds: string[]): Promise<{ success:
         const magazineContent: GenerateMagazineOutput = await generateMagazineAI({ postIds });
 
         // 2. Render the PDF to a buffer on the server.
-        // This step is where the error likely happened. Let's ensure data is clean.
         const buffer = await renderToBuffer(<MagazineLayout data={magazineContent} />);
         
         // 3. Upload the PDF to Firebase Storage
@@ -680,11 +679,11 @@ export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ suc
 
 export async function askDiano(
     input: { question: string; history: ChatMessage[] }
-) {
+): Promise<ReadableStream<Uint8Array>> {
     if (!(await isAiFeatureEnabled('isAskDianoEnabled'))) {
       const readableStream = new ReadableStream({
         start(controller) {
-          controller.enqueue('The "Ask Diano" feature is currently disabled by the administrator.');
+          controller.enqueue(new TextEncoder().encode('The "Ask Diano" feature is currently disabled by the administrator.'));
           controller.close();
         },
       });
@@ -705,7 +704,7 @@ export async function askDiano(
     }, { headers: headersObject });
 
     const encoder = new TextEncoder();
-    const transformStream = new TransformStream({
+    const transformStream = new TransformStream<string, Uint8Array>({
       transform(chunk, controller) {
         controller.enqueue(encoder.encode(chunk));
       },
