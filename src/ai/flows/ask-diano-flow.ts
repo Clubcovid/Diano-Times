@@ -27,7 +27,7 @@ const searchPostsTool = ai.defineTool(
   },
   async ({ query }, context) => {
     console.log(`Searching posts with query: ${query || 'LATEST'}`);
-    const posts = await getPosts({ searchQuery: query, limit: 3, publishedOnly: true });
+    const posts = await getPosts({ searchQuery: query, limit: 3, publishedOnly: true }, context);
     return {
       posts: posts.map((post) => ({
         slug: post.slug,

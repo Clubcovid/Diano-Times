@@ -4,6 +4,7 @@ import { db } from '@/lib/firebase-admin';
 import type { Post } from './types';
 import { mockPosts } from './mock-data';
 import { Query, Timestamp } from 'firebase-admin/firestore';
+import type { FlowContext } from 'genkit';
 
 function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
   const data = doc.data();
@@ -33,7 +34,7 @@ interface GetPostsOptions {
   searchQuery?: string;
 }
 
-export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
+export async function getPosts(options: GetPostsOptions = {}, context?: FlowContext): Promise<Post[]> {
   const { limit, publishedOnly, tag, fromDate, ids, searchQuery } = options;
 
   if (!db) {
