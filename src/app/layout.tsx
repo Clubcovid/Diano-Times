@@ -1,8 +1,10 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/components/auth-provider';
 import { ThemeProvider } from '@/components/theme-provider';
+import { DianoChatWidget } from '@/components/diano-chat-widget';
 
 export const metadata: Metadata = {
   title: 'Diano Times',
@@ -34,6 +36,7 @@ export default function RootLayout({
           <AuthProvider>
             {children}
             <Toaster />
+            <DianoChatWidget />
           </AuthProvider>
         </ThemeProvider>
       </body>
