@@ -3,20 +3,11 @@ import Link from 'next/link';
 import { getVideos } from '@/lib/actions';
 import { BlogHeader } from '@/components/blog-header';
 import { VideoGrid } from '@/components/video-grid';
-import type { Video } from '@/lib/types';
+import type { SerializableVideo } from '@/lib/types';
 
-// This is a type guard to check if the video has serializable dates
-type SerializableVideo = Omit<Video, 'createdAt'> & {
-  createdAt: string;
-};
 
 export default async function VideoPage() {
-  const videos: Video[] = await getVideos();
-
-  const serializableVideos: SerializableVideo[] = videos.map(video => ({
-    ...video,
-    createdAt: video.createdAt?.toDate ? video.createdAt.toDate().toISOString() : new Date().toISOString(),
-  }));
+  const videos: SerializableVideo[] = await getVideos();
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -28,7 +19,7 @@ export default async function VideoPage() {
                 <p className="text-lg text-muted-foreground mt-2">Watch our latest videos</p>
             </div>
             
-            <VideoGrid videos={serializableVideos} />
+            <VideoGrid videos={videos} />
 
         </div>
       </main>
@@ -67,3 +58,5 @@ export default async function VideoPage() {
     </div>
   );
 }
+
+    

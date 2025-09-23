@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Loader2, Newspaper } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
 
 type SerializablePostForMagazine = {
   id: string;
@@ -103,7 +104,7 @@ export default function CreateMagazinePage() {
                                     <Label htmlFor={`post-${post.id}`} className="flex-1 cursor-pointer">
                                         <p className="font-semibold">{post.title}</p>
                                         <p className="text-xs text-muted-foreground">
-                                            Published on {post.createdAt}
+                                            Published on {format(parseISO(post.createdAt), 'PPP')}
                                         </p>
                                     </Label>
                                 </div>
@@ -131,3 +132,5 @@ export default function CreateMagazinePage() {
         </div>
     );
 }
+
+    

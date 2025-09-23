@@ -7,21 +7,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { AdFormDialog } from '@/components/admin/ad-form-dialog';
 import { AdCard } from '@/components/admin/ad-card';
-import type { Ad } from '@/lib/types';
+import type { SerializableAd } from '@/lib/types';
 import { getAds } from '@/lib/actions';
 
-// This is a type guard to check if the ad has serializable dates
-type SerializableAd = Omit<Ad, 'createdAt'> & {
-  createdAt: string;
-};
-
 export default async function AdvertisementsPage() {
-  const ads: Ad[] = await getAds();
-  
-  const serializableAds: SerializableAd[] = ads.map(ad => ({
-    ...ad,
-    createdAt: ad.createdAt?.toDate ? ad.createdAt.toDate().toISOString() : new Date().toISOString(),
-  }));
+  const ads: SerializableAd[] = await getAds();
 
   return (
     <>
@@ -38,7 +28,7 @@ export default async function AdvertisementsPage() {
           </AdFormDialog>
         </div>
 
-        {serializableAds.length === 0 ? (
+        {ads.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <h3 className="text-xl font-semibold">No advertisements found.</h3>
@@ -49,7 +39,7 @@ export default async function AdvertisementsPage() {
           </Card>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {serializableAds.map((ad) => (
+            {ads.map((ad) => (
               <AdCard key={ad.id} ad={ad} />
             ))}
           </div>
@@ -58,3 +48,5 @@ export default async function AdvertisementsPage() {
     </>
   );
 }
+
+    

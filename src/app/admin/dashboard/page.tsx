@@ -3,21 +3,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { getPosts } from '@/lib/actions';
 import { getUsers } from '@/lib/actions';
 import { DashboardCharts, type PostCategoryData, type EngagementData } from '@/components/admin/dashboard-charts';
-import type { Post } from '@/lib/types';
+import type { SerializablePost } from '@/lib/types';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { FileText, Users, CheckCircle, Edit, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format, subMonths, getMonth, getYear } from 'date-fns';
 
-function getEngagementData(posts: Post[]): EngagementData {
+function getEngagementData(posts: SerializablePost[]): EngagementData {
     const last6Months = Array.from({ length: 6 }).map((_, i) => {
         const d = subMonths(new Date(), i);
         return { year: getYear(d), month: getMonth(d), name: format(d, 'MMM'), published: 0, drafts: 0 };
     }).reverse();
 
     posts.forEach(post => {
-        const postDate = post.createdAt.toDate();
+        const postDate = new Date(post.createdAt);
         const postYear = getYear(postDate);
         const postMonth = getMonth(postDate);
 
@@ -36,7 +36,7 @@ function getEngagementData(posts: Post[]): EngagementData {
 }
 
 
-async function getCategoryData(posts: Post[]): Promise<PostCategoryData> {
+async function getCategoryData(posts: SerializablePost[]): Promise<PostCategoryData> {
     const categoryCounts = posts.reduce((acc, post) => {
         post.tags.forEach(tag => {
             if (acc[tag]) {
@@ -57,7 +57,7 @@ async function getCategoryData(posts: Post[]): Promise<PostCategoryData> {
     }));
 }
 
-function RecentPosts({ posts }: { posts: Post[] }) {
+function RecentPosts({ posts }: { posts: SerializablePost[] }) {
     if (posts.length === 0) {
         return (
             <Card>
@@ -77,7 +77,7 @@ function RecentPosts({ posts }: { posts: Post[] }) {
                     <div>
                         <p className="font-medium">{post.title}</p>
                         <p className="text-sm text-muted-foreground">
-                            {format(post.createdAt.toDate(), 'PPP')}
+                            {format(new Date(post.createdAt), 'PPP')}
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -176,3 +176,5 @@ export default async function DashboardPage() {
     </div>
   );
 }
+
+    

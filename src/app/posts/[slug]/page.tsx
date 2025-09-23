@@ -47,8 +47,8 @@ export async function generateMetadata(
       type: 'article',
       url: `https://dianotimes.com/posts/${post.slug}`,
       images: post.coverImage ? [post.coverImage, ...previousImages] : [...previousImages],
-      publishedTime: post.createdAt.toDate().toISOString(),
-      modifiedTime: post.updatedAt.toDate().toISOString(),
+      publishedTime: new Date(post.createdAt).toISOString(),
+      modifiedTime: new Date(post.updatedAt).toISOString(),
       tags: post.tags,
       authors: [post.authorName],
     },
@@ -75,7 +75,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
     notFound();
   }
 
-  const postDate = post.createdAt?.toDate ? post.createdAt.toDate() : new Date();
+  const postDate = new Date(post.createdAt);
   const relatedPosts = await getPosts({ publishedOnly: true, tag: post.tags[0], limit: 3 });
   const filteredRelatedPosts = relatedPosts.filter(p => p.id !== post.id).slice(0, 2);
 
@@ -208,3 +208,5 @@ export default async function PostPage({ params }: { params: { slug: string } })
     </>
   );
 }
+
+    

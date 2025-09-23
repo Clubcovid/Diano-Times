@@ -27,7 +27,7 @@ async function MagazineList() {
                     <CardHeader>
                         <CardTitle>{magazine.title}</CardTitle>
                         <CardDescription>
-                            Published on {format(magazine.createdAt.toDate(), 'MMMM d, yyyy')}
+                            Published on {format(new Date(magazine.createdAt as any), 'MMMM d, yyyy')}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -75,3 +75,5 @@ export default function DianoWeeklyPage() {
         </div>
     );
 }
+
+    

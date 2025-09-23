@@ -5,23 +5,13 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import type { Video } from '@/lib/types';
+import type { SerializableVideo } from '@/lib/types';
 import { getVideos } from '@/lib/actions';
 import { VideoFormDialog } from '@/components/admin/video-form-dialog';
 import { VideoCard } from '@/components/admin/video-card';
 
-// This is a type guard to check if the video has serializable dates
-type SerializableVideo = Omit<Video, 'createdAt'> & {
-  createdAt: string;
-};
-
 export default async function VideosPage() {
-  const videos: Video[] = await getVideos();
-
-  const serializableVideos: SerializableVideo[] = videos.map(video => ({
-    ...video,
-    createdAt: video.createdAt?.toDate ? video.createdAt.toDate().toISOString() : new Date().toISOString(),
-  }));
+  const videos: SerializableVideo[] = await getVideos();
 
   return (
     <>
@@ -38,7 +28,7 @@ export default async function VideosPage() {
           </VideoFormDialog>
         </div>
 
-        {serializableVideos.length === 0 ? (
+        {videos.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <h3 className="text-xl font-semibold">No videos found.</h3>
@@ -49,7 +39,7 @@ export default async function VideosPage() {
           </Card>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {serializableVideos.map((video) => (
+            {videos.map((video) => (
               <VideoCard key={video.id} video={video} />
             ))}
           </div>
@@ -58,3 +48,5 @@ export default async function VideosPage() {
     </>
   );
 }
+
+    

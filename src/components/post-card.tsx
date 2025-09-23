@@ -2,11 +2,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Post } from '@/lib/types';
+import type { SerializablePost } from '@/lib/types';
 import { format } from 'date-fns';
 
-export function PostCard({ post }: { post: Post }) {
-  const postDate = post.createdAt?.toDate ? post.createdAt.toDate() : new Date();
+export function PostCard({ post }: { post: SerializablePost }) {
+  const postDate = new Date(post.createdAt);
 
   return (
     <Link href={`/posts/${post.slug}`} className="block">
@@ -40,3 +40,5 @@ export function PostCard({ post }: { post: Post }) {
     </Link>
   );
 }
+
+    

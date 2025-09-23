@@ -4,7 +4,7 @@
 
 import { PostCard } from '@/components/post-card';
 import { getPosts, getTrendingTags, getWeatherForecastAction } from '@/lib/actions';
-import type { Post } from '@/lib/types';
+import type { SerializablePost } from '@/lib/types';
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -80,7 +80,7 @@ function TrendingTicker() {
 }
 
 function PostsSection() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<SerializablePost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -161,7 +161,7 @@ function PostsSection() {
         {otherPosts.length > 0 ? (
           <div className="grid gap-8 md:grid-cols-2">
             {otherPosts.slice(0, 4).map((post) => (
-              <PostCard key={post.id} post={post as Post} />
+              <PostCard key={post.id} post={post} />
             ))}
           </div>
         ) : (
@@ -363,3 +363,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    

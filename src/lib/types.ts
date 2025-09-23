@@ -17,6 +17,11 @@ export interface Post {
   updatedAt: Timestamp;
 }
 
+export type SerializablePost = Omit<Post, 'createdAt' | 'updatedAt'> & {
+  createdAt: string;
+  updatedAt: string;
+};
+
 export interface AdminUser {
     uid: string;
     email: string;
@@ -35,12 +40,17 @@ export interface Ad {
   createdAt: Timestamp;
 }
 
+export type SerializableAd = Omit<Ad, 'createdAt'> & { createdAt: string };
+
+
 export interface Video {
   id: string;
   title: string;
   youtubeUrl: string;
   createdAt: Timestamp;
 }
+
+export type SerializableVideo = Omit<Video, 'createdAt'> & { createdAt: string };
 
 export interface Magazine {
   id: string;
@@ -64,3 +74,5 @@ export interface ChatSession {
     updatedAt: Timestamp;
     messages: ChatMessage[];
 }
+
+    

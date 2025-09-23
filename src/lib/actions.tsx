@@ -9,7 +9,7 @@ import { generateMagazine as generateMagazineAI } from '@/ai/flows/generate-maga
 import { postSchema, adSchema, videoSchema, type PostFormData } from '@/lib/schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
-import type { AdminUser, Ad, Video, Post, Magazine, ChatSession, ChatMessage } from '@/lib/types';
+import type { AdminUser, Ad, Video, Post, Magazine, ChatSession, ChatMessage, SerializablePost, SerializableAd, SerializableVideo } from '@/lib/types';
 import { headers } from 'next/headers';
 import { mockPosts, mockAds, mockVideos } from '@/lib/mock-data';
 import { FieldValue, Timestamp, Query } from 'firebase-admin/firestore';
@@ -30,9 +30,6 @@ type SerializablePostForMagazine = {
   createdAt: string;
 };
 
-type SerializableAd = Omit<Ad, 'createdAt'> & {
-  createdAt: string;
-};
 
 async function isSlugUnique(slug: string, currentId?: string): Promise<boolean> {
   if (!db) {
@@ -83,7 +80,7 @@ type FormState<T> = {
   data?: T;
 };
 
-export async function createPost(data: PostFormData): Promise<FormState<Post>> {
+export async function createPost(data: PostFormData): Promise<FormState<SerializablePost>> {
   if (!db) {
     return { success: false, message: 'Database not connected. Is the admin SDK configured correctly?' };
   }
@@ -115,12 +112,13 @@ export async function createPost(data: PostFormData): Promise<FormState<Post>> {
     };
 
     const docRef = await db.collection('posts').add(postToSave);
-    const newPost = await docRef.get();
+    const newPostDoc = await docRef.get();
+    const newPost = toSerializablePost(newPostDoc);
 
     revalidatePath('/');
     revalidatePath('/admin/posts');
 
-    return { success: true, message: 'Post created successfully.', data: {id: newPost.id, ...newPost.data()} as Post };
+    return { success: true, message: 'Post created successfully.', data: newPost };
   } catch (error) {
     console.error('Error creating post:', error);
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -128,7 +126,7 @@ export async function createPost(data: PostFormData): Promise<FormState<Post>> {
   }
 }
 
-export async function updatePost(postId: string, data: PostFormData): Promise<FormState<Post>> {
+export async function updatePost(postId: string, data: PostFormData): Promise<FormState<SerializablePost>> {
   if (!db) {
     return { success: false, message: 'Database not connected.' };
   }
@@ -158,13 +156,14 @@ export async function updatePost(postId: string, data: PostFormData): Promise<Fo
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    const updatedPost = await postRef.get();
+    const updatedPostDoc = await postRef.get();
+    const updatedPost = toSerializablePost(updatedPostDoc);
 
     revalidatePath('/');
     revalidatePath(`/posts/${validatedData.slug}`);
     revalidatePath('/admin/posts');
 
-    return { success: true, message: 'Post updated successfully.', data: {id: updatedPost.id, ...updatedPost.data()} as Post };
+    return { success: true, message: 'Post updated successfully.', data: updatedPost };
   } catch (error) {
     console.error('Error updating post:', error);
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -301,19 +300,24 @@ export async function deleteAd(adId: string): Promise<{ success: boolean, messag
 }
 
 
-export async function getVideos(): Promise<Video[]> {
+export async function getVideos(): Promise<SerializableVideo[]> {
   if (!db) {
     console.error("Database not connected. Cannot fetch videos.");
-    return mockVideos as Video[];
+    return mockVideos.map(v => ({...v, createdAt: new Date().toISOString()}));
   }
   try {
     const videosCollection = db.collection('videos');
     const snapshot = await videosCollection.orderBy('createdAt', 'desc').get();
     if (snapshot.empty) return [];
-    return snapshot.docs.map(doc => ({ 
-      id: doc.id,
-      ...doc.data(),
-    } as Video));
+    return snapshot.docs.map(doc => {
+        const data = doc.data() as Video;
+        return {
+            id: doc.id,
+            title: data.title,
+            youtubeUrl: data.youtubeUrl,
+            createdAt: data.createdAt.toDate().toISOString()
+        }
+    });
   } catch (error) {
     console.error('Error fetching videos:', error);
     return [];
@@ -541,9 +545,9 @@ export async function generateDraftPost(topic: string): Promise<{success: boolea
             status: 'draft',
         });
 
-        if (result.success) {
+        if (result.success && result.data) {
             revalidatePath('/admin/autopilot');
-            return { success: true, message: 'Draft created', postId: result.data?.id };
+            return { success: true, message: 'Draft created', postId: result.data.id };
         } else {
             return { success: false, message: result.message };
         }
@@ -826,27 +830,24 @@ export async function getPublishedPostsForMagazine(): Promise<SerializablePostFo
   return posts.map(post => ({
     id: post.id,
     title: post.title,
-    createdAt: format(post.createdAt.toDate(), 'PPP'),
+    createdAt: format(post.createdAt, 'PPP'),
   }));
 }
 
-function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
+function toSerializablePost(doc: FirebaseFirestore.DocumentSnapshot): SerializablePost {
   const data = doc.data();
   if (!data) throw new Error('Document data is empty');
-  return {
+  
+  const post = {
     id: doc.id,
-    title: data.title,
-    slug: data.slug,
-    content: data.content,
-    coverImage: data.coverImage,
-    tags: data.tags || [],
-    status: data.status,
-    authorName: data.authorName || 'Diano Times Staff',
-    authorImage: data.authorImage || '',
-    galleryImages: data.galleryImages || [],
-    createdAt: data.createdAt,
-    updatedAt: data.updatedAt,
+    ...data
   } as Post;
+
+  return {
+    ...post,
+    createdAt: post.createdAt.toDate().toISOString(),
+    updatedAt: post.updatedAt.toDate().toISOString(),
+  };
 }
 
 interface GetPostsOptions {
@@ -858,34 +859,12 @@ interface GetPostsOptions {
   searchQuery?: string;
 }
 
-export async function getPosts(options: GetPostsOptions = {}, context?: any): Promise<Post[]> {
+export async function getPosts(options: GetPostsOptions = {}, context?: any): Promise<SerializablePost[]> {
   const { limit, publishedOnly, tag, fromDate, ids, searchQuery } = options;
 
   if (!db) {
     console.warn("Firebase Admin is not initialized. Cannot fetch posts. Returning mock data.");
-    let filteredMockPosts = mockPosts;
-
-    if (publishedOnly) {
-      filteredMockPosts = filteredMockPosts.filter(p => p.status === 'published');
-    }
-    if (tag) {
-      filteredMockPosts = filteredMockPosts.filter(p => p.tags.includes(tag));
-    }
-    if (fromDate) {
-       filteredMockPosts = filteredMockPosts.filter(p => p.createdAt.toDate() >= fromDate);
-    }
-    if (ids) {
-        filteredMockPosts = filteredMockPosts.filter(p => ids.includes(p.id));
-    }
-    if (searchQuery) {
-        const lowerCaseQuery = searchQuery.toLowerCase();
-        filteredMockPosts = filteredMockPosts.filter(p => 
-            p.title.toLowerCase().includes(lowerCaseQuery) ||
-            p.content.toLowerCase().includes(lowerCaseQuery)
-        );
-    }
-    
-    return filteredMockPosts.slice(0, limit);
+    return [];
   }
 
   const postsCollection = db.collection('posts');
@@ -917,7 +896,7 @@ export async function getPosts(options: GetPostsOptions = {}, context?: any): Pr
       return [];
     }
     
-    let posts = snapshot.docs.map(toPost);
+    let posts = snapshot.docs.map(toSerializablePost);
 
     if (searchQuery) {
       const lowerCaseQuery = searchQuery.toLowerCase();
@@ -939,7 +918,7 @@ export async function getPosts(options: GetPostsOptions = {}, context?: any): Pr
       }
       
       const allPostsSnapshot = await fallbackQuery.get();
-      let posts = allPostsSnapshot.docs.map(toPost);
+      let posts = allPostsSnapshot.docs.map(toSerializablePost);
 
       // Manual filtering
       if (publishedOnly) {
@@ -949,7 +928,7 @@ export async function getPosts(options: GetPostsOptions = {}, context?: any): Pr
         posts = posts.filter(post => post.tags.includes(tag));
       }
       if (fromDate) {
-        posts = posts.filter(post => post.createdAt.toDate() >= fromDate);
+        posts = posts.filter(post => new Date(post.createdAt) >= fromDate);
       }
        if (searchQuery) {
         const lowerCaseQuery = searchQuery.toLowerCase();
@@ -959,7 +938,7 @@ export async function getPosts(options: GetPostsOptions = {}, context?: any): Pr
         );
       }
       
-      posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+      posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       return posts.slice(0, limit || 100);
     }
@@ -1010,32 +989,52 @@ export async function getTrendingTags(limit: number = 5): Promise<string[]> {
       .map(([tag]) => tag);
   }
 
-  const postsCollection = db.collection('posts');
-  const snapshot = await postsCollection
-    .where('status', '==', 'published')
-    .orderBy('createdAt', 'desc')
-    .limit(50)
-    .get();
+  try {
+    const postsCollection = db.collection('posts');
+    const snapshot = await postsCollection
+      .where('status', '==', 'published')
+      .orderBy('createdAt', 'desc')
+      .limit(50)
+      .get();
 
-  const tagCounts: Record<string, number> = {};
-  snapshot.docs.forEach(doc => {
-    const post = toPost(doc);
-    post.tags.forEach(tag => {
-      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+    const tagCounts: Record<string, number> = {};
+    snapshot.docs.forEach(doc => {
+      const post = toSerializablePost(doc);
+      post.tags.forEach(tag => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      });
     });
-  });
+    
+    return Object.entries(tagCounts)
+      .sort(([, countA], [, countB]) => countB - countA)
+      .slice(0, limit)
+      .map(([tag]) => tag);
 
-  return Object.entries(tagCounts)
-    .sort(([, countA], [, countB]) => countB - countA)
-    .slice(0, limit)
-    .map(([tag]) => tag);
+  } catch(error: any) {
+    if (error.code === 9 && error.message.includes('requires an index')) {
+        console.warn(`Firestore query failed for trending tags due to a missing index. Falling back to manual calculation.`);
+        const allPosts = await getPosts({ publishedOnly: true, limit: 100 });
+        const tagCounts: Record<string, number> = {};
+        allPosts.forEach(post => {
+            post.tags.forEach(tag => {
+                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+            });
+        });
+        return Object.entries(tagCounts)
+            .sort(([, countA], [, countB]) => countB - countA)
+            .slice(0, limit)
+            .map(([tag]) => tag);
+    }
+     console.error("Error fetching trending tags from Firestore:", error);
+    return [];
+  }
 }
 
 
-export async function getPostBySlug(slug: string): Promise<Post | null> {
+export async function getPostBySlug(slug: string): Promise<SerializablePost | null> {
     if (!db) {
       console.error(`Firebase Admin is not initialized. Cannot fetch post by slug: ${slug}.`);
-      return mockPosts.find(p => p.slug === slug) || null;
+      return null;
     }
   try {
     const postsCollection = db.collection('posts');
@@ -1043,17 +1042,17 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     if (snapshot.empty) {
       return null;
     }
-    return toPost(snapshot.docs[0]);
+    return toSerializablePost(snapshot.docs[0]);
   } catch (error) {
     console.error(`Error fetching post by slug ${slug}:`, error);
     return null;
   }
 }
 
-export async function getPostById(id: string): Promise<Post | null> {
+export async function getPostById(id: string): Promise<SerializablePost | null> {
   if (!db) {
       console.error(`Firebase Admin is not initialized. Cannot fetch post by id: ${id}.`);
-      return mockPosts.find(p => p.id === id) || null;
+      return null;
   }
   try {
     const postDocRef = db.collection('posts').doc(id);
@@ -1061,9 +1060,11 @@ export async function getPostById(id: string): Promise<Post | null> {
     if (!postDoc.exists) {
        return null;
     }
-    return toPost(postDoc);
+    return toSerializablePost(postDoc);
   } catch (error) {
     console.error(`Error fetching post by ID ${id}:`, error);
     return null;
   }
 }
+
+    
