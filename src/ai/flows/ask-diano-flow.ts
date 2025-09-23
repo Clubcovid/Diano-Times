@@ -56,7 +56,7 @@ const askDianoFlow = ai.defineFlow(
   {
     name: 'askDianoFlow',
     inputSchema: AskDianoInputSchema,
-    outputSchema: z.string().stream(),
+    outputSchema: z.string(),
   },
   async (input, context) => {
     const { question, history } = input;
