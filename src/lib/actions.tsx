@@ -21,7 +21,7 @@ import { isAiFeatureEnabled } from '@/lib/ai-flags';
 import { renderToBuffer } from '@react-pdf/renderer';
 import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
-import { askDianoFlow } from '@/ai/flows/ask-diano-flow';
+import { askDiano } from '@/ai/flows/ask-diano-flow';
 import { format } from 'date-fns';
 
 type SerializablePostForMagazine = {
@@ -677,7 +677,7 @@ export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ suc
     }
 }
 
-export async function askDiano(
+export async function askDianoAction(
     input: { question: string; history: ChatMessage[] }
 ): Promise<ReadableStream<Uint8Array>> {
     if (!(await isAiFeatureEnabled('isAskDianoEnabled'))) {
@@ -698,7 +698,7 @@ export async function askDiano(
 
     const typedHistory = input.history.map(m => ({role: m.role, content: m.content}));
 
-    const stream = await askDianoFlow({
+    const stream = await askDiano({
         question: input.question,
         history: typedHistory,
     }, { headers: headersObject });
@@ -713,7 +713,6 @@ export async function askDiano(
     stream.pipeTo(transformStream.writable);
     return transformStream.readable;
 }
-
 
 export async function getUserChatSession(): Promise<ChatSession> {
     if (!db) throw new Error('Database not connected.');
@@ -769,7 +768,7 @@ export async function saveAndContinueConversation(sessionId: string, userMessage
     const currentSession = await sessionRef.get();
     const currentData = currentSession.data() as Omit<ChatSession, 'id'>;
 
-    const stream = await askDiano({
+    const stream = await askDianoAction({
         question: userMessage.content,
         history: currentData.messages,
     });

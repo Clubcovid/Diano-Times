@@ -7,13 +7,14 @@ import type { ChatMessage, ChatSession } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { getUserChatSession, saveAndContinueConversation } from '@/lib/actions';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Loader2, Bot, User, BookOpen, Send, Sparkles } from 'lucide-react';
+import { Loader2, Bot, User, BookOpen, Send } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { askDianoAction } from '@/lib/actions';
 
 interface DianoChatInterfaceProps {
     containerClassName?: string;
