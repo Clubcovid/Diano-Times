@@ -6,22 +6,22 @@ import { db, auth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
 import { generatePost as generatePostAI } from '@/ai/flows/generate-post';
 import { generateMagazine as generateMagazineAI } from '@/ai/flows/generate-magazine';
-import { postSchema, adSchema, videoSchema, type PostFormData } from './schemas';
+import { postSchema, adSchema, videoSchema, type PostFormData } from '@/lib/schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
-import type { AdminUser, Ad, Video, Post, Magazine, ChatSession, ChatMessage } from './types';
+import type { AdminUser, Ad, Video, Post, Magazine, ChatSession, ChatMessage } from '@/lib/types';
 import { headers } from 'next/headers';
-import { mockPosts, mockAds, mockVideos } from './mock-data';
+import { mockPosts, mockAds, mockVideos } from '@/lib/mock-data';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { v4 as uuidv4 } from 'uuid';
-import { getPosts } from './posts';
-import type { AiFeatureFlags } from './ai-flags';
-import { isAiFeatureEnabled } from './ai-flags';
+import { getPosts } from '@/lib/actions';
+import type { AiFeatureFlags } from '@/lib/ai-flags';
+import { isAiFeatureEnabled } from '@/lib/ai-flags';
 import { renderToBuffer } from '@react-pdf/renderer';
 import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
-import { askDianoFlow, type AskDianoOutput } from '@/ai/flows/ask-diano-flow';
+import { askDiano } from '@/ai/flows/ask-diano-flow';
 import { format } from 'date-fns';
 
 type SerializablePostForMagazine = {
@@ -742,7 +742,7 @@ export async function saveAndContinueConversation(sessionId: string, userMessage
         headersObject[key] = value;
     });
 
-    const stream = await askDianoFlow({
+    const stream = await askDiano({
         question: userMessage.content,
         history: currentData.messages,
     }, { headers: headersObject });
@@ -779,7 +779,7 @@ export async function saveAndContinueConversation(sessionId: string, userMessage
       },
     });
 
-    stream.pipeThrough(transformStream);
+    stream.pipeTo(transformStream.writable);
     return transformStream.readable;
 }
 

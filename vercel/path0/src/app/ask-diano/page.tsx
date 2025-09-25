@@ -57,7 +57,6 @@ export default function AskDianoPage() {
     const userMessage: ChatMessage = { role: 'user', content: question };
     const currentMessages = [...(chatSession.messages || []), userMessage];
     
-    // Optimistic update with user message
     setChatSession(prev => prev ? { ...prev, messages: currentMessages } : null);
     setQuestion('');
     setIsAsking(true);
@@ -69,8 +68,7 @@ export default function AskDianoPage() {
         
         let done = false;
         let streamedResponse = { role: 'model' as const, content: '', sources: [] };
-
-        // Add the empty model message to start rendering it
+        
         setChatSession(prev => prev ? { ...prev, messages: [...currentMessages, streamedResponse] } : null);
         
         while (!done) {
@@ -81,7 +79,8 @@ export default function AskDianoPage() {
             if (chunk) {
               setChatSession(prev => {
                 if (!prev) return null;
-                const lastMessage = prev.messages[prev.messages.length - 1];
+                const newMessages = [...prev.messages];
+                const lastMessage = newMessages[newMessages.length - 1];
 
                 if(chunk.includes('__SOURCES_JSON__:')){
                     const parts = chunk.split('__SOURCES_JSON__:');
@@ -96,7 +95,7 @@ export default function AskDianoPage() {
                      lastMessage.content += chunk;
                 }
 
-                return { ...prev, messages: [...prev.messages] };
+                return { ...prev, messages: newMessages };
               });
             }
         }
@@ -106,8 +105,7 @@ export default function AskDianoPage() {
         description: error.message || 'Failed to get an answer.',
         variant: 'destructive',
       });
-      // Revert optimistic update
-       setChatSession(prev => prev ? { ...prev, messages: prev.messages.slice(0, -1)} : null);
+      setChatSession(prev => prev ? { ...prev, messages: prev.messages.slice(0, -1)} : null);
     } finally {
         setIsAsking(false);
     }
