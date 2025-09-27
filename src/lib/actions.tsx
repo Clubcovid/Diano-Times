@@ -1066,5 +1066,3 @@ export async function getPostById(id: string): Promise<SerializablePost | null> 
     return null;
   }
 }
-
-    
