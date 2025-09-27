@@ -9,7 +9,6 @@ import { getPosts } from '@/lib/actions';
 import { z } from 'genkit';
 import { htmlToText } from 'html-to-text';
 import { dianoChat } from '@/ai/flows/diano-chat-flow';
-import { Readable } from 'stream';
 
 // Define the schema for the tool that searches posts
 const searchPostsTool = ai.defineTool(
@@ -61,12 +60,8 @@ const askDianoFlow = ai.defineFlow(
   },
   async (input, context) => {
     const { question, history } = input;
-    
-    const { stream, response } = ai.generateStream({
-      model: 'googleai/gemini-2.5-flash',
-      tools: [searchPostsTool, dianoChat],
-      history: history?.map(msg => ({ role: msg.role, parts: [{ text: msg.content }] })) || [],
-      prompt: `You are "Diano," the AI persona for the Talk of Nations blog. You embody the digital spirit of George Towett Diano: a witty, satirical, and unapologetically direct social commentator from Kenya.
+
+    const systemPrompt = `You are "Diano," the AI persona for the Talk of Nations blog. You embody the digital spirit of George Towett Diano: a witty, satirical, and unapologetically direct social commentator from Kenya.
 
       **Core Persona & Style:**
       - **Identity:** You are a Kipsigis from Nairobi, a sharp-tongued activist, and a storyteller. Your language should be a fluid, natural mix of English, Sheng, and Swahili, used where it feels authentic.
@@ -87,29 +82,51 @@ const askDianoFlow = ai.defineFlow(
       4.  **Handling Language Requests:** If a user asks you to switch languages (e.g., "speak in English only"), don't just comply. Respond with satire that reinforces your persona. For example: "Hebu niwaambie, my friend. English itakuwaje shida? Mimi si mzungu, lakini lugha sio 'vumbi' kwangu."
       5.  **Cite Sources:** If you used the \`searchPosts\` tool, append a JSON block at the VERY END of your response with any sources you used. It MUST be in the format: \`__SOURCES_JSON__:{"sources": [{"slug": "the-slug", "title": "The Title"}]}\`. Do not include this block if no tools were used.
       6.  **Sign Off:** Conclude your response with an appropriate signature phrase from your list, if it fits the context.
+      `;
 
-      User's Current Question: "${question}"
-      `,
+    const conversationHistory = [
+        { role: 'system' as const, parts: [{ text: systemPrompt }] },
+        ...(history?.map(msg => ({ role: msg.role as 'user' | 'model', parts: [{ text: msg.content }] })) || []),
+    ];
+    
+    const { stream, response } = ai.generateStream({
+      model: 'googleai/gemini-2.5-flash',
+      tools: [searchPostsTool, dianoChat],
+      history: conversationHistory,
+      prompt: question,
     }, context);
 
     const readableStream = new ReadableStream({
       async start(controller) {
-        for await (const chunk of stream) {
-          if (chunk.text) {
-            controller.enqueue(chunk.text);
-          }
-        }
-
-        const finalResponse = await response;
-        const toolResponse = finalResponse.history.find(h => h.role === 'tool');
-        if (toolResponse) {
-            const toolOutput = toolResponse.parts[0].toolResponse?.output as { posts: {slug: string, title: string}[]};
-            if (toolOutput?.posts && toolOutput.posts.length > 0) {
-                const sources = { sources: toolOutput.posts };
-                controller.enqueue(`__SOURCES_JSON__:${JSON.stringify(sources)}`);
+        try {
+            for await (const chunk of stream) {
+                if (chunk.text) {
+                    controller.enqueue(chunk.text);
+                }
             }
+
+            const finalResponse = await response;
+            const sources: { slug: string; title: string }[] = [];
+            
+            for (const h of finalResponse.history) {
+              if (h.role === 'tool') {
+                const toolOutput = h.parts[0].toolResponse?.output as { posts?: {slug: string, title: string}[] };
+                if (toolOutput?.posts) {
+                    sources.push(...toolOutput.posts);
+                }
+              }
+            }
+
+            if (sources.length > 0) {
+              const uniqueSources = Array.from(new Map(sources.map(item => [item.slug, item])).values());
+              controller.enqueue(`__SOURCES_JSON__:${JSON.stringify({ sources: uniqueSources })}`);
+            }
+
+            controller.close();
+        } catch (err: any) {
+            console.error("Error in askDianoFlow stream:", err);
+            controller.error(new Error(`An error occurred while generating the response: ${err.message}`));
         }
-        controller.close();
       },
     });
 
