@@ -415,7 +415,6 @@ export async function updateUserProfile(prevState: ProfileActionState | undefine
     }
     const displayName = formData.get('displayName') as string;
     
-    // This is a server action, so we can get the UID from the session token
     const uid = await getUserIdFromSession();
 
     if (!uid) {
@@ -446,7 +445,6 @@ export async function seedDatabase(): Promise<{ success: boolean, message: strin
   try {
     const batch = db.batch();
 
-    // Seed Posts
     const postsCollection = db.collection('posts');
     mockPosts.forEach(post => {
       const docRef = postsCollection.doc(post.id);
@@ -454,7 +452,6 @@ export async function seedDatabase(): Promise<{ success: boolean, message: strin
       batch.set(docRef, { ...postData, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
     });
 
-    // Seed Ads
     const adsCollection = db.collection('advertisements');
     mockAds.forEach(ad => {
       const docRef = adsCollection.doc(ad.id);
@@ -462,7 +459,6 @@ export async function seedDatabase(): Promise<{ success: boolean, message: strin
       batch.set(docRef, { ...adData, createdAt: FieldValue.serverTimestamp() });
     });
 
-    // Seed Videos
     const videosCollection = db.collection('videos');
     mockVideos.forEach(video => {
       const docRef = videosCollection.doc(video.id);
@@ -588,8 +584,6 @@ export async function getMagazine(id: string): Promise<Magazine | null> {
         const data = doc.data();
         if (!data) return null;
         
-        // The magazineData might be stored as a plain object after Firestore serialization.
-        // We just need to cast it correctly on the client.
         const magazineData = data.magazineData ? JSON.parse(JSON.stringify(data.magazineData)) : null;
 
         return {
@@ -619,13 +613,10 @@ export async function generateMagazinePdf(postIds: string[]): Promise<{ success:
     }
 
     try {
-        // 1. Generate the structured content from the AI
         const magazineContent: GenerateMagazineOutput = await generateMagazineAI({ postIds });
 
-        // 2. Render the PDF to a buffer on the server.
         const buffer = await renderToBuffer(<MagazineLayout data={magazineContent} />);
         
-        // 3. Upload the PDF to Firebase Storage
         const bucket = getStorage().bucket();
         const fileName = `magazines/diano-weekly-${uuidv4()}.pdf`;
         const file = bucket.file(fileName);
@@ -638,16 +629,15 @@ export async function generateMagazinePdf(postIds: string[]): Promise<{ success:
 
         const [fileUrl] = await file.getSignedUrl({
             action: 'read',
-            expires: '03-09-2491', // A far-future expiration date
+            expires: '03-09-2491',
         });
         
-        // 4. Save the metadata to Firestore, including the structured content
         const magazineData = {
             title: magazineContent.title,
             fileUrl: fileUrl,
             createdAt: FieldValue.serverTimestamp(),
             postIds: postIds,
-            magazineData: magazineContent, // Store the raw JSON object
+            magazineData: magazineContent,
         };
         const docRef = await db.collection('magazines').add(magazineData);
 
@@ -735,7 +725,6 @@ export async function getPosts(options: GetPostsOptions = {}, context?: any): Pr
   const postsCollection = db.collection('posts');
   let query: Query = postsCollection;
   
-  // Build the query
   if (publishedOnly) {
     query = query.where('status', '==', 'published');
   }
@@ -749,7 +738,7 @@ export async function getPosts(options: GetPostsOptions = {}, context?: any): Pr
      if (ids.length > 0) {
       query = query.where('__name__', 'in', ids);
     } else {
-      return []; // Return empty if no IDs are provided
+      return [];
     }
   }
 
@@ -785,7 +774,6 @@ export async function getPosts(options: GetPostsOptions = {}, context?: any): Pr
       const allPostsSnapshot = await fallbackQuery.get();
       let posts = allPostsSnapshot.docs.map(toSerializablePost);
 
-      // Manual filtering
       if (publishedOnly) {
         posts = posts.filter(post => post.status === 'published');
       }
