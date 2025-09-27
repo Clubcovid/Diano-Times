@@ -8,7 +8,7 @@ import { ai } from '@/ai/genkit';
 import { getPosts } from '@/lib/actions';
 import { z } from 'genkit';
 import { htmlToText } from 'html-to-text';
-import { dianoChat } from './diano-chat-flow';
+import { dianoChat } from '@/ai/flows/diano-chat-flow';
 import { Readable } from 'stream';
 
 // Define the schema for the tool that searches posts
