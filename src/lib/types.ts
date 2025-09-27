@@ -60,19 +60,3 @@ export interface Magazine {
   postIds: string[];
   magazineData: GenerateMagazineOutput;
 }
-
-export interface ChatMessage {
-  role: 'user' | 'model';
-  content: string;
-  sources?: Array<{ slug: string; title: string; }>;
-}
-
-export interface ChatSession {
-    id: string;
-    userId: string;
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
-    messages: ChatMessage[];
-}
-
-    

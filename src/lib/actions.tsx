@@ -9,7 +9,7 @@ import { generateMagazine as generateMagazineAI } from '@/ai/flows/generate-maga
 import { postSchema, adSchema, videoSchema, type PostFormData } from '@/lib/schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
-import type { AdminUser, Ad, Video, Post, Magazine, ChatSession, ChatMessage, SerializablePost, SerializableAd, SerializableVideo } from '@/lib/types';
+import type { AdminUser, Ad, Video, Post, Magazine, SerializablePost, SerializableAd, SerializableVideo } from '@/lib/types';
 import { headers } from 'next/headers';
 import { mockPosts, mockAds, mockVideos } from '@/lib/mock-data';
 import { FieldValue, Timestamp, Query } from 'firebase-admin/firestore';
@@ -20,7 +20,6 @@ import { isAiFeatureEnabled } from '@/lib/ai-flags';
 import { renderToBuffer } from '@react-pdf/renderer';
 import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
-import { askDiano } from '@/ai/flows/ask-diano-flow';
 import { getWeatherForecast, GetWeatherForecastInput, WeatherForecast } from '@/ai/flows/get-weather-forecast';
 import { format } from 'date-fns';
 
@@ -689,140 +688,6 @@ export async function getWeatherForecastAction(input: GetWeatherForecastInput): 
         console.error('Error in getWeatherForecastAction:', error);
         return null;
     }
-}
-
-
-export async function askDianoAction(
-    input: { question: string; history: ChatMessage[] }
-): Promise<ReadableStream<Uint8Array>> {
-    if (!(await isAiFeatureEnabled('isAskDianoEnabled'))) {
-      const readableStream = new ReadableStream({
-        start(controller) {
-          controller.enqueue(new TextEncoder().encode('The "Ask Diano" feature is currently disabled by the administrator.'));
-          controller.close();
-        },
-      });
-      return readableStream;
-    }
-    
-    const headersList = headers();
-    const headersObject = {} as Record<string, string>;
-    headersList.forEach((value, key) => {
-        headersObject[key] = value;
-    });
-
-    const typedHistory = input.history.map(m => ({role: m.role, content: m.content}));
-
-    const stream = await askDiano({
-        question: input.question,
-        history: typedHistory,
-    }, { headers: headersObject });
-
-    const encoder = new TextEncoder();
-    const transformStream = new TransformStream<string, Uint8Array>({
-      transform(chunk, controller) {
-        controller.enqueue(encoder.encode(chunk));
-      },
-    });
-
-    stream.pipeTo(transformStream.writable);
-    return transformStream.readable;
-}
-
-export async function getUserChatSession(): Promise<ChatSession> {
-    if (!db) throw new Error('Database not connected.');
-    
-    const userId = await getUserIdFromSession();
-    if (!userId) {
-        throw new Error('User not authenticated.');
-    }
-
-    const chatCollection = db.collection('diano_chats');
-    let sessionDoc = (await chatCollection.where('userId', '==', userId).orderBy('createdAt', 'desc').limit(1).get()).docs[0];
-    
-    if (!sessionDoc) {
-        const newSessionData = {
-            userId,
-            createdAt: FieldValue.serverTimestamp(),
-            updatedAt: FieldValue.serverTimestamp(),
-            messages: [{
-                role: 'model' as const,
-                content: 'Karibu to Talk of Nations! I am Diano, your AI assistant. Ask me anything about Kenyan news, politics, lifestyle... or what\'s on your mind. Let\'s talk, Omwami.'
-            }]
-        };
-        const docRef = await db.collection('diano_chats').add(newSessionData);
-        sessionDoc = await docRef.get();
-    }
-    
-    const data = sessionDoc.data()!;
-    return {
-        id: sessionDoc.id,
-        userId: data.userId,
-        createdAt: data.createdAt,
-        updatedAt: data.updatedAt,
-        messages: data.messages,
-    };
-}
-
-export async function saveAndContinueConversation(sessionId: string, userMessage: ChatMessage): Promise<ReadableStream<Uint8Array>> {
-  if (!db) throw new Error('Database not connected.');
-    
-    const userId = await getUserIdFromSession();
-    if (!userId) {
-        throw new Error('User not authenticated.');
-    }
-    
-    const sessionRef = db.collection('diano_chats').doc(sessionId);
-
-    // Save user message first
-    await sessionRef.update({
-        messages: FieldValue.arrayUnion(userMessage),
-        updatedAt: FieldValue.serverTimestamp(),
-    });
-
-    const currentSession = await sessionRef.get();
-    const currentData = currentSession.data() as Omit<ChatSession, 'id'>;
-
-    const stream = await askDianoAction({
-        question: userMessage.content,
-        history: currentData.messages,
-    });
-
-    let fullText = '';
-    let sources: any = null;
-
-    const transformStream = new TransformStream<Uint8Array, Uint8Array>({
-      async transform(chunk, controller) {
-        const decodedChunk = new TextDecoder().decode(chunk);
-        if (decodedChunk.includes('__SOURCES_JSON__:')) {
-          const parts = decodedChunk.split('__SOURCES_JSON__:');
-          fullText += parts[0];
-          try {
-            sources = JSON.parse(parts[1]).sources;
-          } catch (e) {
-            console.error('Failed to parse sources JSON from stream', e);
-          }
-        } else {
-          fullText += decodedChunk;
-        }
-        controller.enqueue(chunk);
-      },
-      async flush() {
-        const modelMessage: ChatMessage = {
-          role: 'model',
-          content: fullText.trim(),
-          ...(sources && { sources }),
-        };
-
-        await sessionRef.update({
-          messages: FieldValue.arrayUnion(modelMessage),
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-      },
-    });
-
-    stream.pipeTo(transformStream.writable);
-    return transformStream.readable;
 }
 
 export async function getPublishedPostsForMagazine(): Promise<SerializablePostForMagazine[]> {
