@@ -32,7 +32,7 @@ export default function ContactPage() {
                                 <Mail className="h-6 w-6 text-primary" />
                                 <div>
                                     <h3 className="font-semibold">Email</h3>
-                                    <a href="mailto:info@dianotimes.com" className="text-muted-foreground hover:text-primary">info@dianotimes.com</a>
+                                    <a href="mailto:info@talkofnations.com" className="text-muted-foreground hover:text-primary">info@talkofnations.com</a>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">

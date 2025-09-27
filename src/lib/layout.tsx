@@ -13,11 +13,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Talk of Nations',
     description: 'Your source for Kenyan news, lifestyle, and technological trends.',
-    url: 'https://dianotimes.com',
+    url: 'https://talkofnations.com',
     siteName: 'Talk of Nations',
     images: [
       {
-        url: 'https://dianotimes.com/og-image.png', // Must be an absolute URL
+        url: 'https://talkofnations.com/og-image.png', // Must be an absolute URL
         width: 1200,
         height: 630,
       },
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Talk of Nations',
     description: 'Your source for Kenyan news, lifestyle, and technological trends.',
-    images: ['https://dianotimes.com/og-image.png'], // Must be an absolute URL
+    images: ['https://talkofnations.com/og-image.png'], // Must be an absolute URL
   },
    icons: {
     icon: '/favicon.ico',

@@ -118,9 +118,9 @@ export function BlogHeader() {
         </NavigationMenuList>
       </NavigationMenu>
       <Link href="/ask-diano" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
-        <Mic className="h-4 w-4" /> Ask Diano
+        <Mic className="h-4 w-4" /> Ask AI
       </Link>
-      <Link href="/diano-weekly" className="text-muted-foreground hover:text-primary transition-colors">Diano Weekly</Link>
+      <Link href="/magazine" className="text-muted-foreground hover:text-primary transition-colors">Magazine</Link>
       <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
       <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
     </>
@@ -211,8 +211,8 @@ export function BlogHeader() {
                     {categories.map(cat => (
                        <Link key={cat.href} href={cat.href} className="text-muted-foreground hover:text-primary transition-colors">{cat.title}</Link>
                     ))}
-                    <Link href="/ask-diano" className="text-muted-foreground hover:text-primary transition-colors">Ask Diano</Link>
-                    <Link href="/diano-weekly" className="text-muted-foreground hover:text-primary transition-colors">Diano Weekly</Link>
+                    <Link href="/ask-diano" className="text-muted-foreground hover:text-primary transition-colors">Ask AI</Link>
+                    <Link href="/magazine" className="text-muted-foreground hover:text-primary transition-colors">Magazine</Link>
                     <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
                     <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
                   </nav>

@@ -16,7 +16,7 @@ import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Mail } from 'lucide-react';
 
-const NEWSLETTER_POPUP_KEY = 'diano-times-newsletter-popup-dismissed';
+const NEWSLETTER_POPUP_KEY = 'talkofnations-newsletter-popup-dismissed';
 
 export function NewsletterPopup() {
   const [isOpen, setIsOpen] = useState(false);

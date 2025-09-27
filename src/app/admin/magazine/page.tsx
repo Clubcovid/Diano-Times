@@ -15,7 +15,7 @@ async function MagazineList() {
             <div className="text-center py-16">
                 <Newspaper className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h2 className="mt-4 text-2xl font-bold font-headline">No Issues Yet</h2>
-                <p className="mt-2 text-muted-foreground">Click the button above to create the first issue of Diano Weekly.</p>
+                <p className="mt-2 text-muted-foreground">Click the button above to create the first issue of the magazine.</p>
             </div>
         );
     }
@@ -34,13 +34,13 @@ async function MagazineList() {
                         <p className="text-sm text-muted-foreground">View the issue online or download the PDF.</p>
                         <div className="flex gap-2">
                              <Button asChild variant="secondary">
-                                <Link href={`/diano-weekly/${magazine.id}`} target="_blank">
+                                <Link href={`/magazine/${magazine.id}`} target="_blank">
                                     <Eye className="mr-2 h-4 w-4" />
                                     View Online
                                 </Link>
                             </Button>
                             <Button asChild>
-                                <Link href={magazine.fileUrl} target="_blank" download={`diano-weekly-${magazine.id}.pdf`}>
+                                <Link href={magazine.fileUrl} target="_blank" download={`talkofnations-magazine-${magazine.id}.pdf`}>
                                     <Download className="mr-2 h-4 w-4" />
                                     Download PDF
                                 </Link>
@@ -54,12 +54,12 @@ async function MagazineList() {
 }
 
 
-export default function DianoWeeklyPage() {
+export default function MagazineAdminPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold font-headline">Diano Weekly</h1>
+                    <h1 className="text-3xl font-bold font-headline">Magazine</h1>
                     <p className="text-muted-foreground mt-2">
                         Your weekly digest of news, culture, and technology.
                     </p>
@@ -75,5 +75,3 @@ export default function DianoWeeklyPage() {
         </div>
     );
 }
-
-    

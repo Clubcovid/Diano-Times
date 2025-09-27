@@ -1,34 +1,33 @@
-
 {
   "placeholderImages": [
     {
-      "id": "diano-blog-1",
+      "id": "talkofnations-blog-1",
       "description": "Abstract technology background",
-      "imageUrl": "https://picsum.photos/seed/diano-1/1200/800",
+      "imageUrl": "https://images.unsplash.com/photo-1568952433726-3896e3881c65?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YWJzdHJhY3QlMjB0ZWNobm9sb2d5fGVufDB8fHx8MTc1ODg5NTMzNHww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "abstract technology"
     },
     {
-      "id": "diano-blog-2",
+      "id": "talkofnations-blog-2",
       "description": "Person working on a creative project",
-      "imageUrl": "https://picsum.photos/seed/diano-2/1200/800",
+      "imageUrl": "https://images.unsplash.com/photo-1571101628768-6bae026844b6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjcmVhdGl2ZSUyMHByb2Nlc3N8ZW58MHx8fHwxNzU4OTQ3NzEzfDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "creative process"
     },
     {
-      "id": "diano-blog-3",
+      "id": "talkofnations-blog-3",
       "description": "Glowing digital world map",
-      "imageUrl": "https://picsum.photos/seed/diano-3/1200/800",
+      "imageUrl": "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxkaWdpdGFsJTIwd29ybGR8ZW58MHx8fHwxNzU4ODk1MzY5fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "digital world"
     },
     {
-      "id": "diano-blog-4",
+      "id": "talkofnations-blog-4",
       "description": "Minimalist desk setup",
-      "imageUrl": "https://picsum.photos/seed/diano-4/1200/800",
+      "imageUrl": "https://images.unsplash.com/photo-1483470134942-13bbf4677d84?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtaW5pbWFsaXN0JTIwZGVza3xlbnwwfHx8fDE3NTg5NTM4MDh8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "minimalist desk"
     },
     {
-      "id": "diano-blog-5",
+      "id": "talkofnations-blog-5",
       "description": "Neon signs in a city at night",
-      "imageUrl": "https://picsum.photos/seed/diano-5/1200/800",
+      "imageUrl": "https://images.unsplash.com/photo-1541537103745-ea3429c65dc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxuZW9uJTIwY2l0eXxlbnwwfHx8fDE3NTg5NDg4MTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "neon city"
     }
   ]

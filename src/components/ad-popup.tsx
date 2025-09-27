@@ -16,7 +16,7 @@ import { getAds } from '@/lib/actions';
 import type { Ad } from '@/lib/types';
 import { Megaphone, X } from 'lucide-react';
 
-const AD_POPUP_KEY = 'diano-times-ad-popup-dismissed';
+const AD_POPUP_KEY = 'talkofnations-ad-popup-dismissed';
 
 type SerializableAd = Omit<Ad, 'createdAt'> & { createdAt: string };
 

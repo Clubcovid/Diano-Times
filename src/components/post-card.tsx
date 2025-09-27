@@ -14,7 +14,7 @@ export function PostCard({ post }: { post: SerializablePost }) {
         <CardHeader className="p-0">
           <div className="aspect-video relative overflow-hidden rounded-t-lg">
             <Image
-              src={post.coverImage || "https://picsum.photos/seed/diano-fallback/600/400"}
+              src={post.coverImage || "https://picsum.photos/seed/talkofnations-fallback/600/400"}
               alt={post.title}
               fill
               className="object-cover transition-transform group-hover:scale-105 duration-300 ease-in-out"
@@ -40,5 +40,3 @@ export function PostCard({ post }: { post: SerializablePost }) {
     </Link>
   );
 }
-
-    

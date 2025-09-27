@@ -121,7 +121,7 @@ function PostsSection() {
           <section className="mb-12">
             <div className="relative aspect-video lg:aspect-[2/1] rounded-lg overflow-hidden group">
                 <Image
-                src={featuredPost.coverImage || 'https://picsum.photos/seed/diano-featured/1200/600'}
+                src={featuredPost.coverImage || 'https://picsum.photos/seed/talkofnations-featured/1200/600'}
                 alt={featuredPost.title}
                 fill
                 className="object-cover"
@@ -363,5 +363,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    

@@ -45,7 +45,7 @@ export async function generateMetadata(
       title: post.title,
       description: description,
       type: 'article',
-      url: `https://dianotimes.com/posts/${post.slug}`,
+      url: `https://talkofnations.com/posts/${post.slug}`,
       images: post.coverImage ? [post.coverImage, ...previousImages] : [...previousImages],
       publishedTime: new Date(post.createdAt).toISOString(),
       modifiedTime: new Date(post.updatedAt).toISOString(),
@@ -104,7 +104,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
             </header>
             <div className="relative aspect-video mb-8 rounded-lg overflow-hidden shadow-lg">
                 <Image
-                src={post.coverImage || "https://picsum.photos/seed/diano-fallback/1200/800"}
+                src={post.coverImage || "https://picsum.photos/seed/talkofnations-fallback/1200/800"}
                 alt={post.title}
                 fill
                 className="object-cover"
@@ -208,5 +208,3 @@ export default async function PostPage({ params }: { params: { slug: string } })
     </>
   );
 }
-
-    

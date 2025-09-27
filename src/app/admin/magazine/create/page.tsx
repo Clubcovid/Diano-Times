@@ -62,7 +62,7 @@ export default function CreateMagazinePage() {
                     title: 'Magazine Generated!',
                     description: 'Your new weekly issue has been created.',
                 });
-                router.push(`/diano-weekly/${result.magazineId}`);
+                router.push(`/magazine/${result.magazineId}`);
             } else {
                  toast({
                     title: 'Error',
@@ -77,7 +77,7 @@ export default function CreateMagazinePage() {
         <div className="space-y-6">
             <div>
                 <h1 className="text-3xl font-bold font-headline">Create New Magazine Issue</h1>
-                <p className="text-muted-foreground">Select the posts you want to include in this issue of Diano Weekly.</p>
+                <p className="text-muted-foreground">Select the posts you want to include in this issue.</p>
             </div>
 
             <Card>
@@ -132,5 +132,3 @@ export default function CreateMagazinePage() {
         </div>
     );
 }
-
-    

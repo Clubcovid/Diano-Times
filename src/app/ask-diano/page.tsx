@@ -14,7 +14,7 @@ export default function AskDianoPage() {
           <div className="text-center mb-12">
             <Sparkles className="mx-auto h-12 w-12 text-primary mb-4" />
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">
-              Ask Diano
+              Ask Our AI
             </h1>
             <p className="text-lg text-muted-foreground mt-2">
               Your AI expert on all things Kenya. Ask me anything!

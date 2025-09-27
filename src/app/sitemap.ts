@@ -2,7 +2,7 @@
 import { MetadataRoute } from 'next';
 import { getPosts } from '@/lib/actions';
 
-const BASE_URL = 'https://dianotimes.com'; 
+const BASE_URL = 'https://talkofnations.com'; 
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const posts = await getPosts({ publishedOnly: true });
@@ -17,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/about', 
     '/contact', 
     '/video', 
-    '/diano-weekly',
+    '/magazine',
     '/fashion',
     '/gadgets',
     '/lifestyle',
