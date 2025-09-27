@@ -167,7 +167,7 @@ The application will be available at [http://localhost:9002](http://localhost:90
 ### 4. Run the Genkit Developer UI
 
 To develop and test AI flows, run the Genkit development UI in a separate terminal:
-
+    
 ```bash
 npm run genkit:dev
 ```
