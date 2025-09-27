@@ -830,7 +830,7 @@ export async function getPublishedPostsForMagazine(): Promise<SerializablePostFo
   return posts.map(post => ({
     id: post.id,
     title: post.title,
-    createdAt: format(post.createdAt, 'PPP'),
+    createdAt: format(new Date(post.createdAt), 'PPP'),
   }));
 }
 
