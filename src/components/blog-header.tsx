@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/navigation-menu"
 import React from 'react';
 import { GoogleIcon } from './icons/google';
+import { Logo } from './icons/logo';
 
 const categories: { title: string; href: string; description: string }[] = [
   {
@@ -128,8 +129,11 @@ export function BlogHeader() {
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b">
       <div className="container mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
-        <Link href="/" className="text-3xl font-bold font-headline text-primary">
-          Talk of Nations
+        <Link href="/" className="flex items-center gap-2">
+            <Logo />
+            <span className="text-xl font-bold font-headline text-foreground">
+            Talk of Nations
+            </span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
           {navLinks}
