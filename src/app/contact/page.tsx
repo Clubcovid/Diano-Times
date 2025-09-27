@@ -89,7 +89,7 @@ export default function ContactPage() {
       <footer className="bg-muted text-muted-foreground py-12">
         <div className="container mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Diano Times</h3>
+            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Talk of Nations</h3>
             <p className="text-sm">Your source for Kenyan news, lifestyle, and technological trends.</p>
           </div>
           <div>
@@ -118,7 +118,7 @@ export default function ContactPage() {
           </div>
         </div>
         <div className="container mx-auto px-4 md:px-6 mt-8 text-center text-sm border-t border-border pt-6">
-          &copy; {new Date().getFullYear()} Diano Times. All rights reserved.
+          &copy; {new Date().getFullYear()} Talk of Nations. All rights reserved.
         </div>
       </footer>
     </div>

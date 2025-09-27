@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview Suggests blog post topics for Diano Times.
+ * @fileOverview Suggests blog post topics for Talk of Nations.
  *
  * This flow generates a list of relevant and engaging blog post topics
  * tailored for a Kenyan audience.
@@ -26,7 +26,7 @@ export async function suggestTopics(): Promise<SuggestTopicsOutput> {
 const prompt = ai.definePrompt({
   name: 'suggestTopicsPrompt',
   output: { schema: SuggestTopicsOutputSchema },
-  prompt: `You are a creative director for "Diano Times," a Kenyan news and lifestyle blog.
+  prompt: `You are a creative director for "Talk of Nations," a Kenyan news and lifestyle blog.
 
   Your task is to generate a list of 5 fresh, relevant, and engaging blog post topics. These topics should be tailored to a modern Kenyan audience and cover a range of categories including Technology, Lifestyle, Fashion, and Business.
 

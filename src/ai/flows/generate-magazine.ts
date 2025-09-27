@@ -83,7 +83,7 @@ const generateMagazineFlow = ai.defineFlow(
   async ({posts}) => {
     const today = format(new Date(), 'MMMM d, yyyy');
 
-    const prompt = `You are the editor-in-chief of "Diano Weekly", a digital magazine by Diano Times.
+    const prompt = `You are the editor-in-chief of "Diano Weekly", a digital magazine by Talk of Nations.
     Your task is to curate a comprehensive and engaging weekly magazine issue for the week of ${today}.
     You will be given a list of recent articles. Your job is to organize them into a coherent magazine format.
 

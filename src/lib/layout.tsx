@@ -6,15 +6,15 @@ import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Diano Times',
-    template: '%s | Diano Times',
+    default: 'Talk of Nations',
+    template: '%s | Talk of Nations',
   },
   description: 'Your source for Kenyan news, lifestyle, and technological trends.',
   openGraph: {
-    title: 'Diano Times',
+    title: 'Talk of Nations',
     description: 'Your source for Kenyan news, lifestyle, and technological trends.',
     url: 'https://dianotimes.com',
-    siteName: 'Diano Times',
+    siteName: 'Talk of Nations',
     images: [
       {
         url: 'https://dianotimes.com/og-image.png', // Must be an absolute URL
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   },
    twitter: {
     card: 'summary_large_image',
-    title: 'Diano Times',
+    title: 'Talk of Nations',
     description: 'Your source for Kenyan news, lifestyle, and technological trends.',
     images: ['https://dianotimes.com/og-image.png'], // Must be an absolute URL
   },

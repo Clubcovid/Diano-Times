@@ -45,7 +45,7 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
     <>
       <div className="flex items-center gap-2 p-4 border-b">
         <Link href="/admin" className="text-2xl font-bold font-headline text-primary">
-          Diano Times Admin
+          Talk of Nations Admin
         </Link>
       </div>
       <div className="flex-1 overflow-auto py-2">

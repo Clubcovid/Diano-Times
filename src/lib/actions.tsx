@@ -747,7 +747,7 @@ export async function getUserChatSession(): Promise<ChatSession> {
             updatedAt: FieldValue.serverTimestamp(),
             messages: [{
                 role: 'model' as const,
-                content: 'Karibu to Diano Times! I am Diano, your AI assistant. Ask me anything about Kenyan news, politics, lifestyle... or what\'s on your mind. Let\'s talk, Omwami.'
+                content: 'Karibu to Talk of Nations! I am Diano, your AI assistant. Ask me anything about Kenyan news, politics, lifestyle... or what\'s on your mind. Let\'s talk, Omwami.'
             }]
         };
         const docRef = await db.collection('diano_chats').add(newSessionData);

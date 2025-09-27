@@ -1,6 +1,6 @@
 # Firestore Indexes
 
-This directory contains the index configuration for the Diano Times Firestore database. These indexes are required for the complex queries used throughout the application to fetch and sort posts efficiently.
+This directory contains the index configuration for the Talk of Nations Firestore database. These indexes are required for the complex queries used throughout the application to fetch and sort posts efficiently.
 
 Without these indexes, certain queries will fail with a `FAILED_PRECONDITION` error, indicating that a composite index is needed.
 

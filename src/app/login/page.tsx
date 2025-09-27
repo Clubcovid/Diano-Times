@@ -86,7 +86,7 @@ function LoginForm() {
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-muted/40">
        <div className="text-center mb-8">
             <Link href="/" className="text-4xl font-bold font-headline text-primary">
-                Diano Times
+                Talk of Nations
             </Link>
         </div>
       <Card className="w-full max-w-sm">

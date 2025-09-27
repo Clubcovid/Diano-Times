@@ -7,7 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { DianoChatWidget } from '@/components/diano-chat-widget';
 
 export const metadata: Metadata = {
-  title: 'Diano Times',
+  title: 'Talk of Nations',
   description: 'Your source for Kenyan news, lifestyle, and more.',
 };
 
