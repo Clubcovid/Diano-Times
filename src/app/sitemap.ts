@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { getPosts } from '@/lib/posts';
 
-const BASE_URL = 'https://dianotimes.com'; 
+const BASE_URL = 'https://talkofnations.com'; 
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const posts = await getPosts({ publishedOnly: true });

@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 
-const BASE_URL = 'https://dianotimes.com';
+const BASE_URL = 'https://talkofnations.com';
 
 export default function robots(): MetadataRoute.Robots {
   return {

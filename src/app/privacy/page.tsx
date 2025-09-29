@@ -16,7 +16,7 @@ export default function PrivacyPage() {
                 </div>
                 <div className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline">
                     <p>
-                        Talk of Nations ("us", "we", or "our") operates the https://dianotimes.com website (the "Service"). This page informs you of our policies regarding the collection, use, and disclosure of personal data when you use our Service and the choices you have associated with that data.
+                        Talk of Nations ("us", "we", or "our") operates the https://talkofnations.com website (the "Service"). This page informs you of our policies regarding the collection, use, and disclosure of personal data when you use our Service and the choices you have associated with that data.
                     </p>
                     
                     <h2>Information Collection and Use</h2>
