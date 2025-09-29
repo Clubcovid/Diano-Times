@@ -59,9 +59,9 @@ export function AdPopup() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-        <DialogHeader>
-            <DialogTitle className="sr-only">{ad.title}</DialogTitle>
-            <DialogDescription className="sr-only">{ad.description}</DialogDescription>
+        <DialogHeader className="sr-only">
+            <DialogTitle>Advertisement: {ad.title}</DialogTitle>
+            <DialogDescription>{ad.description}</DialogDescription>
         </DialogHeader>
         <div className="relative">
             <button 
