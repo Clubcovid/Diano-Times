@@ -1,4 +1,6 @@
 
+'use client';
+
 import { Suspense } from 'react';
 import { PostFormSkeleton } from '@/components/admin/post-form';
 import dynamic from 'next/dynamic'
