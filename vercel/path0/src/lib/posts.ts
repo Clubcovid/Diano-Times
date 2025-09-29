@@ -2,7 +2,7 @@
 import 'server-only';
 import { db } from '@/lib/firebase-admin';
 import type { Ad, Post } from './types';
-import { mockPosts, mockAds } from './mock-data';
+import { mockPosts, mockAds } from '@/lib/mock-data';
 import { Query, Timestamp } from 'firebase-admin/firestore';
 import type { ContentBlock } from './types';
 
