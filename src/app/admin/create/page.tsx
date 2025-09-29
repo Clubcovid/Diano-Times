@@ -1,8 +1,8 @@
 
 import { Suspense } from 'react';
 import { PostFormSkeleton } from '@/components/admin/post-form';
-import { PostForm } from '@/components/admin/post-form';
-import {-next-dynamic-import-} from 'next/dynamic'
+import dynamic from 'next/dynamic'
+
 const DynamicPostForm = dynamic(() => import('@/components/admin/post-form').then(mod => mod.PostForm), {
   loading: () => <PostFormSkeleton />,
   ssr: false,
