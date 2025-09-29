@@ -1,7 +1,7 @@
 
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { getPostBySlug, getPosts } from '@/lib/posts';
+import { getPostBySlug, getPosts, getAds } from '@/lib/posts';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import Link from 'next/link';
@@ -13,10 +13,52 @@ import { PostCard } from '@/components/post-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Instagram, Twitter, Facebook } from 'lucide-react';
 import { Logo } from '@/components/icons/logo';
+import type { Ad, Post } from '@/lib/types';
 
 type Props = {
   params: { slug: string }
 }
+
+async function Advertisement() {
+    const ads = await getAds();
+    if (ads.length === 0) {
+        return null;
+    }
+    const ad: Ad = ads[Math.floor(Math.random() * ads.length)];
+    return (
+        <Card className="my-8">
+            <CardContent className="p-4">
+                <a href={ad.linkUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col md:flex-row gap-4 items-center">
+                    <div className="relative w-full md:w-1/3 aspect-video rounded-md overflow-hidden">
+                        <Image src={ad.imageUrl} alt={ad.title} fill className="object-cover" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="text-xs text-muted-foreground font-semibold uppercase">Advertisement</p>
+                        <h4 className="font-bold font-headline">{ad.title}</h4>
+                        <p className="text-sm text-muted-foreground">{ad.description}</p>
+                    </div>
+                </a>
+            </CardContent>
+        </Card>
+    );
+}
+
+const renderContentWithAd = (content: string, adComponent: React.ReactNode) => {
+    const paragraphs = content.split('</p>').filter(p => p.trim() !== '');
+    if (paragraphs.length <= 2) {
+        return <div dangerouslySetInnerHTML={{ __html: content }} />;
+    }
+    
+    const contentWithAd = [];
+    for (let i = 0; i < paragraphs.length; i++) {
+        contentWithAd.push(<div key={`p-${i}`} dangerouslySetInnerHTML={{ __html: paragraphs[i] + '</p>' }} />);
+        if (i === 1) { // Insert ad after the second paragraph
+            contentWithAd.push(<div key="ad">{adComponent}</div>);
+        }
+    }
+    return <>{contentWithAd}</>;
+}
+
 
 export async function generateMetadata(
   { params }: Props,
@@ -119,8 +161,9 @@ export default async function PostPage({ params }: { params: { slug: string } })
             </div>
             <div
                 className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline prose-headings:text-primary prose-a:text-accent-foreground prose-a:transition-colors hover:prose-a:text-primary prose-img:rounded-lg"
-                dangerouslySetInnerHTML={{ __html: post.content }}
-            />
+            >
+              {renderContentWithAd(post.content, <Advertisement />)}
+            </div>
             </article>
 
             <aside className="lg:col-span-1 space-y-8 lg:sticky top-28 h-fit">

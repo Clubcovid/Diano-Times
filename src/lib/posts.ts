@@ -1,8 +1,8 @@
 
 import 'server-only';
 import { db } from '@/lib/firebase-admin';
-import type { Post } from './types';
-import { mockPosts } from './mock-data';
+import type { Ad, Post } from './types';
+import { mockPosts, mockAds } from './mock-data';
 import { Query, Timestamp } from 'firebase-admin/firestore';
 
 function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
@@ -219,5 +219,29 @@ export async function getPostById(id: string): Promise<Post | null> {
   } catch (error) {
     console.error(`Error fetching post by ID ${id}:`, error);
     return null;
+  }
+}
+
+
+export async function getAds(): Promise<Ad[]> {
+  if (!db) {
+      console.error("Database not connected. Cannot fetch ads.");
+      return mockAds.map(ad => ({...ad, createdAt: Timestamp.now()}));
+  }
+  try {
+    const adsCollection = db.collection('advertisements');
+    const snapshot = await adsCollection.orderBy('createdAt', 'desc').get();
+    if (snapshot.empty) return [];
+
+    return snapshot.docs.map(doc => {
+      const data = doc.data() as Ad;
+      return {
+        ...data,
+        id: doc.id,
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching ads:', error);
+    return [];
   }
 }
