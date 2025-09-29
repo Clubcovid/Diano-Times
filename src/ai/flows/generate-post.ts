@@ -69,7 +69,7 @@ const prompt = ai.definePrompt({
   name: 'generatePostPrompt',
   input: {schema: GeneratePostInputSchema},
   output: {schema: GeneratePostOutputSchema},
-  prompt: `You are an expert blog post writer for a Kenyan news and lifestyle blog called "Talk of Nations".
+  prompt: `You are an expert blog post writer and SEO specialist for a Kenyan news and lifestyle blog called "Talk of Nations".
 
   Your task is to generate a complete, engaging, and well-structured blog post based on the following topic:
   Topic: {{{topic}}}
@@ -78,10 +78,11 @@ const prompt = ai.definePrompt({
   1.  **Title**: Create a catchy, SEO-friendly title for the post.
   2.  **Slug**: Generate a URL-friendly slug (lowercase, hyphens for spaces, no special characters).
   3.  **Content**: Write the post content in Markdown format. It should be at least 4 paragraphs long and include headings, lists, or other formatting to make it readable.
-  4.  **Tags**: Choose up to 3 relevant tags from the following list: Fashion, Gadgets, Lifestyle, Technology, Wellness, Travel, Food, Business, Culture, Art, Reviews, Tips, Nairobi, Kenya, Global Affairs, Sports.
-  5.  **Cover Image**: Provide a URL for a high-quality, relevant cover image. Use a placeholder from picsum.photos with a unique seed (e.g., https://picsum.photos/seed/your-topic-slug/1200/800).
+  4.  **SEO Keywords**: Naturally weave in relevant keywords throughout the article. Good keywords to consider are: 'Kenyan politics news', 'latest news in Kenya', 'political gossip', 'humorous Kenyan news', 'Talk of Nations blog', 'Africa breaking news', 'government scandals', and 'celebrity gossip Kenya'.
+  5.  **Tags**: Choose up to 3 relevant tags from the following list: Fashion, Gadgets, Lifestyle, Technology, Wellness, Travel, Food, Business, Culture, Art, Reviews, Tips, Nairobi, Kenya, Global Affairs, Sports.
+  6.  **Cover Image**: Provide a URL for a high-quality, relevant cover image. Use a placeholder from picsum.photos with a unique seed (e.g., https://picsum.photos/seed/your-topic-slug/1200/800).
   
-  The tone should be modern, informative, and tailored for a Kenyan audience.`,
+  The tone should be modern, informative, witty, and tailored for a Kenyan audience.`,
 });
 
 const generatePostFlow = ai.defineFlow(

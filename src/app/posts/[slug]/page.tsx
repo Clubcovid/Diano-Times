@@ -37,15 +37,17 @@ export async function generateMetadata(
   }).substring(0, 155);
 
   const previousImages = (await parent).openGraph?.images || []
+  const parentKeywords = (await parent).keywords || [];
 
   return {
     title: `${post.title} | Talk of Nations`,
     description: description,
+    keywords: [...post.tags, ...parentKeywords],
     openGraph: {
       title: post.title,
       description: description,
       type: 'article',
-      url: `https://dianotimes.com/posts/${post.slug}`,
+      url: `https://www.talkofnations.com/posts/${post.slug}`,
       images: post.coverImage ? [post.coverImage, ...previousImages] : [...previousImages],
       publishedTime: post.createdAt.toDate().toISOString(),
       modifiedTime: post.updatedAt.toDate().toISOString(),
