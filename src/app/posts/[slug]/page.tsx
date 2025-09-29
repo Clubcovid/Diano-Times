@@ -11,6 +11,7 @@ import { htmlToText } from 'html-to-text';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PostCard } from '@/components/post-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Instagram, Twitter, Facebook } from 'lucide-react';
 
 type Props = {
   params: { slug: string }
@@ -106,7 +107,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
             </header>
             <div className="relative aspect-video mb-8 rounded-lg overflow-hidden shadow-lg">
                 <Image
-                src={post.coverImage || "https://picsum.photos/seed/diano-fallback/1200/800"}
+                src={post.coverImage || "https://picsum.photos/seed/talkofnations-fallback/1200/800"}
                 alt={post.title}
                 fill
                 className="object-cover"
@@ -179,7 +180,11 @@ export default async function PostPage({ params }: { params: { slug: string } })
           </div>
           <div>
             <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Follow Us</h3>
-            {/* Add Social media icons here */}
+            <div className="flex gap-4">
+                <a href="#" className="hover:text-primary"><Instagram /></a>
+                <a href="#" className="hover:text-primary"><Twitter /></a>
+                <a href="#" className="hover:text-primary"><Facebook /></a>
+            </div>
           </div>
         </div>
         <div className="container mx-auto px-4 md:px-6 mt-8 text-center text-sm border-t border-border pt-6">

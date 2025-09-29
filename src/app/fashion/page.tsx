@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { Rss } from 'lucide-react';
+import { Rss, Instagram, Twitter, Facebook } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getPosts } from '@/lib/posts';
 import { PostCard } from '@/components/post-card';
@@ -98,7 +98,11 @@ export default function CategoryPage({ searchParams }: { searchParams: { tag?: s
           </div>
           <div>
             <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Follow Us</h3>
-            {/* Add Social media icons here */}
+            <div className="flex gap-4">
+                <a href="#" className="hover:text-primary"><Instagram /></a>
+                <a href="#" className="hover:text-primary"><Twitter /></a>
+                <a href="#" className="hover:text-primary"><Facebook /></a>
+            </div>
           </div>
         </div>
         <div className="container mx-auto px-4 md:px-6 mt-8 text-center text-sm border-t border-border pt-6">

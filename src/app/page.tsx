@@ -8,7 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, LogIn, UserPlus, LayoutDashboard, Zap } from 'lucide-react';
+import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, LogIn, UserPlus, LayoutDashboard, Zap, Instagram, Twitter, Facebook } from 'lucide-react';
 import { mockMarketData, mockWeatherData } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getWeatherForecast, type WeatherForecast } from '@/ai/flows/get-weather-forecast';
@@ -20,7 +20,7 @@ import { AdPopup } from '@/components/ad-popup';
 
 function PostsSkeleton() {
   return (
-    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-2">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="space-y-4">
           <div className="aspect-video bg-muted rounded-lg animate-pulse" />
@@ -89,7 +89,7 @@ async function PostsSection() {
           <section className="mb-12">
             <div className="relative aspect-video lg:aspect-[2.5/1] rounded-lg overflow-hidden group">
                 <Image
-                src={featuredPost.coverImage || 'https://picsum.photos/seed/diano-featured/1200/600'}
+                src={featuredPost.coverImage || 'https://picsum.photos/seed/talkofnations-featured/1200/600'}
                 alt={featuredPost.title}
                 fill
                 className="object-cover"
@@ -98,7 +98,7 @@ async function PostsSection() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
                 
-                <div className="absolute inset-0 hidden flex-col items-center justify-center p-4 md:flex">
+                <div className="absolute inset-0 hidden flex-col items-center justify-center p-4 lg:flex">
                     <div className="w-full max-w-xl lg:max-w-2xl">
                        <SearchForm />
                     </div>
@@ -122,7 +122,7 @@ async function PostsSection() {
           </section>
         )}
 
-        <div className="md:hidden -mt-6 mb-8 px-4">
+        <div className="lg:hidden -mt-6 mb-8 px-4">
              <SearchForm />
         </div>
         
@@ -271,7 +271,11 @@ export default function HomePage() {
           </div>
           <div>
             <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Follow Us</h3>
-            {/* Add Social media icons here */}
+            <div className="flex gap-4">
+                <a href="#" className="hover:text-primary"><Instagram /></a>
+                <a href="#" className="hover:text-primary"><Twitter /></a>
+                <a href="#" className="hover:text-primary"><Facebook /></a>
+            </div>
           </div>
         </div>
         <div className="container mx-auto px-4 md:px-6 mt-8 text-center text-sm border-t border-border pt-6">
