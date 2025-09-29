@@ -41,7 +41,7 @@ async function TrendingTicker() {
         return null;
     }
 
-    const topics = [...trendingTopics, ...trendingTopics];
+    const topics = [...trendingTopics, ...trendingTopics, ...trendingTopics, ...trendingTopics];
 
     return (
         <div className="bg-background border-b">
@@ -87,7 +87,7 @@ async function PostsSection() {
        <div className="lg:col-span-4">
         {featuredPost && (
           <section className="mb-12">
-            <div className="relative aspect-video lg:aspect-[2/1] rounded-lg overflow-hidden group">
+            <div className="relative aspect-video lg:aspect-[2.5/1] rounded-lg overflow-hidden group">
                 <Image
                 src={featuredPost.coverImage || 'https://picsum.photos/seed/diano-featured/1200/600'}
                 alt={featuredPost.title}
@@ -99,7 +99,7 @@ async function PostsSection() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
                 
                 <div className="absolute inset-0 hidden flex-col items-center justify-center p-4 md:flex">
-                    <div className="w-full max-w-2xl">
+                    <div className="w-full max-w-xl lg:max-w-2xl">
                        <SearchForm />
                     </div>
                 </div>
@@ -127,7 +127,7 @@ async function PostsSection() {
         </div>
         
         {otherPosts.length > 0 ? (
-          <div className="grid gap-8 md:grid-cols-2">
+          <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-2">
             {otherPosts.slice(0, 4).map((post) => (
               <PostCard key={post.id} post={post as Post} />
             ))}
@@ -146,7 +146,7 @@ async function PostsSection() {
 }
 
 const MarketTicker = () => {
-    const marketData = [...mockMarketData, ...mockMarketData];
+    const marketData = [...mockMarketData, ...mockMarketData, ...mockMarketData, ...mockMarketData];
     return (
         <div className="bg-secondary text-secondary-foreground py-2 border-b-2 border-primary">
             <div className="container mx-auto px-4 md:px-6">
@@ -196,7 +196,7 @@ const WeatherTicker = async () => {
   //   // You could return a fallback or empty component here
   //   return null;
   // }
-  const weatherData = [...mockWeatherData, ...mockWeatherData];
+  const weatherData = [...mockWeatherData, ...mockWeatherData, ...mockWeatherData, ...mockWeatherData];
 
   if (weatherData.length === 0) {
     return null;
