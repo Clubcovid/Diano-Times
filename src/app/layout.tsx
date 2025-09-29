@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     template: '%s | Talk of Nations',
   },
   description: 'Your source for Kenyan news, lifestyle, and technological trends.',
+  verification: {
+    google: 'google273252ce5a3190c2',
+  },
   openGraph: {
     title: 'Talk of Nations',
     description: 'Your source for Kenyan news, lifestyle, and technological trends.',
