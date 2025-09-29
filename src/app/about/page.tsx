@@ -54,9 +54,9 @@ export default function AboutPage() {
           <div>
             <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Follow Us</h3>
             <div className="flex gap-4">
-                <a href="#" className="hover:text-primary"><Instagram /></a>
-                <a href="https://x.com/TalkofNations?t=Z7MSDp3fplIqkuqYzTrxJw&s=09" target="_blank" rel="noopener noreferrer" className="hover:text-primary"><Twitter /></a>
-                <a href="#" className="hover:text-primary"><Facebook /></a>
+                <a href="#" className="hover:text-primary" aria-label="Instagram"><Instagram /></a>
+                <a href="https://x.com/TalkofNations?t=Z7MSDp3fplIqkuqYzTrxJw&s=09" target="_blank" rel="noopener noreferrer" className="hover:text-primary" aria-label="Twitter"><Twitter /></a>
+                <a href="#" className="hover:text-primary" aria-label="Facebook"><Facebook /></a>
             </div>
           </div>
         </div>
