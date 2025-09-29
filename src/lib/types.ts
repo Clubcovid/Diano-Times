@@ -11,7 +11,6 @@ export interface Post {
   status: 'draft' | 'published';
   authorName: string;
   authorImage: string;
-  galleryImages?: string[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

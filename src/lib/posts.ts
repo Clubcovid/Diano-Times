@@ -18,7 +18,6 @@ function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
     status: data.status,
     authorName: data.authorName || 'Talk of Nations Staff',
     authorImage: data.authorImage || '',
-    galleryImages: data.galleryImages || [],
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
   } as Post;

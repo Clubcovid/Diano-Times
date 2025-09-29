@@ -116,7 +116,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
                 />
             </div>
             <div
-                className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline prose-headings:text-primary prose-a:text-accent-foreground prose-a:transition-colors hover:prose-a:text-primary"
+                className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline prose-headings:text-primary prose-a:text-accent-foreground prose-a:transition-colors hover:prose-a:text-primary prose-img:rounded-lg"
                 dangerouslySetInnerHTML={{ __html: post.content }}
             />
             </article>
@@ -139,27 +139,6 @@ export default async function PostPage({ params }: { params: { slug: string } })
                         </div>
                     </CardContent>
                 </Card>
-
-                {post.galleryImages && post.galleryImages.length > 0 && (
-                     <Card>
-                        <CardHeader>
-                            <CardTitle className="font-headline">Gallery</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid grid-cols-2 gap-2">
-                           {post.galleryImages.map((image, index) => (
-                                <div key={index} className="relative aspect-square rounded-md overflow-hidden">
-                                    <Image
-                                        src={image}
-                                        alt={`Gallery image ${index + 1} for ${post.title}`}
-                                        fill
-                                        className="object-cover"
-                                        sizes="150px"
-                                    />
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                )}
                 
                 {filteredRelatedPosts.length > 0 && (
                      <Card>

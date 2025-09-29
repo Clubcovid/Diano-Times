@@ -21,7 +21,7 @@ export type GeneratePostInput = z.infer<typeof GeneratePostInputSchema>;
 const GeneratePostOutputSchema = z.object({
   title: z.string().describe('The generated title of the blog post.'),
   slug: z.string().describe('The URL-friendly slug for the post.'),
-  content: z.string().describe('The full content of the blog post in Markdown format.'),
+  content: z.string().describe('The full content of the blog post in Markdown format. This should include images embedded using Markdown syntax (e.g., ![alt text](image_url)).'),
   tags: z.array(z.string()).describe('An array of relevant tags from the provided list.'),
   coverImage: z.string().url().describe('A URL for a relevant cover image from an image service like Unsplash or Pexels.'),
 });
@@ -77,7 +77,7 @@ const prompt = ai.definePrompt({
   Please adhere to the following guidelines:
   1.  **Title**: Create a catchy, SEO-friendly title for the post.
   2.  **Slug**: Generate a URL-friendly slug (lowercase, hyphens for spaces, no special characters).
-  3.  **Content**: Write the post content in Markdown format. It should be at least 4 paragraphs long and include headings, lists, or other formatting to make it readable.
+  3.  **Content**: Write the post content in Markdown format. It should be at least 4 paragraphs long and include headings and lists. Crucially, you must embed at least one relevant image within the content using Markdown syntax: ![alt text for image](https://picsum.photos/seed/unique-seed/800/600). Use a different, descriptive 'unique-seed' for each image.
   4.  **SEO Keywords**: Naturally weave in relevant keywords throughout the article. Good keywords to consider are: 'Kenyan politics news', 'latest news in Kenya', 'political gossip', 'humorous Kenyan news', 'Talk of Nations blog', 'Africa breaking news', 'government scandals', and 'celebrity gossip Kenya'.
   5.  **Tags**: Choose up to 3 relevant tags from the following list: Fashion, Gadgets, Lifestyle, Technology, Wellness, Travel, Food, Business, Culture, Art, Reviews, Tips, Nairobi, Kenya, Global Affairs, Sports.
   6.  **Cover Image**: Provide a URL for a high-quality, relevant cover image. Use a placeholder from picsum.photos with a unique seed (e.g., https://picsum.photos/seed/your-topic-slug/1200/800).

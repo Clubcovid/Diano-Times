@@ -12,7 +12,6 @@ export const postSchema = z.object({
   status: z.enum(['draft', 'published']),
   authorName: z.string().min(3, { message: 'Author name is required.' }),
   authorImage: z.string().url({ message: 'Please enter a valid URL for the author image.' }).or(z.literal('')),
-  galleryImages: z.array(z.string().url({ message: 'Each gallery image must be a valid URL.' })).optional(),
 });
 
 export type PostFormData = z.infer<typeof postSchema>;

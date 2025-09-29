@@ -2,7 +2,7 @@
 'use client';
 
 import { useTransition } from 'react';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Wand2, Save, PlusCircle, Trash2 } from 'lucide-react';
+import { Wand2, Save } from 'lucide-react';
 
 const availableTags = ['Fashion', 'Gadgets', 'Lifestyle', 'Technology', 'Wellness', 'Travel', 'Food', 'Business', 'Culture', 'Art', 'Reviews', 'Tips', 'Nairobi', 'Kenya', 'Global Affairs', 'Sports'];
 
@@ -57,13 +57,7 @@ export function PostForm({ post }: { post?: SerializablePost }) {
       status: post?.status || 'draft',
       authorName: post?.authorName || 'Talk of Nations Staff',
       authorImage: post?.authorImage || 'https://picsum.photos/seed/diano-author/100/100',
-      galleryImages: post?.galleryImages || [],
     },
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "galleryImages",
   });
 
   const handleGenerateSlug = () => {
@@ -135,7 +129,7 @@ export function PostForm({ post }: { post?: SerializablePost }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="content">Content</Label>
-            <Textarea id="content" {...form.register('content')} rows={15} placeholder="Write your post content here. Markdown is supported."/>
+            <Textarea id="content" {...form.register('content')} rows={15} placeholder="Write your post content here. Markdown is supported. To add an image, use ![alt text](image_url)"/>
             {form.formState.errors.content && <p className="text-sm text-destructive">{form.formState.errors.content.message}</p>}
           </div>
         </CardContent>
@@ -206,36 +200,7 @@ export function PostForm({ post }: { post?: SerializablePost }) {
             {form.formState.errors.status && <p className="text-sm text-destructive">{form.formState.errors.status.message}</p>}
           </div>
         </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Image Gallery</CardTitle>
-          <CardDescription>Add additional images to display in the post gallery.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {fields.map((field, index) => (
-            <div key={field.id} className="flex items-center gap-2">
-              <Input
-                {...form.register(`galleryImages.${index}` as const)}
-                placeholder="https://example.com/gallery-image.png"
-              />
-              <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-           {form.formState.errors.galleryImages && <p className="text-sm text-destructive">{form.formState.errors.galleryImages.message}</p>}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => append('')}
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Image
-          </Button>
-        </CardContent>
-        <CardFooter>
+         <CardFooter>
             <Button type="submit" disabled={isSubmitting}>
               <Save className="mr-2 h-4 w-4" />
               {isSubmitting ? 'Saving...' : (post ? 'Update Post' : 'Create Post')}
