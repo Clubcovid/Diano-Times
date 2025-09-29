@@ -147,7 +147,7 @@ export function BlogHeader() {
              </Button>
            </div>
            {loading ? (
-            <Skeleton className="h-10 w-24 rounded-md" />
+            <Skeleton className="h-10 w-10 rounded-full" />
           ) : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -175,22 +175,26 @@ export function BlogHeader() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-             <>
-                <div className="hidden sm:flex">
-                  <Button variant="ghost" asChild>
-                      <Link href="/login">
-                          <LogIn className="mr-2"/>
-                          Login
-                      </Link>
+            <div className="hidden sm:flex">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <UserCircle className="h-5 w-5" />
+                    <span className="sr-only">Account</span>
                   </Button>
-                  <Button asChild>
-                      <Link href="/register">
-                          <UserPlus className="mr-2"/>
-                          Register
-                      </Link>
-                  </Button>
-                </div>
-             </>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/login"><LogIn className="mr-2"/>Login</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/register"><UserPlus className="mr-2"/>Register</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
            <Sheet>
             <SheetTrigger asChild>
