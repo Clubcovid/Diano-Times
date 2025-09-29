@@ -17,7 +17,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from './ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
 import { ThemeToggle } from './theme-toggle';
 import {
   NavigationMenu,
@@ -204,6 +204,10 @@ export function BlogHeader() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left">
+                <SheetHeader>
+                    <SheetTitle className="sr-only">Main Menu</SheetTitle>
+                    <SheetDescription className="sr-only">Main navigation menu for Talk of Nations</SheetDescription>
+                </SheetHeader>
                 <div className="p-4">
                     <Link href="/" className="flex items-center gap-2 mb-8">
                         <Logo className="h-8 w-8 text-primary" />
