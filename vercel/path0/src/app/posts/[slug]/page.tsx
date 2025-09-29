@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Instagram, Twitter, Facebook } from 'lucide-react';
 import { Logo } from '@/components/icons/logo';
 import type { Ad, Post, ContentBlock } from '@/lib/types';
+import React from 'react';
 
 type Props = {
   params: { slug: string }
