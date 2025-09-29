@@ -5,7 +5,7 @@ import { AuthProvider } from '@/components/auth-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'Diano Times',
+  title: 'Talk of Nations',
   description: 'Your source for Kenyan news, lifestyle, and more.',
 };
 

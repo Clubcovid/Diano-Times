@@ -159,7 +159,7 @@ interface MagazineLayoutProps {
 }
 
 const MagazineLayout = ({ data }: MagazineLayoutProps) => (
-  <Document author="Diano Times" title={data.title}>
+  <Document author="Talk of Nations" title={data.title}>
     {/* --- Cover Page --- */}
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>

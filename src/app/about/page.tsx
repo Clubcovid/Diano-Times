@@ -11,15 +11,15 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 md:px-6 py-12">
             <div className="max-w-3xl mx-auto">
                 <div className="text-center mb-12">
-                    <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">About Diano Times</h1>
+                    <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">About Talk of Nations</h1>
                     <p className="text-lg text-muted-foreground mt-2">Your source for Kenyan news, lifestyle, and technological trends.</p>
                 </div>
                 <div className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline">
                     <p>
-                        Welcome to Diano Times, your premier digital destination for insightful news, vibrant lifestyle content, and the latest in technological innovations, all with a distinct Kenyan focus.
+                        Welcome to Talk of Nations, your premier digital destination for insightful news, vibrant lifestyle content, and the latest in technological innovations, all with a distinct Kenyan focus.
                     </p>
                     <p>
-                        Our mission is to deliver timely, accurate, and engaging content that matters to you. Whether you're looking for in-depth analysis of current events, tips on the latest fashion trends, reviews of the hottest gadgets, or a glimpse into the rich cultural tapestry of Kenya, Diano Times is your trusted source.
+                        Our mission is to deliver timely, accurate, and engaging content that matters to you. Whether you're looking for in-depth analysis of current events, tips on the latest fashion trends, reviews of the hottest gadgets, or a glimpse into the rich cultural tapestry of Kenya, Talk of Nations is your trusted source.
                     </p>
                     <p>
                         We are a team of passionate journalists, writers, and creators dedicated to telling the Kenyan story in a modern, dynamic, and authentic way. Join our community and stay informed, inspired, and entertained.
@@ -32,7 +32,7 @@ export default function AboutPage() {
       <footer className="bg-muted text-muted-foreground py-12">
         <div className="container mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Diano Times</h3>
+            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Talk of Nations</h3>
             <p className="text-sm">Your source for Kenyan news, lifestyle, and technological trends.</p>
           </div>
           <div>
@@ -57,7 +57,7 @@ export default function AboutPage() {
           </div>
         </div>
         <div className="container mx-auto px-4 md:px-6 mt-8 text-center text-sm border-t border-border pt-6">
-          &copy; {new Date().getFullYear()} Diano Times. All rights reserved.
+          &copy; {new Date().getFullYear()} Talk of Nations. All rights reserved.
         </div>
       </footer>
     </div>

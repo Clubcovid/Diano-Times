@@ -58,7 +58,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <AdminSidebar isMobile />
                 </SheetContent>
             </Sheet>
-             <h1 className="text-xl font-bold font-headline text-primary">Diano Times Admin</h1>
+             <h1 className="text-xl font-bold font-headline text-primary">Talk of Nations Admin</h1>
         </header>
         <main className="flex-1 p-4 sm:p-6 md:p-8">{children}</main>
       </div>

@@ -55,7 +55,7 @@ export function PostForm({ post }: { post?: SerializablePost }) {
       coverImage: post?.coverImage || '',
       tags: post?.tags || [],
       status: post?.status || 'draft',
-      authorName: post?.authorName || 'Diano Times Staff',
+      authorName: post?.authorName || 'Talk of Nations Staff',
       authorImage: post?.authorImage || 'https://picsum.photos/seed/diano-author/100/100',
       galleryImages: post?.galleryImages || [],
     },

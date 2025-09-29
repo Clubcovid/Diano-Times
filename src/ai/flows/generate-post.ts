@@ -69,7 +69,7 @@ const prompt = ai.definePrompt({
   name: 'generatePostPrompt',
   input: {schema: GeneratePostInputSchema},
   output: {schema: GeneratePostOutputSchema},
-  prompt: `You are an expert blog post writer for a Kenyan news and lifestyle blog called "Diano Times".
+  prompt: `You are an expert blog post writer for a Kenyan news and lifestyle blog called "Talk of Nations".
 
   Your task is to generate a complete, engaging, and well-structured blog post based on the following topic:
   Topic: {{{topic}}}

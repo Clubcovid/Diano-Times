@@ -16,7 +16,7 @@ function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
     coverImage: data.coverImage,
     tags: data.tags || [],
     status: data.status,
-    authorName: data.authorName || 'Diano Times Staff',
+    authorName: data.authorName || 'Talk of Nations Staff',
     authorImage: data.authorImage || '',
     galleryImages: data.galleryImages || [],
     createdAt: data.createdAt,

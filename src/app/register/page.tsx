@@ -38,7 +38,7 @@ export default function RegisterPage() {
       await signInWithPopup(auth, provider);
       toast({
         title: 'Registration Successful',
-        description: 'Welcome to Diano Times!',
+        description: 'Welcome to Talk of Nations!',
       });
       router.push('/');
     } catch (error: any) {
@@ -64,7 +64,7 @@ export default function RegisterPage() {
       await updateProfile(userCredential.user, { displayName });
       toast({
         title: 'Registration Successful',
-        description: 'Welcome to Diano Times!',
+        description: 'Welcome to Talk of Nations!',
       });
       router.push('/');
     } catch (error: any) {
@@ -90,7 +90,7 @@ export default function RegisterPage() {
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-muted/40">
       <div className="text-center mb-8">
         <Link href="/" className="text-4xl font-bold font-headline text-primary">
-          Diano Times
+          Talk of Nations
         </Link>
       </div>
       <Card className="w-full max-w-sm">

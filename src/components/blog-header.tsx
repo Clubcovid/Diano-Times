@@ -129,7 +129,7 @@ export function BlogHeader() {
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b">
       <div className="container mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
         <Link href="/" className="text-3xl font-bold font-headline text-primary">
-          Diano Times
+          Talk of Nations
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
           {navLinks}
@@ -200,7 +200,7 @@ export function BlogHeader() {
             <SheetContent side="left">
                 <div className="p-4">
                   <Link href="/" className="text-2xl font-bold font-headline text-primary mb-8 block">
-                    Diano Times
+                    Talk of Nations
                   </Link>
                   <nav className="grid gap-4 text-lg">
                     <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">Home</Link>

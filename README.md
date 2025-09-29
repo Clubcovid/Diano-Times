@@ -1,6 +1,6 @@
-# Diano Times
+# Talk of Nations
 
-Welcome to Diano Times, a modern, full-stack news and blog platform built with Next.js, Firebase, and Genkit. This application serves as a feature-rich starting point for creating dynamic, content-driven websites with a built-in admin panel for managing posts.
+Welcome to Talk of Nations, a modern, full-stack news and blog platform built with Next.js, Firebase, and Genkit. This application serves as a feature-rich starting point for creating dynamic, content-driven websites with a built-in admin panel for managing posts.
 
 ## Features
 

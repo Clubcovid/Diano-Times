@@ -16,7 +16,7 @@ export default function PrivacyPage() {
                 </div>
                 <div className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline">
                     <p>
-                        Diano Times ("us", "we", or "our") operates the https://dianotimes.com website (the "Service"). This page informs you of our policies regarding the collection, use, and disclosure of personal data when you use our Service and the choices you have associated with that data.
+                        Talk of Nations ("us", "we", or "our") operates the https://dianotimes.com website (the "Service"). This page informs you of our policies regarding the collection, use, and disclosure of personal data when you use our Service and the choices you have associated with that data.
                     </p>
                     
                     <h2>Information Collection and Use</h2>
@@ -31,7 +31,7 @@ export default function PrivacyPage() {
                     </p>
                     
                     <h2>Use of Data</h2>
-                    <p>Diano Times uses the collected data for various purposes:</p>
+                    <p>Talk of Nations uses the collected data for various purposes:</p>
                     <ul>
                         <li>To provide and maintain the Service</li>
                         <li>To notify you about changes to our Service</li>
@@ -59,7 +59,7 @@ export default function PrivacyPage() {
       <footer className="bg-muted text-muted-foreground py-12">
         <div className="container mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Diano Times</h3>
+            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Talk of Nations</h3>
             <p className="text-sm">Your source for Kenyan news, lifestyle, and technological trends.</p>
           </div>
           <div>
@@ -84,7 +84,7 @@ export default function PrivacyPage() {
           </div>
         </div>
         <div className="container mx-auto px-4 md:px-6 mt-8 text-center text-sm border-t border-border pt-6">
-          &copy; {new Date().getFullYear()} Diano Times. All rights reserved.
+          &copy; {new Date().getFullYear()} Talk of Nations. All rights reserved.
         </div>
       </footer>
     </div>

@@ -39,7 +39,7 @@ export async function generateMetadata(
   const previousImages = (await parent).openGraph?.images || []
 
   return {
-    title: `${post.title} | Diano Times`,
+    title: `${post.title} | Talk of Nations`,
     description: description,
     openGraph: {
       title: post.title,
@@ -132,7 +132,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
                             </Avatar>
                             <div>
                                 <h3 className="font-semibold text-lg">{post.authorName}</h3>
-                                <p className="text-sm text-muted-foreground">Diano Times Contributor</p>
+                                <p className="text-sm text-muted-foreground">Talk of Nations Contributor</p>
                             </div>
                         </div>
                     </CardContent>
@@ -177,7 +177,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
       <footer className="bg-muted text-muted-foreground py-12 mt-12">
         <div className="container mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Diano Times</h3>
+            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Talk of Nations</h3>
             <p className="text-sm">Your source for Kenyan news, lifestyle, and technological trends.</p>
           </div>
           <div>
@@ -202,7 +202,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
           </div>
         </div>
         <div className="container mx-auto px-4 md:px-6 mt-8 text-center text-sm border-t border-border pt-6">
-          &copy; {new Date().getFullYear()} Diano Times. All rights reserved.
+          &copy; {new Date().getFullYear()} Talk of Nations. All rights reserved.
         </div>
       </footer>
     </>

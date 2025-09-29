@@ -131,7 +131,7 @@ export default function AskDianoPage() {
                         <div className="mt-4 border-t border-primary-foreground/20 pt-3">
                             <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
                             <BookOpen className="h-4 w-4" />
-                            Sources from Diano Times:
+                            Sources from Talk of Nations:
                             </h4>
                             <div className="space-y-2">
                             {msg.sources.map(source => (

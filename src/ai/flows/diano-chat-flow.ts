@@ -31,7 +31,7 @@ async function createNewChatSession(userId: string): Promise<ChatSession> {
         updatedAt: Timestamp.now(),
         messages: [{
             role: 'model',
-            content: 'Karibu to Diano Times! I am Diano, your AI assistant. Ask me anything about Kenyan news, politics, lifestyle... or what\'s on your mind. Let\'s talk, Omwami.'
+            content: 'Karibu to Talk of Nations! I am Diano, your AI assistant. Ask me anything about Kenyan news, politics, lifestyle... or what\'s on your mind. Let\'s talk, Omwami.'
         }]
     };
     const docRef = await db.collection('diano_chats').add(newSession);

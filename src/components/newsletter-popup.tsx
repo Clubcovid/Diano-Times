@@ -53,7 +53,7 @@ export function NewsletterPopup() {
     console.log(`Subscribing email: ${email}`);
     toast({
       title: 'Subscription Successful!',
-      description: 'Thank you for subscribing to the Diano Times newsletter.',
+      description: 'Thank you for subscribing to the Talk of Nations newsletter.',
     });
     setEmail('');
     handleClose();
@@ -66,7 +66,7 @@ export function NewsletterPopup() {
           <div className="bg-primary/10 p-3 rounded-full mb-4">
             <Mail className="h-8 w-8 text-primary" />
           </div>
-          <DialogTitle className="font-headline text-2xl">Subscribe to Diano Times</DialogTitle>
+          <DialogTitle className="font-headline text-2xl">Subscribe to Talk of Nations</DialogTitle>
           <DialogDescription>
             Get the latest news, articles, and updates delivered straight to your inbox.
           </DialogDescription>
