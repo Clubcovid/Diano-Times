@@ -41,6 +41,8 @@ async function TrendingTicker() {
         return null;
     }
 
+    const topics = [...trendingTopics, ...trendingTopics];
+
     return (
         <div className="bg-background border-b">
             <div className="container mx-auto px-4 md:px-6 py-2 flex items-center gap-4">
@@ -51,13 +53,8 @@ async function TrendingTicker() {
                  <div className="flex-1 relative flex overflow-hidden">
                     <div className="marquee">
                         <div className="marquee-content text-sm">
-                            {trendingTopics.map((topic, index) => (
+                            {topics.map((topic, index) => (
                               <Link key={index} href={`/search?q=${encodeURIComponent(topic)}`} className="font-medium text-muted-foreground hover:text-primary transition-colors px-4">
-                                {topic}
-                              </Link>
-                            ))}
-                             {trendingTopics.map((topic, index) => (
-                              <Link key={`${index}-clone`} href={`/search?q=${encodeURIComponent(topic)}`} className="font-medium text-muted-foreground hover:text-primary transition-colors px-4">
                                 {topic}
                               </Link>
                             ))}
@@ -149,24 +146,15 @@ async function PostsSection() {
 }
 
 const MarketTicker = () => {
+    const marketData = [...mockMarketData, ...mockMarketData];
     return (
         <div className="bg-secondary text-secondary-foreground py-2 border-b-2 border-primary">
             <div className="container mx-auto px-4 md:px-6">
                 <div className="relative flex overflow-hidden group">
                     <div className="marquee">
                         <div className="marquee-content">
-                            {mockMarketData.map(stock => (
-                                <div key={stock.ticker} className="flex items-center gap-4 text-sm font-medium">
-                                    <span className="font-bold">{stock.ticker}</span>
-                                    <span>${stock.price.toFixed(2)}</span>
-                                    <span className={`flex items-center ${stock.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-                                        {stock.change.startsWith('+') ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
-                                        {stock.change}
-                                    </span>
-                                </div>
-                            ))}
-                             {mockMarketData.map(stock => (
-                                <div key={stock.ticker +'-clone'} className="flex items-center gap-4 text-sm font-medium">
+                            {marketData.map((stock, index) => (
+                                <div key={index} className="flex items-center gap-4 text-sm font-medium">
                                     <span className="font-bold">{stock.ticker}</span>
                                     <span>${stock.price.toFixed(2)}</span>
                                     <span className={`flex items-center ${stock.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
@@ -208,7 +196,7 @@ const WeatherTicker = async () => {
   //   // You could return a fallback or empty component here
   //   return null;
   // }
-  const weatherData = mockWeatherData;
+  const weatherData = [...mockWeatherData, ...mockWeatherData];
 
   if (weatherData.length === 0) {
     return null;
@@ -220,21 +208,10 @@ const WeatherTicker = async () => {
         <div className="relative flex overflow-hidden group">
           <div className="marquee">
             <div className="marquee-content">
-              {weatherData.map(weather => {
+              {weatherData.map((weather, index) => {
                 const Icon = iconMap[weather.icon] || Cloud;
                 return (
-                  <div key={weather.location} className="flex items-center gap-4 text-sm font-medium">
-                    <span className="font-bold">{weather.location}</span>
-                    <Icon className="h-5 w-5 text-primary" />
-                    <span>{weather.temperature}</span>
-                    <span className="text-muted-foreground">{weather.condition}</span>
-                  </div>
-                );
-              })}
-              {weatherData.map(weather => {
-                const Icon = iconMap[weather.icon] || Cloud;
-                return (
-                  <div key={`${weather.location}-clone`} className="flex items-center gap-4 text-sm font-medium">
+                  <div key={index} className="flex items-center gap-4 text-sm font-medium">
                     <span className="font-bold">{weather.location}</span>
                     <Icon className="h-5 w-5 text-primary" />
                     <span>{weather.temperature}</span>
