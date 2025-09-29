@@ -45,7 +45,7 @@ export default function ContactPage() {
                              <div className="flex items-center gap-4">
                                 <div className="flex gap-4 text-primary">
                                     <a href="#" className="hover:text-foreground"><Instagram /></a>
-                                    <a href="#" className="hover:text-foreground"><Twitter /></a>
+                                    <a href="https://x.com/TalkofNations?t=Z7MSDp3fplIqkuqYzTrxJw&s=09" target="_blank" rel="noopener noreferrer" className="hover:text-foreground"><Twitter /></a>
                                     <a href="#" className="hover:text-foreground"><Facebook /></a>
                                 </div>
                             </div>
@@ -112,7 +112,7 @@ export default function ContactPage() {
             <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Follow Us</h3>
             <div className="flex gap-4">
                 <a href="#" className="hover:text-primary"><Instagram /></a>
-                <a href="#" className="hover:text-primary"><Twitter /></a>
+                <a href="https://x.com/TalkofNations?t=Z7MSDp3fplIqkuqYzTrxJw&s=09" target="_blank" rel="noopener noreferrer" className="hover:text-primary"><Twitter /></a>
                 <a href="#" className="hover:text-primary"><Facebook /></a>
             </div>
           </div>
