@@ -5,9 +5,50 @@ import { AuthProvider } from '@/components/auth-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'Talk of Nations',
-  description: 'Your source for Kenyan news, lifestyle, and more.',
+  title: {
+    default: 'Talk of Nations',
+    template: '%s | Talk of Nations',
+  },
+  description: 'Your source for Kenyan news, lifestyle, and technological trends.',
+  openGraph: {
+    title: 'Talk of Nations',
+    description: 'Your source for Kenyan news, lifestyle, and technological trends.',
+    url: 'https://dianotimes.com',
+    siteName: 'Talk of Nations',
+    images: [
+      {
+        url: 'https://dianotimes.com/og-image.png', // Must be an absolute URL
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+   twitter: {
+    card: 'summary_large_image',
+    title: 'Talk of Nations',
+    description: 'Your source for Kenyan news, lifestyle, and technological trends.',
+    images: ['https://dianotimes.com/og-image.png'], // Must be an absolute URL
+  },
+   icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon-16x16.png',
+    apple: '/apple-touch-icon.png',
+  },
 };
+
 
 export default function RootLayout({
   children,
