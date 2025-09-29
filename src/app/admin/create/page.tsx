@@ -1,4 +1,13 @@
+
+import { Suspense } from 'react';
+import { PostFormSkeleton } from '@/components/admin/post-form';
 import { PostForm } from '@/components/admin/post-form';
+import {-next-dynamic-import-} from 'next/dynamic'
+const DynamicPostForm = dynamic(() => import('@/components/admin/post-form').then(mod => mod.PostForm), {
+  loading: () => <PostFormSkeleton />,
+  ssr: false,
+});
+
 
 export default function CreatePostPage() {
   return (
@@ -7,7 +16,9 @@ export default function CreatePostPage() {
         <h1 className="text-3xl font-bold font-headline">Create New Post</h1>
         <p className="text-muted-foreground">Fill in the details below to create a new blog post.</p>
       </div>
-      <PostForm />
+      <Suspense fallback={<PostFormSkeleton />}>
+        <DynamicPostForm />
+      </Suspense>
     </div>
   );
 }
