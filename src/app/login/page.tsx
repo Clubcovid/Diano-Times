@@ -14,6 +14,7 @@ import { LogIn } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
 import Link from 'next/link';
 import { GoogleIcon } from '@/components/icons/google';
+import { Logo } from '@/components/icons/logo';
 
 function LoginForm() {
   const [loadingGoogle, setLoadingGoogle] = useState(false);
@@ -85,8 +86,9 @@ function LoginForm() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-muted/40">
        <div className="text-center mb-8">
-            <Link href="/" className="text-4xl font-bold font-headline text-primary">
-                Talk of Nations
+            <Link href="/" className="flex items-center justify-center gap-2">
+                <Logo className="h-10 w-10 text-primary" />
+                <span className="text-3xl font-extrabold tracking-tight text-foreground">Talk of Nations</span>
             </Link>
         </div>
       <Card className="w-full max-w-sm">

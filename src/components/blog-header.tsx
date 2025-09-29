@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/navigation-menu"
 import React from 'react';
 import { GoogleIcon } from './icons/google';
+import { Logo } from './icons/logo';
 
 const categories: { title: string; href: string; description: string }[] = [
   {
@@ -119,7 +120,7 @@ export function BlogHeader() {
       <Link href="/ask-diano" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
         <Mic className="h-4 w-4" /> Ask Diano
       </Link>
-      <Link href="/diano-weekly" className="text-muted-foreground hover:text-primary transition-colors">Diano Weekly</Link>
+      <Link href="/diano-weekly" className="text-muted-foreground hover:text-primary transition-colors">Nations Weekly</Link>
       <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
       <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
     </>
@@ -128,10 +129,11 @@ export function BlogHeader() {
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b">
       <div className="container mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
-        <Link href="/" className="text-3xl font-bold font-headline text-primary">
-          Talk of Nations
+        <Link href="/" className="flex items-center gap-2">
+            <Logo className="h-8 w-8 text-primary" />
+            <span className="text-2xl font-extrabold tracking-tight text-foreground">Talk of Nations</span>
         </Link>
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+        <nav className="hidden lg:flex items-center gap-6 text-sm font-medium">
           {navLinks}
         </nav>
         <div className="flex items-center gap-2">
@@ -192,23 +194,24 @@ export function BlogHeader() {
           )}
            <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden">
+              <Button variant="outline" size="icon" className="lg:hidden">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left">
                 <div className="p-4">
-                  <Link href="/" className="text-2xl font-bold font-headline text-primary mb-8 block">
-                    Talk of Nations
-                  </Link>
+                    <Link href="/" className="flex items-center gap-2 mb-8">
+                        <Logo className="h-8 w-8 text-primary" />
+                        <span className="text-xl font-extrabold tracking-tight text-foreground">Talk of Nations</span>
+                    </Link>
                   <nav className="grid gap-4 text-lg">
                     <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">Home</Link>
                     {categories.map(cat => (
                        <Link key={cat.href} href={cat.href} className="text-muted-foreground hover:text-primary transition-colors">{cat.title}</Link>
                     ))}
                     <Link href="/ask-diano" className="text-muted-foreground hover:text-primary transition-colors">Ask Diano</Link>
-                    <Link href="/diano-weekly" className="text-muted-foreground hover:text-primary transition-colors">Diano Weekly</Link>
+                    <Link href="/diano-weekly" className="text-muted-foreground hover:text-primary transition-colors">Nations Weekly</Link>
                     <Link href="/video" className="text-muted-foreground hover:text-primary transition-colors">Video</Link>
                     <Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link>
                   </nav>

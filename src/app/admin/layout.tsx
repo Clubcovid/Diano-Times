@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from 'react';
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
+import { Logo } from '@/components/icons/logo';
 
 const ADMIN_EMAIL = 'georgedianoh@gmail.com';
 
@@ -58,7 +60,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <AdminSidebar isMobile />
                 </SheetContent>
             </Sheet>
-             <h1 className="text-xl font-bold font-headline text-primary">Talk of Nations Admin</h1>
+             <div className="flex items-center gap-2">
+                <Logo className="h-7 w-7 text-primary" />
+                <h1 className="text-xl font-bold text-foreground">Admin Panel</h1>
+             </div>
         </header>
         <main className="flex-1 p-4 sm:p-6 md:p-8">{children}</main>
       </div>
