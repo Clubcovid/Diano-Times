@@ -8,6 +8,7 @@ import { Suspense } from 'react';
 import { TagList } from '@/components/tag-list';
 import { getTags } from '@/lib/posts';
 import { BlogHeader } from '@/components/blog-header';
+import { Logo } from '@/components/icons/logo';
 
 async function PostsData({ tag }: { tag?: string }) {
   let posts = await getPosts({ publishedOnly: true, tag: tag || 'Lifestyle' });
@@ -74,39 +75,30 @@ export default function CategoryPage({ searchParams }: { searchParams: { tag?: s
         </div>
       </main>
 
-      <footer className="bg-muted text-muted-foreground py-12">
-        <div className="container mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Talk of Nations</h3>
-            <p className="text-sm">Your source for Kenyan news, lifestyle, and technological trends.</p>
-          </div>
-          <div>
-            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Quick Links</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
-              <li><Link href="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
-              <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Categories</h3>
-             <ul className="space-y-2 text-sm">
-                <li><Link href="/fashion" className="hover:text-primary transition-colors">Fashion</Link></li>
-                <li><Link href="/gadgets" className="hover:text-primary transition-colors">Gadgets</Link></li>
-                <li><Link href="/lifestyle" className="hover:text-primary transition-colors">Lifestyle</Link></li>
-             </ul>
-          </div>
-          <div>
-            <h3 className="text-lg font-headline font-semibold text-foreground mb-4">Follow Us</h3>
-            <div className="flex gap-4">
+      <footer className="bg-muted text-muted-foreground py-8">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-2">
+                <Logo className="h-8 w-8 text-primary" />
+                <span className="text-xl font-bold text-foreground">Talk of Nations</span>
+            </div>
+            <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
+                <Link href="/about" className="hover:text-primary transition-colors">About Us</Link>
+                <Link href="/contact" className="hover:text-primary transition-colors">Contact</Link>
+                <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+                <Link href="/fashion" className="hover:text-primary transition-colors">Fashion</Link>
+                <Link href="/gadgets" className="hover:text-primary transition-colors">Gadgets</Link>
+                <Link href="/lifestyle" className="hover:text-primary transition-colors">Lifestyle</Link>
+            </nav>
+             <div className="flex gap-4">
                 <a href="#" className="hover:text-primary" aria-label="Instagram"><Instagram /></a>
                 <a href="https://x.com/TalkofNations?t=Z7MSDp3fplIqkuqYzTrxJw&s=09" target="_blank" rel="noopener noreferrer" className="hover:text-primary" aria-label="Twitter"><Twitter /></a>
                 <a href="#" className="hover:text-primary" aria-label="Facebook"><Facebook /></a>
             </div>
           </div>
-        </div>
-        <div className="container mx-auto px-4 md:px-6 mt-8 text-center text-sm border-t border-border pt-6">
-          &copy; {new Date().getFullYear()} Talk of Nations. All rights reserved.
+          <div className="mt-8 text-center text-sm border-t border-border pt-6">
+            &copy; {new Date().getFullYear()} Talk of Nations. All rights reserved.
+          </div>
         </div>
       </footer>
     </div>
