@@ -1,4 +1,5 @@
 import { htmlToText } from 'html-to-text';
+import type { Post } from './types';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
@@ -51,7 +52,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<{ succes
  * @param siteUrl - The base URL of the site.
  * @returns A formatted HTML string for the Telegram message.
  */
-export function formatPostForTelegram(post: { title: string; slug: string; content: string; tags: string[] }, siteUrl: string): string {
+export function formatPostForTelegram(post: Post, siteUrl: string): string {
     const postUrl = `${siteUrl}/posts/${post.slug}`;
     const snippet = htmlToText(post.content, { wordwrap: 130 }).substring(0, 200);
     const tags = post.tags.map(t => `#${t.replace(/\s+/g, '')}`).join(' ');

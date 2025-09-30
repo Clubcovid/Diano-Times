@@ -16,7 +16,7 @@ import { mockPosts, mockAds, mockVideos } from './mock-data';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { v4 as uuidv4 } from 'uuid';
-import { getPosts } from './posts';
+import { getPosts, getPostById } from './posts';
 import { subDays } from 'date-fns';
 import type { AiFeatureFlags } from './ai-flags';
 import { isAiFeatureEnabled } from './ai-flags';
@@ -24,6 +24,7 @@ import { renderToBuffer } from '@react-pdf/renderer';
 import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
 import { sendMessage, formatPostForTelegram } from './telegram';
+import { telegramBotFlow } from '@/ai/flows/telegram-bot-flow';
 
 type SerializableAd = Omit<Ad, 'createdAt'> & {
   createdAt: string;
@@ -71,14 +72,14 @@ export async function generateSlug(title: string): Promise<{ success: boolean; s
   }
 }
 
-type FormState<T> = {
+type FormState = {
   success: boolean;
   message: string;
   errors?: z.ZodIssue[];
-  data?: T;
+  postId?: string;
 };
 
-export async function createPost(data: PostFormData): Promise<FormState<Post>> {
+export async function createPost(data: PostFormData): Promise<FormState> {
   if (!db) {
     return { success: false, message: 'Database not connected. Is the admin SDK configured correctly?' };
   }
@@ -110,12 +111,13 @@ export async function createPost(data: PostFormData): Promise<FormState<Post>> {
     };
 
     const docRef = await db.collection('posts').add(postToSave);
-    const newPost = await docRef.get();
+    const newPostDoc = await docRef.get();
+    const newPost = { id: newPostDoc.id, ...newPostDoc.data() } as Post;
     
     // If the post is published, send a Telegram notification
-    if (validatedData.status === 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
+    if (newPost.status === 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
       const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
-      const telegramMessage = formatPostForTelegram(validatedData, siteUrl);
+      const telegramMessage = formatPostForTelegram(newPost, siteUrl);
       await sendMessage({
         chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
         text: telegramMessage,
@@ -128,7 +130,7 @@ export async function createPost(data: PostFormData): Promise<FormState<Post>> {
     revalidatePath('/');
     revalidatePath('/admin/posts');
 
-    return { success: true, message: 'Post created successfully.', data: {id: newPost.id, ...newPost.data()} as Post };
+    return { success: true, message: 'Post created successfully.', postId: newPost.id };
   } catch (error) {
     console.error('Error creating post:', error);
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -136,7 +138,7 @@ export async function createPost(data: PostFormData): Promise<FormState<Post>> {
   }
 }
 
-export async function updatePost(postId: string, data: PostFormData): Promise<FormState<Post>> {
+export async function updatePost(postId: string, data: PostFormData): Promise<FormState> {
   if (!db) {
     return { success: false, message: 'Database not connected.' };
   }
@@ -169,10 +171,13 @@ export async function updatePost(postId: string, data: PostFormData): Promise<Fo
       updatedAt: FieldValue.serverTimestamp(),
     });
 
+    const updatedPostDoc = await postRef.get();
+    const updatedPost = { id: updatedPostDoc.id, ...updatedPostDoc.data() } as Post;
+
     // If post is newly published, send notification
-    if (validatedData.status === 'published' && existingPostData?.status !== 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
+    if (updatedPost.status === 'published' && existingPostData?.status !== 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
         const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
-        const telegramMessage = formatPostForTelegram(validatedData, siteUrl);
+        const telegramMessage = formatPostForTelegram(updatedPost, siteUrl);
         await sendMessage({
             chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
             text: telegramMessage,
@@ -181,13 +186,11 @@ export async function updatePost(postId: string, data: PostFormData): Promise<Fo
         });
     }
 
-    const updatedPost = await postRef.get();
-
     revalidatePath('/');
     revalidatePath(`/posts/${validatedData.slug}`);
     revalidatePath('/admin/posts');
 
-    return { success: true, message: 'Post updated successfully.', data: {id: updatedPost.id, ...updatedPost.data()} as Post };
+    return { success: true, message: 'Post updated successfully.', postId: updatedPost.id };
   } catch (error) {
     console.error('Error updating post:', error);
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -677,8 +680,8 @@ export async function notifyNewUserRegistration(user: { email?: string | null, d
         return { success: false };
     }
 
-    const name = user.displayName || 'N/A';
-    const email = user.email || 'N/A';
+    const name = user.displayName ? user.displayName.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1') : 'N/A';
+    const email = user.email ? user.email.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1') : 'N/A';
     const text = `
 ✅ *New User Registration* ✅
 
@@ -697,16 +700,32 @@ A new user has signed up on Talk of Nations:
     return { success: true };
 }
 
-export async function handleTelegramUpdate(update: any): Promise<{ success: boolean }> {
-    // This is the entry point for the interactive bot.
-    // For now, it just logs the update.
-    console.log("Received Telegram update:", JSON.stringify(update, null, 2));
+export async function handleTelegramUpdate(update: any) {
+    if (!update.message) {
+        return { success: true };
+    }
+    const { message } = update;
+    const { chat, text } = message;
 
-    // TODO: Implement logic to parse the update and respond.
-    // This will involve calling the `telegramBotFlow`.
+    try {
+        const botResponse = await telegramBotFlow({ chatId: chat.id, message: text });
+
+        await sendMessage({
+            chat_id: String(chat.id),
+            text: botResponse.response,
+        });
+
+    } catch (error) {
+        console.error("Error handling Telegram update:", error);
+        await sendMessage({
+            chat_id: String(chat.id),
+            text: "Sorry, I encountered an error while processing your request.",
+        });
+    }
 
     return { success: true };
 }
     
 
     
+
