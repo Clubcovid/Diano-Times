@@ -45,21 +45,21 @@ async function Advertisement() {
 }
 
 const PostContent = ({ content }: { content: string }) => {
-    const paragraphs = content.split('\n\n');
-    const contentWithAd: React.ReactNode[] = [];
-
-    paragraphs.forEach((p, index) => {
-        contentWithAd.push(<p key={`p-${index}`}>{p}</p>);
-        if (index === 1 && paragraphs.length > 2) {
-            contentWithAd.push(<Advertisement key="ad" />);
-        }
-    });
-
+    // This regular expression splits the content by one or more newlines,
+    // which is more robust for handling Markdown-style paragraphs.
+    const paragraphs = content.split(/\n+/).filter(p => p.trim() !== '');
+    
     return (
         <div 
-            className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline prose-headings:text-primary prose-a:text-accent-foreground prose-a:transition-colors hover:prose-a:text-primary prose-img:rounded-lg" 
-            dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }}
-        />
+            className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline prose-headings:text-primary prose-a:text-accent-foreground prose-a:transition-colors hover:prose-a:text-primary prose-img:rounded-lg"
+        >
+            {paragraphs.map((p, index) => (
+                <React.Fragment key={index}>
+                    <div dangerouslySetInnerHTML={{ __html: p.replace(/\n/g, '<br />') }} />
+                    {index === 1 && <Advertisement />}
+                </React.Fragment>
+            ))}
+        </div>
     );
 };
 
