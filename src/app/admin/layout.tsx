@@ -56,7 +56,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <span className="sr-only">Toggle Menu</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="sm:max-w-xs">
+                <SheetContent side="left" className="sm:max-w-xs p-0">
                     <AdminSidebar isMobile />
                 </SheetContent>
             </Sheet>

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Download, FileWarning } from 'lucide-react';
 import { generateMagazine } from '@/ai/flows/generate-magazine';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
+import { isClient } from '@/lib/utils';
 
 // Mock data for initial render to avoid error with react-pdf
 const mockSudoku = {
@@ -31,8 +32,15 @@ export default function MagazineViewerPage({ params }: { params: { id: string } 
     const [magazineData, setMagazineData] = useState<GenerateMagazineOutput>(mockMagazineData);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isClient, setIsClient] = useState(false)
+ 
+    useEffect(() => {
+        setIsClient(true)
+    }, [])
 
     useEffect(() => {
+        if (!isClient) return;
+
         const fetchMagazine = async () => {
             try {
                 setIsLoading(true);
@@ -42,9 +50,6 @@ export default function MagazineViewerPage({ params }: { params: { id: string } 
                     return;
                 }
                 setMagazine(mag);
-                // Since we don't store the structured content, we need to regenerate it for viewing.
-                // This is not ideal for production but works for this demo.
-                // A better approach would be to store the JSON output of the AI.
                 const data = await generateMagazine({ postIds: mag.postIds });
                 setMagazineData(data);
             } catch (e: any) {
@@ -54,7 +59,7 @@ export default function MagazineViewerPage({ params }: { params: { id: string } 
             }
         };
         fetchMagazine();
-    }, [params.id]);
+    }, [params.id, isClient]);
 
     if (error) {
         return (
@@ -69,6 +74,22 @@ export default function MagazineViewerPage({ params }: { params: { id: string } 
                 </main>
             </div>
         );
+    }
+    
+    if (!isClient) {
+        return (
+             <div className="flex flex-col min-h-screen bg-muted/40">
+                <div className="bg-background">
+                    <BlogHeader />
+                </div>
+                 <main className="flex-1 flex items-center justify-center p-4">
+                    <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                        <p className="text-muted-foreground">Loading viewer...</p>
+                    </div>
+                 </main>
+            </div>
+        )
     }
 
     return (
@@ -122,4 +143,3 @@ export default function MagazineViewerPage({ params }: { params: { id: string } 
         </div>
     );
 }
-

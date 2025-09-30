@@ -45,20 +45,49 @@ async function Advertisement() {
 }
 
 const PostContent = ({ content }: { content: string }) => {
-    // This regular expression splits the content by one or more newlines,
-    // which is more robust for handling Markdown-style paragraphs.
     const paragraphs = content.split(/\n+/).filter(p => p.trim() !== '');
     
+    // Insert advertisement after the second paragraph if content is long enough
+    const contentWithAd: React.ReactNode[] = [];
+    paragraphs.forEach((p, index) => {
+        // Use regex to detect markdown image syntax
+        const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
+        let lastIndex = 0;
+        let match;
+        const parts: React.ReactNode[] = [];
+
+        while ((match = imgRegex.exec(p)) !== null) {
+            // Add text before the image
+            if (match.index > lastIndex) {
+                parts.push(p.substring(lastIndex, match.index));
+            }
+            // Add the image
+            const [fullMatch, alt, url] = match;
+            parts.push(
+                <div key={`${index}-${lastIndex}-img`} className="relative aspect-video my-6 rounded-lg overflow-hidden">
+                    <Image src={url} alt={alt} fill className="object-cover" />
+                </div>
+            );
+            lastIndex = match.index + fullMatch.length;
+        }
+
+        // Add any remaining text after the last image
+        if (lastIndex < p.length) {
+            parts.push(p.substring(lastIndex));
+        }
+
+        contentWithAd.push(<p key={index}>{parts}</p>);
+
+        if (index === 1) {
+            contentWithAd.push(<Advertisement key="ad" />);
+        }
+    });
+
     return (
         <div 
             className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline prose-headings:text-primary prose-a:text-accent-foreground prose-a:transition-colors hover:prose-a:text-primary prose-img:rounded-lg"
         >
-            {paragraphs.map((p, index) => (
-                <React.Fragment key={index}>
-                    <div dangerouslySetInnerHTML={{ __html: p.replace(/\n/g, '<br />') }} />
-                    {index === 1 && <Advertisement />}
-                </React.Fragment>
-            ))}
+            {contentWithAd}
         </div>
     );
 };
@@ -124,9 +153,9 @@ export default async function PostPage({ params }: { params: { slug: string } })
   const filteredRelatedPosts = relatedPosts.filter(p => p.id !== post.id).slice(0, 2);
 
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
       <BlogHeader />
-      <main className="container mx-auto px-4 md:px-6 py-12">
+      <main className="flex-1 container mx-auto px-4 md:px-6 py-12">
         <div className="grid lg:grid-cols-3 gap-12">
             <article className="lg:col-span-2">
             <header className="mb-8">
@@ -222,6 +251,6 @@ export default async function PostPage({ params }: { params: { slug: string } })
           </div>
         </div>
       </footer>
-    </>
+    </div>
   );
 }

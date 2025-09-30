@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '../auth-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Logo } from '../icons/logo';
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -27,7 +28,7 @@ const navItems = [
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/advertisements', label: 'Advertisements', icon: Megaphone },
   { href: '/admin/videos', label: 'Videos', icon: Video },
-  { href: '/admin/magazine', label: 'Diano Weekly', icon: Newspaper },
+  { href: '/admin/magazine', label: 'Nations Weekly', icon: Newspaper },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -44,8 +45,9 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const content = (
     <>
       <div className="flex items-center gap-2 p-4 border-b">
-        <Link href="/admin" className="text-2xl font-bold font-headline text-primary">
-          Talk of Nations Admin
+        <Link href="/admin" className="flex items-center gap-2">
+            <Logo className="h-8 w-8 text-primary" />
+            <span className="text-xl font-extrabold tracking-tight text-foreground">Admin Panel</span>
         </Link>
       </div>
       <div className="flex-1 overflow-auto py-2">
@@ -122,7 +124,7 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
   );
 
   if (isMobile) {
-    return <div className="flex flex-col h-full">{content}</div>;
+    return <div className="flex flex-col h-full bg-background">{content}</div>;
   }
 
   return (
