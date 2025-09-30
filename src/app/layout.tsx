@@ -60,8 +60,6 @@ export const metadata: Metadata = {
     images: ['https://www.talkofnations.com/og-image.png'], // Must be an absolute URL
   },
    icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
     apple: '/apple-touch-icon.png',
   },
 };
