@@ -4,7 +4,7 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Send } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -19,6 +19,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -32,7 +33,7 @@ import {
     AlertDialogTitle,
   } from "@/components/ui/alert-dialog"
 import type { Post } from '@/lib/types';
-import { deletePost } from '@/lib/actions';
+import { deletePost, sendPostToTelegram } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 
 type SerializablePost = Omit<Post, 'createdAt' | 'updatedAt'> & {
@@ -43,6 +44,7 @@ type SerializablePost = Omit<Post, 'createdAt' | 'updatedAt'> & {
 export function PostsTable({ posts }: { posts: SerializablePost[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const [isSending, startSendingTransition] = useTransition();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [currentPosts, setCurrentPosts] = useState(posts);
@@ -74,6 +76,17 @@ export function PostsTable({ posts }: { posts: SerializablePost[] }) {
       setPostToDelete(null);
     });
   }
+
+  const handleSendToTelegram = (postId: string) => {
+    startSendingTransition(async () => {
+      const result = await sendPostToTelegram(postId);
+      if (result.success) {
+        toast({ title: 'Success', description: 'Post sent to Telegram channel.' });
+      } else {
+        toast({ title: 'Error', description: result.message, variant: 'destructive' });
+      }
+    });
+  };
 
   if (currentPosts.length === 0) {
     return (
@@ -127,6 +140,11 @@ export function PostsTable({ posts }: { posts: SerializablePost[] }) {
                           <Pencil className="mr-2 h-4 w-4" /> Edit
                         </Link>
                       </DropdownMenuItem>
+                       <DropdownMenuItem onClick={() => handleSendToTelegram(post.id)} disabled={isSending}>
+                          <Send className="mr-2 h-4 w-4" />
+                          {isSending ? 'Sending...' : 'Send to Telegram'}
+                        </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => handleDelete(post.id)} className="text-destructive">
                         <Trash2 className="mr-2 h-4 w-4" /> Delete
                       </DropdownMenuItem>
@@ -144,7 +162,7 @@ export function PostsTable({ posts }: { posts: SerializablePost[] }) {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
                 This action cannot be undone. This will permanently delete the post.
-            </AlertDialogDescription>
+            </Description>
             </AlertDialogHeader>
             <AlertDialogFooter>
             <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>

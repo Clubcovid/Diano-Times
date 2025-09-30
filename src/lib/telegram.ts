@@ -54,7 +54,13 @@ export async function sendMessage(options: SendMessageOptions): Promise<{ succes
  */
 export function formatPostForTelegram(post: Post, siteUrl: string): string {
     const postUrl = `${siteUrl}/posts/${post.slug}`;
-    const snippet = htmlToText(post.content, { wordwrap: 130 }).substring(0, 200);
+    
+    // Ensure content is a string before passing to htmlToText
+    const contentAsString = typeof post.content === 'string' 
+        ? post.content 
+        : post.content.map(c => c.type === 'paragraph' ? c.value : '').join(' ');
+
+    const snippet = htmlToText(contentAsString, { wordwrap: 130 }).substring(0, 200);
     const tags = post.tags.map(t => `#${t.replace(/\s+/g, '')}`).join(' ');
 
     // Using HTML for better formatting options in Telegram

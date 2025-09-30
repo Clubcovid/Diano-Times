@@ -725,7 +725,31 @@ export async function handleTelegramUpdate(update: any) {
 
     return { success: true };
 }
-    
 
-    
+export async function sendPostToTelegram(postId: string): Promise<{ success: boolean, message: string }> {
+  if (!process.env.TELEGRAM_NEWS_CHANNEL_ID) {
+    return { success: false, message: 'Telegram News Channel ID is not configured.' };
+  }
 
+  const post = await getPostById(postId);
+  if (!post) {
+    return { success: false, message: 'Post not found.' };
+  }
+
+  try {
+    const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
+    const telegramMessage = formatPostForTelegram(post, siteUrl);
+
+    await sendMessage({
+      chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
+      text: telegramMessage,
+      parse_mode: 'HTML',
+      disable_web_page_preview: false,
+    });
+
+    return { success: true, message: 'Post sent to Telegram successfully.' };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return { success: false, message };
+  }
+}
