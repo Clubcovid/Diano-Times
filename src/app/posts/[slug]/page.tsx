@@ -12,18 +12,12 @@ import { PostCard } from '@/components/post-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Instagram, Twitter, Facebook } from 'lucide-react';
 import { Logo } from '@/components/icons/logo';
-import type { Ad, Post, ContentBlock } from '@/lib/types';
+import type { Ad, Post } from '@/lib/types';
 import React from 'react';
+import { htmlToText } from 'html-to-text';
 
 type Props = {
   params: { slug: string }
-}
-
-function contentToText(content: ContentBlock[]): string {
-    return content
-        .filter(block => block.type === 'paragraph')
-        .map(block => block.value)
-        .join(' ');
 }
 
 async function Advertisement() {
@@ -50,37 +44,22 @@ async function Advertisement() {
     );
 }
 
-const PostContent = ({ content }: { content: ContentBlock[] }) => {
-    const contentWithAd: (React.ReactNode | ContentBlock)[] = [...content];
-    if (content.length > 2) {
-        contentWithAd.splice(2, 0, <Advertisement key="ad" />);
-    }
+const PostContent = ({ content }: { content: string }) => {
+    const paragraphs = content.split('\n\n');
+    const contentWithAd: React.ReactNode[] = [];
+
+    paragraphs.forEach((p, index) => {
+        contentWithAd.push(<p key={`p-${index}`}>{p}</p>);
+        if (index === 1 && paragraphs.length > 2) {
+            contentWithAd.push(<Advertisement key="ad" />);
+        }
+    });
 
     return (
-        <div className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline prose-headings:text-primary prose-a:text-accent-foreground prose-a:transition-colors hover:prose-a:text-primary prose-img:rounded-lg">
-            {contentWithAd.map((block, index) => {
-                if (React.isValidElement(block)) {
-                    return block;
-                }
-                const contentBlock = block as ContentBlock;
-                if (contentBlock.type === 'paragraph') {
-                    return <p key={index}>{contentBlock.value}</p>;
-                }
-                if (contentBlock.type === 'image' && contentBlock.value.url) {
-                    return (
-                        <div key={index} className="relative aspect-video my-8">
-                            <Image
-                                src={contentBlock.value.url}
-                                alt={contentBlock.value.alt || 'Blog post image'}
-                                fill
-                                className="object-contain rounded-lg"
-                            />
-                        </div>
-                    );
-                }
-                return null;
-            })}
-        </div>
+        <div 
+            className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline prose-headings:text-primary prose-a:text-accent-foreground prose-a:transition-colors hover:prose-a:text-primary prose-img:rounded-lg" 
+            dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }}
+        />
     );
 };
 
@@ -97,7 +76,7 @@ export async function generateMetadata(
     }
   }
   
-  const description = contentToText(post.content).substring(0, 155);
+  const description = htmlToText(post.content).substring(0, 155);
 
   const previousImages = (await parent).openGraph?.images || []
   const parentKeywords = (await parent).keywords || [];

@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { postSchema, type PostFormData } from '@/lib/schemas';
 import type { Post } from '@/lib/types';
-import { createPost, updatePost, generateSlug } from '@/lib/actions.tsx';
+import { createPost, updatePost, generateSlug } from '@/lib/actions';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Wand2, Save } from 'lucide-react';
-import { Skeleton } from '../ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const availableTags = ['Fashion', 'Gadgets', 'Lifestyle', 'Technology', 'Wellness', 'Travel', 'Food', 'Business', 'Culture', 'Art', 'Reviews', 'Tips', 'Nairobi', 'Kenya', 'Global Affairs', 'Sports'];
 
@@ -189,15 +189,21 @@ export function PostForm({ post }: { post?: SerializablePost }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select onValueChange={(value) => form.setValue('status', value as 'draft' | 'published')} defaultValue={form.getValues('status')}>
-                <SelectTrigger id="status">
-                    <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                </SelectContent>
-            </Select>
+             <Controller
+                name="status"
+                control={form.control}
+                render={({ field }) => (
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger id="status">
+                            <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="published">Published</SelectItem>
+                        </SelectContent>
+                    </Select>
+                )}
+            />
             {form.formState.errors.status && <p className="text-sm text-destructive">{form.formState.errors.status.message}</p>}
           </div>
         </CardContent>

@@ -1,6 +1,10 @@
 
 import type { Timestamp } from 'firebase/firestore';
 
+export type ContentBlock = 
+  | { type: 'paragraph'; value: string; }
+  | { type: 'image'; value: { url: string; alt: string; }; };
+
 export interface Post {
   id: string;
   title: string;
