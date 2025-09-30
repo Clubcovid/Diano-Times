@@ -7,16 +7,23 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import { BlogHeader } from '@/components/blog-header';
 import { Metadata, ResolvingMetadata } from 'next';
-import { htmlToText } from 'html-to-text';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PostCard } from '@/components/post-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Instagram, Twitter, Facebook } from 'lucide-react';
 import { Logo } from '@/components/icons/logo';
-import type { Ad, Post } from '@/lib/types';
+import type { Ad, Post, ContentBlock } from '@/lib/types';
+import React from 'react';
 
 type Props = {
   params: { slug: string }
+}
+
+function contentToText(content: ContentBlock[]): string {
+    return content
+        .filter(block => block.type === 'paragraph')
+        .map(block => block.value)
+        .join(' ');
 }
 
 async function Advertisement() {
@@ -43,21 +50,39 @@ async function Advertisement() {
     );
 }
 
-const renderContentWithAd = (content: string, adComponent: React.ReactNode) => {
-    const paragraphs = content.split('</p>').filter(p => p.trim() !== '');
-    if (paragraphs.length <= 2) {
-        return <div dangerouslySetInnerHTML={{ __html: content }} />;
+const PostContent = ({ content }: { content: ContentBlock[] }) => {
+    const contentWithAd: (React.ReactNode | ContentBlock)[] = [...content];
+    if (content.length > 2) {
+        contentWithAd.splice(2, 0, <Advertisement key="ad" />);
     }
-    
-    const contentWithAd = [];
-    for (let i = 0; i < paragraphs.length; i++) {
-        contentWithAd.push(<div key={`p-${i}`} dangerouslySetInnerHTML={{ __html: paragraphs[i] + '</p>' }} />);
-        if (i === 1) { // Insert ad after the second paragraph
-            contentWithAd.push(<div key="ad">{adComponent}</div>);
-        }
-    }
-    return <>{contentWithAd}</>;
-}
+
+    return (
+        <div className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline prose-headings:text-primary prose-a:text-accent-foreground prose-a:transition-colors hover:prose-a:text-primary prose-img:rounded-lg">
+            {contentWithAd.map((block, index) => {
+                if (React.isValidElement(block)) {
+                    return block;
+                }
+                const contentBlock = block as ContentBlock;
+                if (contentBlock.type === 'paragraph') {
+                    return <p key={index}>{contentBlock.value}</p>;
+                }
+                if (contentBlock.type === 'image' && contentBlock.value.url) {
+                    return (
+                        <div key={index} className="relative aspect-video my-8">
+                            <Image
+                                src={contentBlock.value.url}
+                                alt={contentBlock.value.alt || 'Blog post image'}
+                                fill
+                                className="object-contain rounded-lg"
+                            />
+                        </div>
+                    );
+                }
+                return null;
+            })}
+        </div>
+    );
+};
 
 
 export async function generateMetadata(
@@ -71,14 +96,8 @@ export async function generateMetadata(
       title: 'Post Not Found',
     }
   }
-
-  const description = htmlToText(post.content, {
-    wordwrap: 155,
-    selectors: [
-        { selector: 'a', options: { ignoreHref: true } },
-        { selector: 'img', format: 'skip' }
-    ]
-  }).substring(0, 155);
+  
+  const description = contentToText(post.content).substring(0, 155);
 
   const previousImages = (await parent).openGraph?.images || []
   const parentKeywords = (await parent).keywords || [];
@@ -159,11 +178,9 @@ export default async function PostPage({ params }: { params: { slug: string } })
                 data-ai-hint="kenyan culture"
                 />
             </div>
-            <div
-                className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline prose-headings:text-primary prose-a:text-accent-foreground prose-a:transition-colors hover:prose-a:text-primary prose-img:rounded-lg"
-            >
-              {renderContentWithAd(post.content, <Advertisement />)}
-            </div>
+            
+            <PostContent content={post.content} />
+
             </article>
 
             <aside className="lg:col-span-1 space-y-8 lg:sticky top-28 h-fit">
