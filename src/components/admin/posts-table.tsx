@@ -35,20 +35,23 @@ import {
 import type { Post } from '@/lib/types';
 import { deletePost, sendPostToTelegram } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
-type SerializablePost = Omit<Post, 'createdAt' | 'updatedAt'> & {
+
+type SerializablePost = Omit<Post, 'createdAt' | 'updatedAt' | 'content'> & {
   createdAt: string;
   updatedAt: string;
+  content: any;
 }
 
 export function PostsTable({ posts }: { posts: SerializablePost[] }) {
   const { toast } = useToast();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isSending, startSendingTransition] = useTransition();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
-  const [currentPosts, setCurrentPosts] = useState(posts);
-
+  
   const handleDelete = (postId: string) => {
     setPostToDelete(postId);
     setShowDeleteDialog(true);
@@ -60,11 +63,11 @@ export function PostsTable({ posts }: { posts: SerializablePost[] }) {
     startTransition(async () => {
       const result = await deletePost(postToDelete);
       if (result.success) {
-        setCurrentPosts(currentPosts.filter(p => p.id !== postToDelete));
         toast({
           title: 'Success',
           description: result.message,
         });
+        router.refresh();
       } else {
         toast({
           title: 'Error',
@@ -87,8 +90,8 @@ export function PostsTable({ posts }: { posts: SerializablePost[] }) {
       }
     });
   };
-
-  if (currentPosts.length === 0) {
+  
+   if (posts.length === 0) {
     return (
         <div className="text-center py-16 border rounded-lg">
             <h2 className="text-2xl font-bold font-headline">No posts yet</h2>
@@ -101,6 +104,7 @@ export function PostsTable({ posts }: { posts: SerializablePost[] }) {
         </div>
     )
   }
+
 
   return (
     <>
@@ -115,7 +119,7 @@ export function PostsTable({ posts }: { posts: SerializablePost[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentPosts.map((post) => (
+            {posts.map((post) => (
               <TableRow key={post.id}>
                 <TableCell className="font-medium">{post.title}</TableCell>
                 <TableCell>
@@ -162,7 +166,7 @@ export function PostsTable({ posts }: { posts: SerializablePost[] }) {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
                 This action cannot be undone. This will permanently delete the post.
-            </Description>
+            </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
             <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
