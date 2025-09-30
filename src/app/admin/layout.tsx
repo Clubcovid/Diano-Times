@@ -47,7 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex h-screen w-full bg-muted/40 overflow-hidden">
       <AdminSidebar />
-      <div className="flex flex-col flex-1 overflow-auto">
+      <div className="flex flex-col flex-1">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 md:hidden">
             <Sheet>
                 <SheetTrigger asChild>
@@ -65,7 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <h1 className="text-xl font-bold text-foreground">Admin Panel</h1>
              </div>
         </header>
-        <main className="flex-1 p-4 sm:p-6 md:p-8">{children}</main>
+        <main className="flex-1 overflow-auto p-4 sm:p-6 md:p-8">{children}</main>
       </div>
     </div>
   );
