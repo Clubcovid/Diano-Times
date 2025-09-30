@@ -103,20 +103,21 @@ export function PostForm({ post }: { post?: SerializablePost }) {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={form.handleSubmit(onSubmit)}>
       <Card>
         <CardHeader>
-          <CardTitle>Post Details</CardTitle>
+          <CardTitle>Post Editor</CardTitle>
           <CardDescription>
-            Provide the main details for your blog post.
+            Fill in the details for your blog post.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input id="title" {...form.register('title')} />
             {form.formState.errors.title && <p className="text-sm text-destructive">{form.formState.errors.title.message}</p>}
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="slug">Slug</Label>
             <div className="flex gap-2">
@@ -128,28 +129,20 @@ export function PostForm({ post }: { post?: SerializablePost }) {
             </div>
             {form.formState.errors.slug && <p className="text-sm text-destructive">{form.formState.errors.slug.message}</p>}
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="content">Content</Label>
             <Textarea id="content" {...form.register('content')} rows={15} placeholder="Write your post content here. Markdown is supported. To add an image, use ![alt text](image_url)"/>
             {form.formState.errors.content && <p className="text-sm text-destructive">{form.formState.errors.content.message}</p>}
           </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Metadata & Author</CardTitle>
-          <CardDescription>
-            Add extra information to help organize your posts.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-           <div className="space-y-2">
+          <div className="space-y-2">
             <Label htmlFor="coverImage">Cover Image URL</Label>
             <Input id="coverImage" {...form.register('coverImage')} placeholder="https://example.com/image.png" />
             {form.formState.errors.coverImage && <p className="text-sm text-destructive">{form.formState.errors.coverImage.message}</p>}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="authorName">Author Name</Label>
               <Input id="authorName" {...form.register('authorName')} />
@@ -161,7 +154,8 @@ export function PostForm({ post }: { post?: SerializablePost }) {
               {form.formState.errors.authorImage && <p className="text-sm text-destructive">{form.formState.errors.authorImage.message}</p>}
             </div>
           </div>
-          <div className="space-y-2">
+
+          <div className="space-y-4">
             <Label>Tags</Label>
             <Controller
               name="tags"
@@ -187,6 +181,7 @@ export function PostForm({ post }: { post?: SerializablePost }) {
             />
             {form.formState.errors.tags && <p className="text-sm text-destructive">{form.formState.errors.tags.message}</p>}
           </div>
+          
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
              <Controller
@@ -194,7 +189,7 @@ export function PostForm({ post }: { post?: SerializablePost }) {
                 control={form.control}
                 render={({ field }) => (
                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger id="status">
+                        <SelectTrigger id="status" className="max-w-sm">
                             <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -206,6 +201,7 @@ export function PostForm({ post }: { post?: SerializablePost }) {
             />
             {form.formState.errors.status && <p className="text-sm text-destructive">{form.formState.errors.status.message}</p>}
           </div>
+
         </CardContent>
          <CardFooter>
             <Button type="submit" disabled={isSubmitting}>
