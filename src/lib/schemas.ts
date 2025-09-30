@@ -1,12 +1,27 @@
 
 import { z } from 'zod';
 
+const paragraphBlockSchema = z.object({
+  type: z.literal('paragraph'),
+  value: z.string().min(1, { message: 'Paragraph cannot be empty.' }),
+});
+
+const imageBlockSchema = z.object({
+  type: z.literal('image'),
+  value: z.object({
+    url: z.string().url({ message: 'Please enter a valid URL.' }).or(z.literal('')),
+    alt: z.string(),
+  }),
+});
+
+const contentBlockSchema = z.union([paragraphBlockSchema, imageBlockSchema]);
+
 export const postSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters long.' }),
   slug: z.string()
     .min(3, { message: 'Slug must be at least 3 characters long.' })
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { message: 'Slug must be URL-friendly (e.g., "my-first-post").' }),
-  content: z.string().min(10, { message: 'Content must be at least 10 characters long.' }),
+  content: z.array(contentBlockSchema).min(1, { message: 'Post must have at least one content block.' }),
   coverImage: z.string().url({ message: 'Please enter a valid URL.' }).or(z.literal('')),
   tags: z.array(z.string()).min(1, { message: 'You have to select at least one tag.' }),
   status: z.enum(['draft', 'published']),
