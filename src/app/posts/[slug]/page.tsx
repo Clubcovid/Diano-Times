@@ -225,7 +225,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
             </aside>
         </div>
       </main>
-      <footer className="bg-muted text-muted-foreground py-8 mt-12">
+      <footer className="bg-muted text-muted-foreground py-8">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
