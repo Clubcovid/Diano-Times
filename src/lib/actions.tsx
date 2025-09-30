@@ -23,6 +23,7 @@ import { isAiFeatureEnabled } from './ai-flags';
 import { renderToBuffer } from '@react-pdf/renderer';
 import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
+import { sendMessage, formatPostForTelegram } from './telegram';
 
 type SerializableAd = Omit<Ad, 'createdAt'> & {
   createdAt: string;
@@ -110,6 +111,19 @@ export async function createPost(data: PostFormData): Promise<FormState<Post>> {
 
     const docRef = await db.collection('posts').add(postToSave);
     const newPost = await docRef.get();
+    
+    // If the post is published, send a Telegram notification
+    if (validatedData.status === 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
+      const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
+      const telegramMessage = formatPostForTelegram(validatedData, siteUrl);
+      await sendMessage({
+        chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
+        text: telegramMessage,
+        parse_mode: 'HTML',
+        disable_web_page_preview: false,
+      });
+    }
+
 
     revalidatePath('/');
     revalidatePath('/admin/posts');
@@ -147,10 +161,25 @@ export async function updatePost(postId: string, data: PostFormData): Promise<Fo
 
   try {
     const postRef = db.collection('posts').doc(postId);
+    const existingPostDoc = await postRef.get();
+    const existingPostData = existingPostDoc.data();
+
     await postRef.update({
       ...validatedData,
       updatedAt: FieldValue.serverTimestamp(),
     });
+
+    // If post is newly published, send notification
+    if (validatedData.status === 'published' && existingPostData?.status !== 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
+        const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
+        const telegramMessage = formatPostForTelegram(validatedData, siteUrl);
+        await sendMessage({
+            chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
+            text: telegramMessage,
+            parse_mode: 'HTML',
+            disable_web_page_preview: false,
+        });
+    }
 
     const updatedPost = await postRef.get();
 
@@ -511,6 +540,8 @@ export async function generateAndSavePost(topic: string): Promise<GeneratePostRe
       status: 'draft' as const, // Save as draft by default
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
+      authorName: 'AI Assistant',
+      authorImage: 'https://picsum.photos/seed/ai-author/100/100',
     };
 
     await db.collection('posts').add(postToSave);
@@ -639,6 +670,43 @@ export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ suc
     }
 }
 
+export async function notifyNewUserRegistration(user: { email?: string | null, displayName?: string | null }): Promise<{ success: boolean }> {
+    const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
+    if (!chatId) {
+        console.warn('TELEGRAM_ADMIN_CHAT_ID is not set. Skipping new user notification.');
+        return { success: false };
+    }
+
+    const name = user.displayName || 'N/A';
+    const email = user.email || 'N/A';
+    const text = `
+✅ *New User Registration* ✅
+
+A new user has signed up on Talk of Nations:
+
+*Name:* ${name}
+*Email:* ${email}
+    `;
+
+    await sendMessage({
+        chat_id: chatId,
+        text: text.trim(),
+        parse_mode: 'MarkdownV2',
+    });
+
+    return { success: true };
+}
+
+export async function handleTelegramUpdate(update: any): Promise<{ success: boolean }> {
+    // This is the entry point for the interactive bot.
+    // For now, it just logs the update.
+    console.log("Received Telegram update:", JSON.stringify(update, null, 2));
+
+    // TODO: Implement logic to parse the update and respond.
+    // This will involve calling the `telegramBotFlow`.
+
+    return { success: true };
+}
     
 
     

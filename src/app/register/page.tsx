@@ -15,6 +15,7 @@ import { useAuth } from '@/components/auth-provider';
 import Link from 'next/link';
 import { GoogleIcon } from '@/components/icons/google';
 import { Logo } from '@/components/icons/logo';
+import { notifyNewUserRegistration } from '@/lib/actions';
 
 export default function RegisterPage() {
   const [loadingGoogle, setLoadingGoogle] = useState(false);
@@ -32,16 +33,24 @@ export default function RegisterPage() {
     }
   }, [user, authLoading, router]);
 
+  const handleSuccessfulRegistration = async (user: any) => {
+    await notifyNewUserRegistration({
+      email: user.email,
+      displayName: user.displayName,
+    });
+    toast({
+      title: 'Registration Successful',
+      description: 'Welcome to Talk of Nations!',
+    });
+    router.push('/');
+  };
+
   const handleGoogleRegister = async () => {
     setLoadingGoogle(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      toast({
-        title: 'Registration Successful',
-        description: 'Welcome to Talk of Nations!',
-      });
-      router.push('/');
+      const result = await signInWithPopup(auth, provider);
+      await handleSuccessfulRegistration(result.user);
     } catch (error: any) {
       toast({
         title: 'Registration Failed',
@@ -63,11 +72,7 @@ export default function RegisterPage() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName });
-      toast({
-        title: 'Registration Successful',
-        description: 'Welcome to Talk of Nations!',
-      });
-      router.push('/');
+      await handleSuccessfulRegistration(userCredential.user);
     } catch (error: any) {
       toast({
         title: 'Registration Failed',
