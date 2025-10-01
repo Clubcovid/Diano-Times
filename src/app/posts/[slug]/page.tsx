@@ -16,6 +16,7 @@ import { Logo } from '@/components/icons/logo';
 import type { Ad, Post, ContentBlock } from '@/lib/types';
 import React from 'react';
 import { htmlToText } from 'html-to-text';
+import { ShareButtons } from '@/components/share-buttons';
 
 type Props = {
   params: { slug: string }
@@ -220,6 +221,15 @@ export default async function PostPage({ params }: { params: { slug: string } })
                         </CardContent>
                     </Card>
                 </Link>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline">Share This Article</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ShareButtons title={post.title} slug={post.slug} />
+                    </CardContent>
+                </Card>
                 
                 {filteredRelatedPosts.length > 0 && (
                      <Card>
@@ -265,3 +275,4 @@ export default async function PostPage({ params }: { params: { slug: string } })
     </div>
   );
 }
+
