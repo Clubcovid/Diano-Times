@@ -189,26 +189,27 @@ const iconMap: { [key: string]: LucideIcon } = {
 };
 
 const WeatherTicker = async () => {
-  const cities = ['Nairobi, Kenya', 'Mombasa, Kenya', 'Kisumu, Kenya', 'Eldoret, Kenya'];
-  let weatherData: WeatherForecast[] = [];
+  const cities = ['Nairobi, Kenya', 'Mombasa, Kenya', 'Kisumu, Kenya', 'Eldoret, Kenya', 'Nakuru, Kenya', 'Nyeri, Kenya', 'Malindi, Kenya'];
+  let weatherData: (WeatherForecast | null)[] = [];
 
   try {
-    const forecasts = await Promise.all(
+    weatherData = await Promise.all(
         cities.map(location => getWeatherForecast({ location }))
     );
-    // Filter out any null results from failed API calls
-    weatherData = forecasts.filter((f): f is WeatherForecast => f !== null);
   } catch (error) {
     console.error("Failed to fetch live weather data, using mock data as fallback:", error);
-    weatherData = mockWeatherData;
   }
   
-  // If all API calls failed, fall back to mock data
-  if (weatherData.length === 0) {
-    weatherData = mockWeatherData;
+  // Filter out any null results from failed API calls
+  let validWeatherData = weatherData.filter((f): f is WeatherForecast => f !== null);
+
+  // If all API calls failed or returned null, fall back to mock data
+  if (validWeatherData.length === 0) {
+    console.warn("All weather API calls failed. Using mock data as a fallback.");
+    validWeatherData = mockWeatherData;
   }
 
-  const duplicatedWeatherData = [...weatherData, ...weatherData, ...weatherData, ...weatherData];
+  const duplicatedWeatherData = [...validWeatherData, ...validWeatherData, ...validWeatherData, ...validWeatherData];
 
   return (
     <div className="bg-background text-foreground py-2 border-b">
@@ -291,6 +292,7 @@ export default function HomePage() {
     
 
     
+
 
 
 
