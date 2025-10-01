@@ -2,6 +2,7 @@
 
 
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -114,26 +115,27 @@ export async function createPost(data: PostFormData): Promise<FormState> {
     };
 
     const docRef = await db.collection('posts').add(postToSave);
-    const newPostDoc = await docRef.get();
-    const newPost = { id: newPostDoc.id, ...newPostDoc.data() } as Post;
     
-    // If the post is published, send a Telegram notification
-    if (newPost.status === 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
-      const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
-      const telegramMessage = formatPostForTelegram(newPost, siteUrl);
-      await sendMessage({
-        chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
-        text: telegramMessage,
-        parse_mode: 'HTML',
-        disable_web_page_preview: false,
-      });
+    // If the post is published, fetch the complete data and then send the notification
+    if (validatedData.status === 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
+        const newPost = await getPostById(docRef.id);
+        if (newPost) {
+            const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
+            const telegramMessage = formatPostForTelegram(newPost, siteUrl);
+            await sendMessage({
+                chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
+                text: telegramMessage,
+                parse_mode: 'HTML',
+                disable_web_page_preview: false,
+            });
+        }
     }
 
 
     revalidatePath('/');
     revalidatePath('/admin/posts');
 
-    return { success: true, message: 'Post created successfully.', postId: newPost.id };
+    return { success: true, message: 'Post created successfully.', postId: docRef.id };
   } catch (error) {
     console.error('Error creating post:', error);
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -174,26 +176,26 @@ export async function updatePost(postId: string, data: PostFormData): Promise<Fo
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    const updatedPostDoc = await postRef.get();
-    const updatedPost = { id: updatedPostDoc.id, ...updatedPostDoc.data() } as Post;
-
-    // If post is newly published, send notification
-    if (updatedPost.status === 'published' && existingPostData?.status !== 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
-        const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
-        const telegramMessage = formatPostForTelegram(updatedPost, siteUrl);
-        await sendMessage({
-            chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
-            text: telegramMessage,
-            parse_mode: 'HTML',
-            disable_web_page_preview: false,
-        });
+    // If post is newly published, fetch the complete data and then send notification
+    if (validatedData.status === 'published' && existingPostData?.status !== 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
+        const updatedPost = await getPostById(postId);
+        if (updatedPost) {
+            const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
+            const telegramMessage = formatPostForTelegram(updatedPost, siteUrl);
+            await sendMessage({
+                chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
+                text: telegramMessage,
+                parse_mode: 'HTML',
+                disable_web_page_preview: false,
+            });
+        }
     }
 
     revalidatePath('/');
     revalidatePath(`/posts/${validatedData.slug}`);
     revalidatePath('/admin/posts');
 
-    return { success: true, message: 'Post updated successfully.', postId: updatedPost.id };
+    return { success: true, message: 'Post updated successfully.', postId };
   } catch (error) {
     console.error('Error updating post:', error);
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
