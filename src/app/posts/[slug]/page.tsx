@@ -180,16 +180,20 @@ export default async function PostPage({ params }: { params: { slug: string } })
                 <span>Published on {format(postDate, 'MMMM d, yyyy')}</span>
                 </div>
             </header>
-            <div className="relative aspect-video mb-8 rounded-lg overflow-hidden shadow-lg">
-                <Image
-                src={post.coverImage || "https://picsum.photos/seed/talkofnations-fallback/1200/800"}
-                alt={post.title}
-                fill
-                className="object-cover"
-                priority
-                sizes="(max-width: 1024px) 100vw, 67vw"
-                data-ai-hint="kenyan culture"
-                />
+            <div className="relative aspect-video mb-8 rounded-lg overflow-hidden shadow-lg bg-muted">
+                {post.coverImage ? (
+                    <Image
+                    src={post.coverImage}
+                    alt={post.title}
+                    fill
+                    className="object-cover"
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 67vw"
+                    data-ai-hint="kenyan culture"
+                    />
+                ) : (
+                    <div className="w-full h-full bg-muted" />
+                )}
             </div>
             
             <PostContent content={post.content} />

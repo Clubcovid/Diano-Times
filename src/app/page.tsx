@@ -88,15 +88,19 @@ async function PostsSection() {
        <div className="lg:col-span-4">
         {featuredPost && (
           <section className="mb-12">
-            <div className="relative aspect-video lg:aspect-[2.5/1] rounded-lg overflow-hidden group">
-                <Image
-                src={featuredPost.coverImage || 'https://picsum.photos/seed/talkofnations-featured/1200/600'}
-                alt={featuredPost.title}
-                fill
-                className="object-cover"
-                priority
-                data-ai-hint="kenyan landscape"
-                />
+            <div className="relative aspect-video lg:aspect-[2.5/1] rounded-lg overflow-hidden group bg-muted">
+                {featuredPost.coverImage ? (
+                    <Image
+                    src={featuredPost.coverImage}
+                    alt={featuredPost.title}
+                    fill
+                    className="object-cover"
+                    priority
+                    data-ai-hint="kenyan landscape"
+                    />
+                ) : (
+                    <div className="w-full h-full bg-muted" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
                 
                 <div className="absolute inset-0 hidden flex-col items-center justify-center p-4 lg:flex">
