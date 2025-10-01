@@ -1,3 +1,4 @@
+
 import { htmlToText } from 'html-to-text';
 import type { Post, ContentBlock } from './types';
 
@@ -49,9 +50,11 @@ export async function sendMessage(options: SendMessageOptions): Promise<{ succes
 
 function contentToText(content: ContentBlock[] | string): string {
     if (typeof content === 'string') {
+        // Handle legacy string content
         return htmlToText(content, { wordwrap: false });
     }
     if (Array.isArray(content)) {
+        // Handle new block-based content
         return content
             .filter(block => block.type === 'paragraph')
             .map(block => block.value)
