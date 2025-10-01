@@ -1,5 +1,4 @@
 
-
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { getPostBySlug, getPosts, getAds } from '@/lib/posts';
@@ -190,7 +189,6 @@ export default async function PostPage({ params }: { params: { slug: string } })
                     className="object-cover"
                     priority
                     sizes="(max-width: 1024px) 100vw, 67vw"
-                    data-ai-hint="kenyan culture"
                     />
                 ) : (
                     <div className="w-full h-full bg-muted" />
