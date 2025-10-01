@@ -201,23 +201,25 @@ export default async function PostPage({ params }: { params: { slug: string } })
             </article>
 
             <aside className="lg:col-span-1 space-y-8 lg:sticky top-28 h-fit">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline">Article By</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex items-center gap-4">
-                            <Avatar className="h-16 w-16">
-                                <AvatarImage src={post.authorImage} alt={post.authorName} />
-                                <AvatarFallback>{post.authorName.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <h3 className="font-semibold text-lg">{post.authorName}</h3>
-                                <p className="text-sm text-muted-foreground">Talk of Nations Contributor</p>
+                <Link href={`/search?q=${encodeURIComponent(post.authorName)}`} className="block hover:bg-muted rounded-lg transition-colors">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline">Article By</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-center gap-4">
+                                <Avatar className="h-16 w-16">
+                                    <AvatarImage src={post.authorImage} alt={post.authorName} />
+                                    <AvatarFallback>{post.authorName.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <h3 className="font-semibold text-lg">{post.authorName}</h3>
+                                    <p className="text-sm text-muted-foreground">Talk of Nations Contributor</p>
+                                </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </Link>
                 
                 {filteredRelatedPosts.length > 0 && (
                      <Card>
