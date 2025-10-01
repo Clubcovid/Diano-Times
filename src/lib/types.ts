@@ -9,7 +9,7 @@ export interface Post {
   id: string;
   title: string;
   slug: string;
-  content: string;
+  content: ContentBlock[] | string; // Can be a string for legacy posts
   coverImage: string;
   tags: string[];
   status: 'draft' | 'published';

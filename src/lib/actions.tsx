@@ -1,5 +1,6 @@
 
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -534,7 +535,7 @@ export async function generateAndSavePost(topic: string): Promise<GeneratePostRe
     }
 
     // 3. Save to Firestore as a draft
-    const postToSave = {
+    const postToSave: Omit<PostFormData, 'slug'> & { slug: string, status: 'draft', createdAt: FieldValue, updatedAt: FieldValue } = {
       title: postData.title,
       slug: finalSlug,
       content: postData.content,

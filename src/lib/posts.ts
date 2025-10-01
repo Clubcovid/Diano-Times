@@ -1,19 +1,46 @@
 
 
+
 import 'server-only';
 import { db } from '@/lib/firebase-admin';
-import type { Ad, Post } from './types';
+import type { Ad, Post, ContentBlock } from './types';
 import { mockPosts, mockAds } from './mock-data';
 import { Query, Timestamp } from 'firebase-admin/firestore';
+import { htmlToText } from 'html-to-text';
+
+function contentToText(content: ContentBlock[] | string): string {
+    if (typeof content === 'string') {
+        return htmlToText(content);
+    }
+    if (Array.isArray(content)) {
+        return content
+            .filter(block => block.type === 'paragraph')
+            .map(block => block.value)
+            .join(' ');
+    }
+    return '';
+}
 
 function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
   const data = doc.data();
   if (!data) throw new Error('Document data is empty');
+
+  // Handle legacy string content and ensure content is always an array for new posts
+  let content: ContentBlock[];
+  if (typeof data.content === 'string') {
+    // Convert legacy string content to the new block format
+    content = data.content.split('\n\n').map(p => ({ type: 'paragraph', value: p }));
+  } else if (Array.isArray(data.content)) {
+    content = data.content;
+  } else {
+    content = [{ type: 'paragraph', value: '' }]; // Fallback for undefined content
+  }
+
   return {
     id: doc.id,
     title: data.title,
     slug: data.slug,
-    content: data.content,
+    content: content,
     coverImage: data.coverImage,
     tags: data.tags || [],
     status: data.status,
@@ -38,7 +65,15 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
 
   if (!db) {
     console.warn("Firebase Admin is not initialized. Cannot fetch posts. Returning mock data.");
-    let filteredMockPosts = mockPosts;
+    let filteredMockPosts = mockPosts.map(p => {
+        if (typeof p.content === 'string') {
+            return {
+                ...p,
+                content: [{ type: 'paragraph', value: p.content }] as ContentBlock[]
+            };
+        }
+        return p as Post;
+    });
 
     if (publishedOnly) {
       filteredMockPosts = filteredMockPosts.filter(p => p.status === 'published');
@@ -56,7 +91,7 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
         const lowerCaseQuery = searchQuery.toLowerCase();
         filteredMockPosts = filteredMockPosts.filter(p => 
             p.title.toLowerCase().includes(lowerCaseQuery) ||
-            p.content.toLowerCase().includes(lowerCaseQuery)
+            contentToText(p.content).toLowerCase().includes(lowerCaseQuery)
         );
     }
     
@@ -98,7 +133,7 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
       const lowerCaseQuery = searchQuery.toLowerCase();
       posts = posts.filter(post => 
         post.title.toLowerCase().includes(lowerCaseQuery) || 
-        post.content.toLowerCase().includes(lowerCaseQuery)
+        contentToText(post.content).toLowerCase().includes(lowerCaseQuery)
       );
     }
     
@@ -130,7 +165,7 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
         const lowerCaseQuery = searchQuery.toLowerCase();
         posts = posts.filter(post => 
             post.title.toLowerCase().includes(lowerCaseQuery) || 
-            post.content.toLowerCase().includes(lowerCaseQuery)
+            contentToText(post.content).toLowerCase().includes(lowerCaseQuery)
         );
       }
       
@@ -190,7 +225,12 @@ export async function getTrendingTags(limit: number = 5): Promise<string[]> {
 export async function getPostBySlug(slug: string): Promise<Post | null> {
     if (!db) {
       console.error(`Firebase Admin is not initialized. Cannot fetch post by slug: ${slug}.`);
-      return mockPosts.find(p => p.slug === slug) || null;
+      const post = mockPosts.find(p => p.slug === slug);
+      if (!post) return null;
+      if (typeof post.content === 'string') {
+        return { ...post, content: [{ type: 'paragraph', value: post.content }] } as Post;
+      }
+      return post as Post;
     }
   try {
     const postsCollection = db.collection('posts');
@@ -208,7 +248,12 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 export async function getPostById(id: string): Promise<Post | null> {
   if (!db) {
       console.error(`Firebase Admin is not initialized. Cannot fetch post by id: ${id}.`);
-      return mockPosts.find(p => p.id === id) || null;
+      const post = mockPosts.find(p => p.id === id);
+      if (!post) return null;
+      if (typeof post.content === 'string') {
+        return { ...post, content: [{ type: 'paragraph', value: post.content }] } as Post;
+      }
+      return post as Post;
   }
   try {
     const postDocRef = db.collection('posts').doc(id);

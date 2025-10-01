@@ -1,5 +1,5 @@
 import { htmlToText } from 'html-to-text';
-import type { Post } from './types';
+import type { Post, ContentBlock } from './types';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
@@ -46,6 +46,20 @@ export async function sendMessage(options: SendMessageOptions): Promise<{ succes
     }
 }
 
+
+function contentToText(content: ContentBlock[] | string): string {
+    if (typeof content === 'string') {
+        return htmlToText(content, { wordwrap: false });
+    }
+    if (Array.isArray(content)) {
+        return content
+            .filter(block => block.type === 'paragraph')
+            .map(block => block.value)
+            .join(' ');
+    }
+    return '';
+}
+
 /**
  * Formats a post for a Telegram notification.
  * @param post - The post object.
@@ -55,12 +69,8 @@ export async function sendMessage(options: SendMessageOptions): Promise<{ succes
 export function formatPostForTelegram(post: Post, siteUrl: string): string {
     const postUrl = `${siteUrl}/posts/${post.slug}`;
     
-    // Ensure content is a string before passing to htmlToText
-    const contentAsString = typeof post.content === 'string' 
-        ? post.content 
-        : post.content.map(c => c.type === 'paragraph' ? c.value : '').join(' ');
-
-    const snippet = htmlToText(contentAsString, { wordwrap: 130 }).substring(0, 200);
+    const contentText = contentToText(post.content);
+    const snippet = contentText.substring(0, 200);
     const tags = post.tags.map(t => `#${t.replace(/\s+/g, '')}`).join(' ');
 
     // Using HTML for better formatting options in Telegram

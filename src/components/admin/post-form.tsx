@@ -2,42 +2,29 @@
 'use client';
 
 import { useTransition } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { postSchema, type PostFormData } from '@/lib/schemas';
 import type { Post } from '@/lib/types';
 import { createPost, updatePost, generateSlug } from '@/lib/actions';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Wand2, Save } from 'lucide-react';
+import { Wand2, Save, PlusCircle, Trash2, GripVertical, Image as ImageIcon, Type } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const availableTags = ['Fashion', 'Gadgets', 'Lifestyle', 'Technology', 'Wellness', 'Travel', 'Food', 'Business', 'Culture', 'Art', 'Reviews', 'Tips', 'Nairobi', 'Kenya', 'Global Affairs', 'Sports'];
 
-type SerializablePost = Omit<Post, 'createdAt' | 'updatedAt'> & {
+type SerializablePost = Omit<Post, 'createdAt' | 'updatedAt' | 'content'> & {
   createdAt: string;
   updatedAt: string;
+  content: any; // react-hook-form needs a flexible type here
 };
 
 export function PostForm({ post }: { post?: SerializablePost }) {
@@ -52,72 +39,67 @@ export function PostForm({ post }: { post?: SerializablePost }) {
     defaultValues: {
       title: post?.title || '',
       slug: post?.slug || '',
-      content: post?.content || '',
+      content: post?.content && Array.isArray(post.content) && post.content.length > 0 ? post.content : [{ type: 'paragraph', value: '' }],
       coverImage: post?.coverImage || '',
       tags: post?.tags || [],
       status: post?.status || 'draft',
-      authorName: post?.authorName || 'Talk of Nations Staff',
+      authorName: post?.authorName || 'George Diano',
       authorImage: post?.authorImage || 'https://picsum.photos/seed/diano-author/100/100',
     },
+  });
+  
+  const { fields, append, remove, move } = useFieldArray({
+    control: form.control,
+    name: "content",
   });
 
   const handleGenerateSlug = () => {
     const title = form.getValues('title');
     if (!title) {
-        toast({ title: 'Title needed', description: 'Please enter a title to generate a slug.', variant: 'destructive' });
-        return;
+      toast({ title: 'Title needed', description: 'Please enter a title to generate a slug.', variant: 'destructive' });
+      return;
     }
     startSlugGeneration(async () => {
-        const result = await generateSlug(title);
-        if (result.success && result.slug) {
-            form.setValue('slug', result.slug);
-            form.clearErrors('slug');
-            toast({ title: 'Success', description: 'Slug generated successfully.' });
-        } else {
-            toast({ title: 'Error', description: result.error, variant: 'destructive' });
-        }
+      const result = await generateSlug(title);
+      if (result.success && result.slug) {
+        form.setValue('slug', result.slug);
+        form.clearErrors('slug');
+        toast({ title: 'Success', description: 'Slug generated successfully.' });
+      } else {
+        toast({ title: 'Error', description: result.error, variant: 'destructive' });
+      }
     });
-  }
+  };
 
   const onSubmit = (data: PostFormData) => {
     startTransition(async () => {
-        const result = isEditing
-            ? await updatePost(post.id, data)
-            : await createPost(data);
+      const result = isEditing
+        ? await updatePost(post.id, data)
+        : await createPost(data);
 
-        if (result.success) {
-            toast({
-                title: 'Success!',
-                description: result.message,
-            });
-            router.push('/admin/posts');
-            router.refresh();
-        } else {
-            toast({
-                title: 'Error',
-                description: result.message,
-                variant: 'destructive',
-            });
-        }
+      if (result.success) {
+        toast({ title: 'Success!', description: result.message });
+        router.push('/admin/posts');
+        router.refresh();
+      } else {
+        toast({ title: 'Error', description: result.message || 'Validation failed. Please check the fields.', variant: 'destructive' });
+      }
     });
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)}>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Post Editor</CardTitle>
-          <CardDescription>
-            Fill in the details for your blog post.
-          </CardDescription>
+          <CardTitle>Post Details</CardTitle>
+          <CardDescription>Provide the main details for your blog post.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input id="title" {...form.register('title')} />
             {form.formState.errors.title && <p className="text-sm text-destructive">{form.formState.errors.title.message}</p>}
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="slug">Slug</Label>
             <div className="flex gap-2">
@@ -129,20 +111,84 @@ export function PostForm({ post }: { post?: SerializablePost }) {
             </div>
             {form.formState.errors.slug && <p className="text-sm text-destructive">{form.formState.errors.slug.message}</p>}
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="space-y-2">
-            <Label htmlFor="content">Content</Label>
-            <Textarea id="content" {...form.register('content')} rows={15} placeholder="Write your post content here. Markdown is supported. To add an image, use ![alt text](image_url)"/>
-            {form.formState.errors.content && <p className="text-sm text-destructive">{form.formState.errors.content.message}</p>}
+      <Card>
+        <CardHeader>
+          <CardTitle>Post Content</CardTitle>
+          <CardDescription>Build your article using paragraph and image blocks.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-4">
+            {fields.map((field, index) => (
+              <div key={field.id} className="flex gap-2 items-start p-4 border rounded-lg bg-muted/50">
+                 <div className="flex flex-col gap-2 pt-1">
+                    <Button type="button" size="icon" variant="ghost" disabled={index === 0} onClick={() => move(index, index - 1)}>
+                        <GripVertical className="h-5 w-5" />
+                    </Button>
+                </div>
+                <div className="flex-1 space-y-2">
+                  {field.type === 'paragraph' ? (
+                    <div>
+                      <Label htmlFor={`content.${index}.value`}>Paragraph</Label>
+                      <Textarea
+                        id={`content.${index}.value`}
+                        {...form.register(`content.${index}.value` as const)}
+                        rows={6}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label>Image</Label>
+                      <Input
+                        placeholder="Image URL"
+                        {...form.register(`content.${index}.value.url` as const)}
+                      />
+                      <Input
+                        placeholder="Alt text for accessibility"
+                        {...form.register(`content.${index}.value.alt` as const)}
+                      />
+                    </div>
+                  )}
+                  {form.formState.errors.content?.[index]?.value && <p className="text-sm text-destructive">{form.formState.errors.content[index]?.value?.message}</p>}
+                  {form.formState.errors.content?.[index]?.type === 'image' && form.formState.errors.content?.[index]?.value?.url && <p className="text-sm text-destructive">{form.formState.errors.content[index]?.value?.url?.message}</p>}
+                </div>
+                <div className="pt-1">
+                    <Button type="button" size="icon" variant="ghost" onClick={() => remove(index)} className="text-destructive">
+                        <Trash2 className="h-5 w-5" />
+                    </Button>
+                </div>
+              </div>
+            ))}
           </div>
+          {form.formState.errors.content?.root && <p className="text-sm text-destructive">{form.formState.errors.content.root.message}</p>}
+           {form.formState.errors.content && !form.formState.errors.content.root && (
+                <p className="text-sm text-destructive">There are errors in your content blocks.</p>
+           )}
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={() => append({ type: 'paragraph', value: '' })}>
+              <Type className="mr-2 h-4 w-4" /> Add Paragraph
+            </Button>
+            <Button type="button" variant="outline" onClick={() => append({ type: 'image', value: { url: '', alt: '' } })}>
+              <ImageIcon className="mr-2 h-4 w-4" /> Add Image
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Metadata & Author</CardTitle>
+          <CardDescription>Add extra information to help organize your posts.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="coverImage">Cover Image URL</Label>
             <Input id="coverImage" {...form.register('coverImage')} placeholder="https://example.com/image.png" />
             {form.formState.errors.coverImage && <p className="text-sm text-destructive">{form.formState.errors.coverImage.message}</p>}
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="authorName">Author Name</Label>
               <Input id="authorName" {...form.register('authorName')} />
@@ -154,8 +200,7 @@ export function PostForm({ post }: { post?: SerializablePost }) {
               {form.formState.errors.authorImage && <p className="text-sm text-destructive">{form.formState.errors.authorImage.message}</p>}
             </div>
           </div>
-
-          <div className="space-y-4">
+          <div className="space-y-2">
             <Label>Tags</Label>
             <Controller
               name="tags"
@@ -181,15 +226,14 @@ export function PostForm({ post }: { post?: SerializablePost }) {
             />
             {form.formState.errors.tags && <p className="text-sm text-destructive">{form.formState.errors.tags.message}</p>}
           </div>
-          
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-             <Controller
+            <Controller
                 name="status"
                 control={form.control}
                 render={({ field }) => (
                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger id="status" className="max-w-sm">
+                        <SelectTrigger id="status">
                             <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -201,13 +245,12 @@ export function PostForm({ post }: { post?: SerializablePost }) {
             />
             {form.formState.errors.status && <p className="text-sm text-destructive">{form.formState.errors.status.message}</p>}
           </div>
-
         </CardContent>
-         <CardFooter>
-            <Button type="submit" disabled={isSubmitting}>
-              <Save className="mr-2 h-4 w-4" />
-              {isSubmitting ? 'Saving...' : (post ? 'Update Post' : 'Create Post')}
-            </Button>
+        <CardFooter>
+          <Button type="submit" disabled={isSubmitting}>
+            <Save className="mr-2 h-4 w-4" />
+            {isSubmitting ? 'Saving...' : (post ? 'Update Post' : 'Create Post')}
+          </Button>
         </CardFooter>
       </Card>
     </form>
@@ -217,49 +260,54 @@ export function PostForm({ post }: { post?: SerializablePost }) {
 export function PostFormSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
-        <Card>
-            <CardHeader>
-                <Skeleton className="h-8 w-1/4" />
-                <Skeleton className="h-4 w-2/4" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-40 w-full" />
-                </div>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader>
-                <Skeleton className="h-8 w-1/3" />
-                <Skeleton className="h-4 w-1/2" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-12" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-            </CardContent>
-            <CardFooter>
-                <Skeleton className="h-10 w-32" />
-            </CardFooter>
-        </Card>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-8 w-1/4" />
+          <Skeleton className="h-4 w-2/4" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-4 w-1/2" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-24 w-full" />
+          <div className="flex gap-2">
+             <Skeleton className="h-10 w-32" />
+             <Skeleton className="h-10 w-32" />
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-4 w-1/2" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Skeleton className="h-10 w-32" />
+        </CardFooter>
+      </Card>
     </div>
-  )
+  );
 }

@@ -1,4 +1,5 @@
 
+
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { getPostBySlug, getPosts, getAds } from '@/lib/posts';
@@ -12,13 +13,27 @@ import { PostCard } from '@/components/post-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Instagram, Twitter, Facebook } from 'lucide-react';
 import { Logo } from '@/components/icons/logo';
-import type { Ad, Post } from '@/lib/types';
+import type { Ad, Post, ContentBlock } from '@/lib/types';
 import React from 'react';
 import { htmlToText } from 'html-to-text';
 
 type Props = {
   params: { slug: string }
 }
+
+function contentToText(content: ContentBlock[] | string): string {
+    if (typeof content === 'string') {
+        return htmlToText(content);
+    }
+    if (Array.isArray(content)) {
+        return content
+            .filter(block => block.type === 'paragraph')
+            .map(block => block.value)
+            .join(' ');
+    }
+    return '';
+}
+
 
 async function Advertisement() {
     const ads = await getAds();
@@ -44,50 +59,40 @@ async function Advertisement() {
     );
 }
 
-const PostContent = ({ content }: { content: string }) => {
-    const paragraphs = content.split(/\n+/).filter(p => p.trim() !== '');
-    
-    // Insert advertisement after the second paragraph if content is long enough
-    const contentWithAd: React.ReactNode[] = [];
-    paragraphs.forEach((p, index) => {
-        // Use regex to detect markdown image syntax
-        const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
-        let lastIndex = 0;
-        let match;
-        const parts: React.ReactNode[] = [];
+const PostContent = ({ content }: { content: ContentBlock[] | string }) => {
+    let blocks: ContentBlock[] = [];
+    if (typeof content === 'string') {
+        blocks = content.split('\n\n').filter(p => p.trim() !== '').map(p => ({ type: 'paragraph', value: p }));
+    } else {
+        blocks = content;
+    }
 
-        while ((match = imgRegex.exec(p)) !== null) {
-            // Add text before the image
-            if (match.index > lastIndex) {
-                parts.push(p.substring(lastIndex, match.index));
-            }
-            // Add the image
-            const [fullMatch, alt, url] = match;
-            parts.push(
-                <div key={`${index}-${lastIndex}-img`} className="relative aspect-video my-6 rounded-lg overflow-hidden">
-                    <Image src={url} alt={alt} fill className="object-cover" />
-                </div>
-            );
-            lastIndex = match.index + fullMatch.length;
-        }
-
-        // Add any remaining text after the last image
-        if (lastIndex < p.length) {
-            parts.push(p.substring(lastIndex));
-        }
-
-        contentWithAd.push(<p key={index}>{parts}</p>);
-
-        if (index === 1) {
-            contentWithAd.push(<Advertisement key="ad" />);
-        }
-    });
+    const contentWithAd: (React.ReactNode | ContentBlock)[] = [...blocks];
+    if (blocks.length > 2) {
+        contentWithAd.splice(2, 0, <Advertisement key="ad" />);
+    }
 
     return (
         <div 
             className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline prose-headings:text-primary prose-a:text-accent-foreground prose-a:transition-colors hover:prose-a:text-primary prose-img:rounded-lg"
         >
-            {contentWithAd}
+            {contentWithAd.map((block, index) => {
+                 if (React.isValidElement(block)) {
+                    return block;
+                }
+                const contentBlock = block as ContentBlock;
+                if (contentBlock.type === 'paragraph') {
+                    return <p key={index}>{contentBlock.value}</p>;
+                }
+                if (contentBlock.type === 'image') {
+                    return (
+                        <div key={index} className="relative aspect-video my-6 rounded-lg overflow-hidden">
+                            <Image src={contentBlock.value.url} alt={contentBlock.value.alt} fill className="object-cover" />
+                        </div>
+                    );
+                }
+                return null;
+            })}
         </div>
     );
 };
@@ -105,7 +110,7 @@ export async function generateMetadata(
     }
   }
   
-  const description = htmlToText(post.content).substring(0, 155);
+  const description = contentToText(post.content).substring(0, 155);
 
   const previousImages = (await parent).openGraph?.images || []
   const parentKeywords = (await parent).keywords || [];
