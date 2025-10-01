@@ -3,6 +3,7 @@
 
 
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -116,18 +117,23 @@ export async function createPost(data: PostFormData): Promise<FormState> {
 
     const docRef = await db.collection('posts').add(postToSave);
     
-    // If the post is published, fetch the complete data and then send the notification
+    let notificationMessage = '';
     if (validatedData.status === 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
         const newPost = await getPostById(docRef.id);
         if (newPost) {
             const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
             const telegramMessage = formatPostForTelegram(newPost, siteUrl);
-            await sendMessage({
+            const result = await sendMessage({
                 chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
                 text: telegramMessage,
                 parse_mode: 'HTML',
                 disable_web_page_preview: false,
             });
+            if (result.success) {
+                notificationMessage = ' and sent to Telegram.';
+            } else {
+                notificationMessage = `, but failed to send to Telegram: ${result.message}`;
+            }
         }
     }
 
@@ -135,7 +141,7 @@ export async function createPost(data: PostFormData): Promise<FormState> {
     revalidatePath('/');
     revalidatePath('/admin/posts');
 
-    return { success: true, message: 'Post created successfully.', postId: docRef.id };
+    return { success: true, message: `Post created successfully${notificationMessage}`, postId: docRef.id };
   } catch (error) {
     console.error('Error creating post:', error);
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -176,18 +182,26 @@ export async function updatePost(postId: string, data: PostFormData): Promise<Fo
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    // If post is newly published, fetch the complete data and then send notification
-    if (validatedData.status === 'published' && existingPostData?.status !== 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
-        const updatedPost = await getPostById(postId);
-        if (updatedPost) {
-            const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
-            const telegramMessage = formatPostForTelegram(updatedPost, siteUrl);
-            await sendMessage({
-                chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
-                text: telegramMessage,
-                parse_mode: 'HTML',
-                disable_web_page_preview: false,
-            });
+    let notificationMessage = '';
+    if (validatedData.status === 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
+        // If post is newly published, send notification
+        if (existingPostData?.status !== 'published') {
+            const updatedPost = await getPostById(postId);
+            if (updatedPost) {
+                const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
+                const telegramMessage = formatPostForTelegram(updatedPost, siteUrl);
+                const result = await sendMessage({
+                    chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
+                    text: telegramMessage,
+                    parse_mode: 'HTML',
+                    disable_web_page_preview: false,
+                });
+                if (result.success) {
+                    notificationMessage = ' and sent to Telegram.';
+                } else {
+                    notificationMessage = `, but failed to send to Telegram: ${result.message}`;
+                }
+            }
         }
     }
 
@@ -195,7 +209,7 @@ export async function updatePost(postId: string, data: PostFormData): Promise<Fo
     revalidatePath(`/posts/${validatedData.slug}`);
     revalidatePath('/admin/posts');
 
-    return { success: true, message: 'Post updated successfully.', postId };
+    return { success: true, message: `Post updated successfully${notificationMessage}`, postId };
   } catch (error) {
     console.error('Error updating post:', error);
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useTransition } from 'react';
+import { useEffect, useTransition } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -31,7 +31,7 @@ export function PostForm({ post }: { post?: SerializablePost }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isGeneratingSlug, startSlugGeneration] = useTransition();
-  const [isSubmitting, startTransition] = useTransition();
+  const [isSubmitting, startSubmitting] = useTransition();
   const isEditing = !!post;
 
   const form = useForm<PostFormData>({
@@ -72,13 +72,17 @@ export function PostForm({ post }: { post?: SerializablePost }) {
   };
 
   const onSubmit = (data: PostFormData) => {
-    startTransition(async () => {
+    startSubmitting(async () => {
       const result = isEditing
         ? await updatePost(post.id, data)
         : await createPost(data);
 
       if (result.success) {
-        toast({ title: 'Success!', description: result.message });
+        toast({ 
+          title: 'Success!', 
+          description: result.message,
+          variant: result.message.includes('failed') ? 'destructive' : 'default',
+        });
         router.push('/admin/posts');
         router.refresh();
       } else {
