@@ -9,6 +9,7 @@ export type AiFeature =
   | 'isPostGenerationEnabled'
   | 'isTopicSuggestionEnabled'
   | 'isMagazineGenerationEnabled'
+  | 'isCoverImageGenerationEnabled'
   | 'isAskDianoEnabled';
 
 export type AiFeatureFlags = {
@@ -21,6 +22,7 @@ const defaultFlags: AiFeatureFlags = {
   isPostGenerationEnabled: true,
   isTopicSuggestionEnabled: true,
   isMagazineGenerationEnabled: true,
+  isCoverImageGenerationEnabled: true,
   isAskDianoEnabled: true,
 };
 

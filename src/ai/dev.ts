@@ -11,6 +11,8 @@ import '@/ai/flows/ask-diano-flow.ts';
 import '@/ai/flows/diano-chat-flow.ts';
 import '@/ai/flows/telegram-bot-flow.ts';
 import '@/ai/flows/generate-social-image.ts';
+import '@/ai/flows/generate-cover-image.ts';
+
 
 
 

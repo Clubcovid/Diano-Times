@@ -21,6 +21,7 @@ const AI_FEATURES: Record<keyof AiFeatureFlags, string> = {
   isPostGenerationEnabled: 'AI Post Generation (Manual & Auto-Pilot)',
   isTopicSuggestionEnabled: 'Auto-Pilot Topic Suggestion',
   isMagazineGenerationEnabled: 'Weekly Magazine Generation',
+  isCoverImageGenerationEnabled: 'AI Cover Image Generation',
   isAskDianoEnabled: 'Ask Diano Q&A',
 };
 

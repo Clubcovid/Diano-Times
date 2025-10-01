@@ -4,6 +4,7 @@
 
 
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -11,6 +12,7 @@ import { db, auth } from '@/lib/firebase-admin';
 import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-friendly-slug';
 import { generatePost as generatePostAI } from '@/ai/flows/generate-post';
 import { generateMagazine as generateMagazineAI } from '@/ai/flows/generate-magazine';
+import { generateCoverImage } from '@/ai/flows/generate-cover-image';
 import { postSchema, adSchema, videoSchema, type PostFormData } from './schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
@@ -797,5 +799,17 @@ export async function generateDraftPost(topic: string): Promise<GeneratePostResu
 
     } catch (e: any) {
         return { success: false, message: e.message || 'An unknown error occurred.' };
+    }
+}
+
+export async function generateCoverImageAction(prompt: string): Promise<{success: boolean; message?: string; imageUrl?: string;}> {
+    try {
+        if (!prompt) {
+            return { success: false, message: 'A prompt (title) is required to generate an image.' };
+        }
+        const result = await generateCoverImage({ prompt });
+        return { success: true, imageUrl: result.imageUrl };
+    } catch(e: any) {
+        return { success: false, message: e.message || 'An unknown error occurred while generating the image.' };
     }
 }

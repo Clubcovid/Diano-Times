@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { postSchema, type PostFormData } from '@/lib/schemas';
 import type { Post } from '@/lib/types';
-import { createPost, updatePost, generateSlug } from '@/lib/actions';
+import { createPost, updatePost, generateSlug, generateCoverImageAction } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Wand2, Save, PlusCircle, Trash2, GripVertical, Image as ImageIcon, Type } from 'lucide-react';
+import { Wand2, Save, PlusCircle, Trash2, GripVertical, Image as ImageIcon, Type, Sparkles } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const availableTags = ['Fashion', 'Gadgets', 'Lifestyle', 'Technology', 'Wellness', 'Travel', 'Food', 'Business', 'Culture', 'Art', 'Reviews', 'Tips', 'Nairobi', 'Kenya', 'Global Affairs', 'Sports'];
@@ -31,6 +31,7 @@ export function PostForm({ post }: { post?: SerializablePost }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isGeneratingSlug, startSlugGeneration] = useTransition();
+  const [isGeneratingImage, startImageGeneration] = useTransition();
   const [isSubmitting, startSubmitting] = useTransition();
   const isEditing = !!post;
 
@@ -70,6 +71,24 @@ export function PostForm({ post }: { post?: SerializablePost }) {
       }
     });
   };
+
+  const handleGenerateImage = () => {
+    const title = form.getValues('title');
+    if (!title) {
+      toast({ title: 'Title needed', description: 'Please enter a title to generate an image.', variant: 'destructive' });
+      return;
+    }
+    startImageGeneration(async () => {
+      const result = await generateCoverImageAction(title);
+      if (result.success && result.imageUrl) {
+        form.setValue('coverImage', result.imageUrl);
+        form.clearErrors('coverImage');
+        toast({ title: 'Success', description: 'Cover image generated and URL updated.' });
+      } else {
+        toast({ title: 'Error', description: result.message, variant: 'destructive' });
+      }
+    });
+  }
 
   const onSubmit = (data: PostFormData) => {
     startSubmitting(async () => {
@@ -189,7 +208,13 @@ export function PostForm({ post }: { post?: SerializablePost }) {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="coverImage">Cover Image URL</Label>
-            <Input id="coverImage" {...form.register('coverImage')} placeholder="https://example.com/image.png" />
+             <div className="flex gap-2">
+                <Input id="coverImage" {...form.register('coverImage')} placeholder="https://example.com/image.png" />
+                <Button type="button" variant="outline" onClick={handleGenerateImage} disabled={isGeneratingImage}>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    {isGeneratingImage ? 'Generating...' : 'Generate Image'}
+                </Button>
+             </div>
             {form.formState.errors.coverImage && <p className="text-sm text-destructive">{form.formState.errors.coverImage.message}</p>}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
