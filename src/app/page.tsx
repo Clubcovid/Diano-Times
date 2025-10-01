@@ -8,7 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, LogIn, UserPlus, LayoutDashboard, Zap, Instagram, Twitter, Facebook } from 'lucide-react';
+import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, LogIn, UserPlus, LayoutDashboard, Zap, Instagram, Twitter, Facebook, CloudDrizzle } from 'lucide-react';
 import { mockMarketData, mockWeatherData } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getWeatherForecast, type WeatherForecast } from '@/ai/flows/get-weather-forecast';
@@ -179,33 +179,34 @@ const MarketTicker = () => {
 const iconMap: { [key: string]: LucideIcon } = {
   Sun,
   Cloud,
+  Cloudy: Cloud,
   CloudRain,
+  CloudDrizzle: CloudRain,
   CloudLightning,
   Wind,
   Snowflake,
+  CloudSnow: Snowflake,
 };
 
 const WeatherTicker = async () => {
-  // AI-based weather fetching disabled to avoid rate-limiting issues.
-  // const cities = ['Nairobi, Kenya', 'Mombasa, Kenya', 'Kisumu, Kenya', 'Eldoret, Kenya'];
-  // const weatherData: WeatherForecast[] = [];
-  // try {
-  //   for (const location of cities) {
-  //     const forecast = await getWeatherForecast({ location });
-  //     if (forecast) {
-  //       weatherData.push(forecast);
-  //     }
-  //   }
-  // } catch (error) {
-  //   console.error("Failed to fetch weather data:", error);
-  //   // You could return a fallback or empty component here
-  //   return null;
-  // }
-  const weatherData = [...mockWeatherData, ...mockWeatherData, ...mockWeatherData, ...mockWeatherData];
+  const cities = ['Nairobi, Kenya', 'Mombasa, Kenya', 'Kisumu, Kenya', 'Eldoret, Kenya'];
+  let weatherData: WeatherForecast[] = [];
 
-  if (weatherData.length === 0) {
-    return null;
+  try {
+    const forecasts = await Promise.all(
+        cities.map(location => getWeatherForecast({ location }))
+    );
+    weatherData = forecasts.filter(f => f) as WeatherForecast[];
+  } catch (error) {
+    console.error("Failed to fetch live weather data, using mock data as fallback:", error);
+    weatherData = mockWeatherData;
   }
+  
+  if (weatherData.length === 0) {
+    weatherData = mockWeatherData; // Final fallback
+  }
+
+  const duplicatedWeatherData = [...weatherData, ...weatherData, ...weatherData, ...weatherData];
 
   return (
     <div className="bg-background text-foreground py-2 border-b">
@@ -213,7 +214,7 @@ const WeatherTicker = async () => {
         <div className="relative flex overflow-hidden group">
           <div className="marquee">
             <div className="marquee-content">
-              {weatherData.map((weather, index) => {
+              {duplicatedWeatherData.map((weather, index) => {
                 const Icon = iconMap[weather.icon] || Cloud;
                 return (
                   <div key={index} className="flex items-center gap-4 text-sm font-medium">
@@ -288,4 +289,5 @@ export default function HomePage() {
     
 
     
+
 
