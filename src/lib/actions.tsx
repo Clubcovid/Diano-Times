@@ -1,6 +1,7 @@
 
 
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -26,6 +27,7 @@ import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
 import { sendMessage, formatPostForTelegram } from './telegram';
 import { telegramBotFlow } from '@/ai/flows/telegram-bot-flow';
+import { htmlToText } from 'html-to-text';
 
 type SerializableAd = Omit<Ad, 'createdAt'> & {
   createdAt: string;
@@ -509,57 +511,50 @@ export async function seedDatabase(): Promise<{ success: boolean, message: strin
 type GeneratePostResult = {
   success: boolean;
   message: string;
+  postId?: string;
 };
 
 export async function generateAndSavePost(topic: string): Promise<GeneratePostResult> {
-  if (!(await isAiFeatureEnabled('isPostGenerationEnabled'))) {
-    return { success: false, message: 'AI Post Generation is currently disabled by the admin.' };
-  }
-  if (!db) {
-    return { success: false, message: "Database not connected. Cannot save post." };
-  }
-  if (!topic) {
-    return { success: false, message: "Topic is required." };
-  }
-
-  try {
-    // 1. Generate post content with AI
-    const postData = await generatePostAI({ topic });
-
-    // 2. Ensure slug is unique
-    let finalSlug = postData.slug;
-    let count = 1;
-    while (!(await isSlugUnique(finalSlug))) {
-      finalSlug = `${postData.slug}-${count}`;
-      count++;
+    if (!(await isAiFeatureEnabled('isPostGenerationEnabled'))) {
+        return { success: false, message: 'AI Post Generation is currently disabled by the admin.' };
+    }
+    if (!db) {
+        return { success: false, message: 'Database not connected. Cannot save post.' };
+    }
+    if (!topic) {
+        return { success: false, message: 'Topic is required.' };
     }
 
-    // 3. Save to Firestore as a draft
-    const postToSave: Omit<PostFormData, 'slug'> & { slug: string, status: 'draft', createdAt: FieldValue, updatedAt: FieldValue } = {
-      title: postData.title,
-      slug: finalSlug,
-      content: postData.content,
-      coverImage: postData.coverImage,
-      tags: postData.tags,
-      status: 'draft' as const, // Save as draft by default
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-      authorName: 'AI Assistant',
-      authorImage: 'https://picsum.photos/seed/ai-author/100/100',
-    };
+    try {
+        const postData = await generatePostAI({ topic });
+        const { success: slugSuccess, slug, error: slugError } = await generateSlug(postData.title);
 
-    await db.collection('posts').add(postToSave);
+        if (!slugSuccess || !slug) {
+            return { success: false, message: slugError || 'Failed to generate a unique slug.' };
+        }
 
-    // 4. Revalidate path to show the new post
-    revalidatePath('/admin/posts');
+        const result = await createPost({
+            title: postData.title,
+            slug: slug,
+            content: postData.content,
+            coverImage: '', // Leave cover image blank for user to fill
+            tags: postData.tags,
+            status: 'draft',
+            authorName: 'AI Assistant',
+            authorImage: 'https://picsum.photos/seed/ai-author/100/100',
+        });
 
-    return { success: true, message: `Successfully generated and saved a draft for: "${postData.title}"` };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "An unknown error occurred.";
-    console.error("Error generating and saving post:", error);
-    return { success: false, message: `Failed to generate post: ${message}` };
-  }
+        if (result.success) {
+            return { success: true, message: `Draft for "${postData.title}" created.`, postId: result.postId };
+        } else {
+            return { success: false, message: result.message };
+        }
+
+    } catch (e: any) {
+        return { success: false, message: e.message || 'An unknown error occurred.' };
+    }
 }
+
 
 export async function getMagazines(): Promise<Magazine[]> {
     if (!db) {
@@ -753,4 +748,38 @@ export async function sendPostToTelegram(postId: string): Promise<{ success: boo
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
     return { success: false, message };
   }
+}
+
+export async function generateDraftPost(topic: string): Promise<GeneratePostResult> {
+    try {
+        if (!(await isAiFeatureEnabled('isPostGenerationEnabled'))) {
+            return { success: false, message: 'AI-powered post generation is disabled by the administrator.' };
+        }
+        const postData = await generatePostAI({ topic });
+        const { success: slugSuccess, slug, error: slugError } = await generateSlug(postData.title);
+
+        if (!slugSuccess || !slug) {
+            return { success: false, message: slugError || 'Failed to generate a unique slug.' };
+        }
+
+        const result = await createPost({
+            title: postData.title,
+            slug: slug,
+            content: postData.content,
+            coverImage: '',
+            tags: postData.tags,
+            status: 'draft',
+            authorName: 'AI Assistant',
+            authorImage: 'https://picsum.photos/seed/ai-author/100/100',
+        });
+
+        if (result.success) {
+            return { success: true, message: 'Draft created', postId: result.postId };
+        } else {
+            return { success: false, message: result.message };
+        }
+
+    } catch (e: any) {
+        return { success: false, message: e.message || 'An unknown error occurred.' };
+    }
 }
