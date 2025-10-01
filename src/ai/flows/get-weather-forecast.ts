@@ -12,47 +12,38 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { isAiFeatureEnabled } from '@/lib/ai-flags';
 
-// Define the schema for the tool that calls the WeatherAPI.com
-const fetchWeatherFromApiTool = ai.defineTool(
-  {
-    name: 'fetchWeatherFromApi',
-    description: 'Fetches real-time weather data for a specified location from a reliable weather API.',
-    inputSchema: z.object({
-      location: z.string().describe('The city name for which to get the weather forecast, e.g., "Nairobi".'),
-    }),
-    outputSchema: z.object({
-      location: z.string(),
-      temperature_c: z.number(),
-      condition_text: z.string(),
-      condition_icon_code: z.number(),
-    }),
-  },
-  async ({ location }) => {
-    const apiKey = process.env.WEATHER_API_KEY;
-    if (!apiKey) {
-      throw new Error('Weather API key is not configured.');
-    }
-    
-    const url = `http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${encodeURIComponent(location)}`;
-    
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch weather data: ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    if (data.error) {
-        throw new Error(`Weather API error: ${data.error.message}`);
-    }
-    
-    return {
-      location: data.location.name,
-      temperature_c: data.current.temp_c,
-      condition_text: data.current.condition.text,
-      condition_icon_code: data.current.condition.code,
-    };
+// The function that calls the WeatherAPI.com
+async function fetchWeatherFromApi(location: string): Promise<{
+  location: string;
+  temperature_c: number;
+  condition_text: string;
+  condition_icon_code: number;
+}> {
+  const apiKey = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
+  if (!apiKey) {
+    throw new Error('Weather API key is not configured.');
   }
-);
+  
+  const url = `http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${encodeURIComponent(location)}`;
+  
+  const response = await fetch(url, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch weather data: ${response.statusText}`);
+  }
+  
+  const data = await response.json();
+  if (data.error) {
+      throw new Error(`Weather API error: ${data.error.message}`);
+  }
+  
+  return {
+    location: data.location.name,
+    temperature_c: data.current.temp_c,
+    condition_text: data.current.condition.text,
+    condition_icon_code: data.current.condition.code,
+  };
+}
+
 
 // Map weather condition codes from the API to lucide-react icons
 function mapCodeToIcon(code: number): string {
@@ -98,30 +89,19 @@ const getWeatherForecastFlow = ai.defineFlow(
   },
   async (input) => {
     
-    const llmResponse = await ai.generate({
-      model: 'googleai/gemini-2.5-flash',
-      tools: [fetchWeatherFromApiTool],
-      prompt: `Get the current weather for ${input.location}. Then, format the output to match the required schema. Use the provided mapping to convert the weather condition code to a lucide-react icon name.`,
-      output: {
-        schema: z.object({
-            location: z.string(),
-            temperature: z.number(),
-            condition: z.string(),
-            iconCode: z.number(),
-        })
-      },
-    });
+    // Directly call the API fetching function instead of using an AI tool
+    const weatherData = await fetchWeatherFromApi(input.location);
 
-    const result = llmResponse.output;
-    if (!result) {
-        throw new Error("Could not get a valid weather forecast from the AI.");
+    if (!weatherData) {
+        throw new Error("Could not get a valid weather forecast from the API.");
     }
     
+    // Format the data directly in code
     return {
-        location: result.location,
-        temperature: `${result.temperature}°C`,
-        condition: result.condition,
-        icon: mapCodeToIcon(result.iconCode),
+        location: weatherData.location,
+        temperature: `${weatherData.temperature_c}°C`,
+        condition: weatherData.condition_text,
+        icon: mapCodeToIcon(weatherData.condition_icon_code),
     };
   }
 );
