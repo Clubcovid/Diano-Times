@@ -174,6 +174,49 @@ npm run genkit:dev
 
 This will start the Genkit development server, typically available at `http://localhost:4000`.
 
+## Social Media & API Integrations
+
+### Telegram Integration
+
+The web application is integrated with Telegram for notifications and user interaction.
+
+#### How It Works
+
+1.  **New User Notifications**: When a new user registers on the website, a notification is automatically sent to a private Telegram chat designated for administrators. This provides real-time updates on user sign-ups.
+2.  **Automatic Post Sharing**: When a new blog post is published (or an existing draft is updated to "published"), a formatted message is automatically sent to a public Telegram channel. This message includes the post title, a snippet, and a link back to the article.
+3.  **Manual Post Sharing**: In the Admin Panel, under "Posts", each post has an option to be manually sent to the Telegram channel. This is useful for resharing content or if the automatic notification failed.
+4.  **Interactive Bot ("Ask Diano")**: The application has a webhook endpoint (`/api/telegram/webhook`) that listens for messages sent to the Telegram bot. When a user interacts with the bot, the message is processed by the `askDianoFlow`, which can use AI to answer questions, search for articles, and respond in character.
+
+#### Missing Details & Setup
+
+To complete the Telegram integration, you need to provide the following environment variables in your `.env` file:
+
+-   `TELEGRAM_BOT_TOKEN`: The token for your Telegram bot, obtained from BotFather. This is required for all Telegram functionality.
+-   `TELEGRAM_NEWS_CHANNEL_ID`: The ID of the public channel where new posts will be announced (e.g., `@YourChannelName`).
+-   `TELEGRAM_ADMIN_CHAT_ID`: The chat ID of the private user or group that will receive new user registration notifications.
+
+You must also set the webhook for your Telegram bot to point to your deployed application's webhook URL: `https://<your-domain>/api/telegram/webhook`.
+
+### Twitter/X Integration
+
+The foundation for a Twitter/X integration has been established by securely storing the necessary API credentials.
+
+#### How It Works (Current State)
+
+-   **API Credentials Stored**: Your Twitter API Key, API Key Secret, Bearer Token, Access Token, and Access Token Secret have been added to the application's environment variables (`.env`). This is the first and most critical step for any integration.
+
+#### Missing Details & Next Steps
+
+The integration is currently **inactive**. We have the keys, but no functionality has been built to use them yet. The immediate next step is to decide **what the integration should do**.
+
+A common and powerful next step is to **automatically tweet when a new post is published**. To implement this, we would need to:
+
+1.  **Install a Twitter API Library**: We would add a package like `twitter-api-v2` to the project to simplify communication with the Twitter API.
+2.  **Create a "Tweet Post" Function**: A new server-side function would be created that takes a post's details (title, URL, cover image) and uses the API keys to compose and send a tweet.
+3.  **Integrate with Actions**: This new function would be called from the `createPost` and `updatePost` server actions in `src/lib/actions.tsx`, specifically when a post's status is set to `published`.
+
+This would fully automate sharing your content on Twitter, increasing your reach with no extra effort.
+
 ## Admin Access
 
 - The admin dashboard is located at `/admin`.
