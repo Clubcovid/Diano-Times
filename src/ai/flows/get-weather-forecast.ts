@@ -77,31 +77,19 @@ export async function getWeatherForecast(input: GetWeatherForecastInput): Promis
   if (!(await isAiFeatureEnabled('isWeatherForecastEnabled'))) {
     throw new Error('AI-powered weather forecast is disabled by the administrator.');
   }
-  return getWeatherForecastFlow(input);
-}
 
+  // Directly call the API fetching function instead of using an AI tool
+  const weatherData = await fetchWeatherFromApi(input.location);
 
-const getWeatherForecastFlow = ai.defineFlow(
-  {
-    name: 'getWeatherForecastFlow',
-    inputSchema: GetWeatherForecastInputSchema,
-    outputSchema: WeatherForecastSchema,
-  },
-  async (input) => {
-    
-    // Directly call the API fetching function instead of using an AI tool
-    const weatherData = await fetchWeatherFromApi(input.location);
-
-    if (!weatherData) {
-        throw new Error("Could not get a valid weather forecast from the API.");
-    }
-    
-    // Format the data directly in code
-    return {
-        location: weatherData.location,
-        temperature: `${weatherData.temperature_c}°C`,
-        condition: weatherData.condition_text,
-        icon: mapCodeToIcon(weatherData.condition_icon_code),
-    };
+  if (!weatherData) {
+      throw new Error("Could not get a valid weather forecast from the API.");
   }
-);
+  
+  // Format the data directly in code
+  return {
+      location: weatherData.location,
+      temperature: `${weatherData.temperature_c}°C`,
+      condition: weatherData.condition_text,
+      icon: mapCodeToIcon(weatherData.condition_icon_code),
+  };
+}
