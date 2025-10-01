@@ -15,6 +15,7 @@ import {
   DatabaseZap,
   Newspaper,
   Bot,
+  ImagePlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { auth } from '@/lib/firebase';
@@ -75,6 +76,15 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
             >
                 <Bot className="h-4 w-4" />
                 Auto-Pilot
+            </Link>
+            <Link
+                href="/admin/social-image"
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
+                    pathname === '/admin/social-image' ? 'bg-muted text-primary' : 'text-muted-foreground'
+                }`}
+            >
+                <ImagePlus className="h-4 w-4" />
+                Social Image
             </Link>
             <Link
               href="/admin/settings/ai"
