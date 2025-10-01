@@ -18,30 +18,40 @@ async function fetchWeatherFromApi(location: string): Promise<{
   temperature_c: number;
   condition_text: string;
   condition_icon_code: number;
-}> {
-  const apiKey = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
+} | null> {
+  const apiKey = process.env.WEATHER_API_KEY;
   if (!apiKey) {
-    throw new Error('Weather API key is not configured.');
+    // Log a warning instead of throwing an error to prevent app crashes.
+    // The component calling this function will handle the null return.
+    console.warn('Weather API key is not configured. The application will use mock data as a fallback.');
+    return null;
   }
   
   const url = `http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${encodeURIComponent(location)}`;
   
-  const response = await fetch(url, { cache: 'no-store' });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch weather data: ${response.statusText}`);
+  try {
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) {
+      console.error(`Failed to fetch weather data: ${response.statusText}`);
+      return null;
+    }
+    
+    const data = await response.json();
+    if (data.error) {
+        console.error(`Weather API error: ${data.error.message}`);
+        return null;
+    }
+    
+    return {
+      location: data.location.name,
+      temperature_c: data.current.temp_c,
+      condition_text: data.current.condition.text,
+      condition_icon_code: data.current.condition.code,
+    };
+  } catch (error) {
+    console.error("Error in fetchWeatherFromApi:", error);
+    return null;
   }
-  
-  const data = await response.json();
-  if (data.error) {
-      throw new Error(`Weather API error: ${data.error.message}`);
-  }
-  
-  return {
-    location: data.location.name,
-    temperature_c: data.current.temp_c,
-    condition_text: data.current.condition.text,
-    condition_icon_code: data.current.condition.code,
-  };
 }
 
 
@@ -73,16 +83,19 @@ const WeatherForecastSchema = z.object({
 export type WeatherForecast = z.infer<typeof WeatherForecastSchema>;
 
 
-export async function getWeatherForecast(input: GetWeatherForecastInput): Promise<WeatherForecast> {
-  if (!(await isAiFeatureEnabled('isWeatherForecastEnabled'))) {
-    throw new Error('AI-powered weather forecast is disabled by the administrator.');
+export async function getWeatherForecast(input: GetWeatherForecastInput): Promise<WeatherForecast | null> {
+  const isEnabled = await isAiFeatureEnabled('isWeatherForecastEnabled');
+  if (!isEnabled) {
+    // Return null instead of throwing an error if the feature is disabled.
+    return null;
   }
 
-  // Directly call the API fetching function instead of using an AI tool
+  // Directly call the API fetching function
   const weatherData = await fetchWeatherFromApi(input.location);
 
   if (!weatherData) {
-      throw new Error("Could not get a valid weather forecast from the API.");
+      // If weatherData is null (due to missing key or API error), return null.
+      return null;
   }
   
   // Format the data directly in code

@@ -196,14 +196,16 @@ const WeatherTicker = async () => {
     const forecasts = await Promise.all(
         cities.map(location => getWeatherForecast({ location }))
     );
-    weatherData = forecasts.filter(f => f) as WeatherForecast[];
+    // Filter out any null results from failed API calls
+    weatherData = forecasts.filter((f): f is WeatherForecast => f !== null);
   } catch (error) {
     console.error("Failed to fetch live weather data, using mock data as fallback:", error);
     weatherData = mockWeatherData;
   }
   
+  // If all API calls failed, fall back to mock data
   if (weatherData.length === 0) {
-    weatherData = mockWeatherData; // Final fallback
+    weatherData = mockWeatherData;
   }
 
   const duplicatedWeatherData = [...weatherData, ...weatherData, ...weatherData, ...weatherData];
@@ -289,5 +291,6 @@ export default function HomePage() {
     
 
     
+
 
 
