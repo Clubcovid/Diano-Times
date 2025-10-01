@@ -26,7 +26,7 @@ const paragraphBlockSchema = z.object({
 const imageBlockSchema = z.object({
   type: z.literal('image'),
   value: z.object({
-    url: z.string().url().describe('The URL of the image from a service like picsum.photos.'),
+    url: z.string().url().describe('The URL of the image from a service like Unsplash or Pexels.'),
     alt: z.string().describe('A descriptive alt text for the image.'),
   }),
 });
@@ -93,10 +93,10 @@ const prompt = ai.definePrompt({
   Please adhere to the following guidelines:
   1.  **Title**: Create a catchy, SEO-friendly title for the post.
   2.  **Slug**: Generate a URL-friendly slug (lowercase, hyphens for spaces, no special characters).
-  3.  **Content**: Create an array of content blocks. It should contain at least 4 paragraph blocks and at least one image block. Use placeholder images from picsum.photos (e.g., https://picsum.photos/seed/unique-seed/800/600). Use a different, descriptive 'unique-seed' for each image.
+  3.  **Content**: Create an array of content blocks. It should contain at least 4 paragraph blocks and at least one image block. Use high-quality, relevant images from professional services like Unsplash or Pexels.
   4.  **SEO Keywords**: Naturally weave in relevant keywords throughout the article. Good keywords to consider are: 'Kenyan politics news', 'latest news in Kenya', 'political gossip', 'humorous Kenyan news', 'Talk of Nations blog', 'Africa breaking news', 'government scandals', and 'celebrity gossip Kenya'.
   5.  **Tags**: Choose up to 3 relevant tags from the following list: Fashion, Gadgets, Lifestyle, Technology, Wellness, Travel, Food, Business, Culture, Art, Reviews, Tips, Nairobi, Kenya, Global Affairs, Sports.
-  6.  **Cover Image**: Provide a URL for a high-quality, relevant cover image. Use a placeholder from picsum.photos with a unique seed (e.g., https://picsum.photos/seed/your-topic-slug/1200/800).
+  6.  **Cover Image**: Provide a URL for a high-quality, relevant cover image from a professional service like Unsplash or Pexels.
   
   The tone should be modern, informative, witty, and tailored for a Kenyan audience.`,
 });
