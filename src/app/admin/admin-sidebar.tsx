@@ -16,6 +16,7 @@ import {
   Newspaper,
   Bot,
   ImagePlus,
+  Share2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { auth } from '@/lib/firebase';
@@ -30,6 +31,7 @@ const navItems = [
   { href: '/admin/advertisements', label: 'Advertisements', icon: Megaphone },
   { href: '/admin/videos', label: 'Videos', icon: Video },
   { href: '/admin/magazine', label: 'Nations Weekly', icon: Newspaper },
+  { href: '/admin/integrations', label: 'Integrations', icon: Share2 },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 

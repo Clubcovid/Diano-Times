@@ -6,6 +6,7 @@
 
 
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -30,7 +31,7 @@ import { isAiFeatureEnabled } from './ai-flags';
 import { renderToBuffer } from '@react-pdf/renderer';
 import MagazineLayout from '@/components/magazine/magazine-layout';
 import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
-import { sendMessage, formatPostForTelegram } from './telegram';
+import { sendMessage, formatPostForTelegram, notifyNewUserRegistration as sendNewUserNotification } from './telegram';
 import { telegramBotFlow } from '@/ai/flows/telegram-bot-flow';
 import { htmlToText } from 'html-to-text';
 import { tweetNewPost } from './twitter';
@@ -720,30 +721,7 @@ export async function updateAiFeatureFlags(flags: AiFeatureFlags): Promise<{ suc
 }
 
 export async function notifyNewUserRegistration(user: { email?: string | null, displayName?: string | null }): Promise<{ success: boolean }> {
-    const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
-    if (!chatId) {
-        console.warn('TELEGRAM_ADMIN_CHAT_ID is not set. Skipping new user notification.');
-        return { success: false };
-    }
-
-    const name = user.displayName ? user.displayName.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1') : 'N/A';
-    const email = user.email ? user.email.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1') : 'N/A';
-    const text = `
-✅ *New User Registration* ✅
-
-A new user has signed up on Talk of Nations:
-
-*Name:* ${name}
-*Email:* ${email}
-    `;
-
-    await sendMessage({
-        chat_id: chatId,
-        text: text.trim(),
-        parse_mode: 'MarkdownV2',
-    });
-
-    return { success: true };
+    return sendNewUserNotification(user);
 }
 
 export async function handleTelegramUpdate(update: any) {

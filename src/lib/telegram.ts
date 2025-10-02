@@ -89,3 +89,35 @@ export function formatPostForTelegram(post: Post, siteUrl: string): string {
 ${tags}
     `;
 }
+
+/**
+ * Sends a notification to the admin chat when a new user registers.
+ * @param user - The new user's details.
+ * @returns An object indicating success or failure.
+ */
+export async function notifyNewUserRegistration(user: { email?: string | null, displayName?: string | null }): Promise<{ success: boolean }> {
+    const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
+    if (!chatId) {
+        console.warn('TELEGRAM_ADMIN_CHAT_ID is not set. Skipping new user notification.');
+        return { success: false };
+    }
+
+    const name = user.displayName ? user.displayName.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1') : 'N/A';
+    const email = user.email ? user.email.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1') : 'N/A';
+    const text = `
+✅ *New User Registration* ✅
+
+A new user has signed up on Talk of Nations:
+
+*Name:* ${name}
+*Email:* ${email}
+    `;
+
+    await sendMessage({
+        chat_id: chatId,
+        text: text.trim(),
+        parse_mode: 'MarkdownV2',
+    });
+
+    return { success: true };
+}
