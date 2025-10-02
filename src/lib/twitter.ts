@@ -1,4 +1,3 @@
-
 'use server';
 
 import { TwitterApi } from 'twitter-api-v2';
@@ -12,17 +11,23 @@ function getTwitterClient() {
     const accessSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET;
 
     if (!appKey || !appSecret || !accessToken || !accessSecret) {
+        console.error('Twitter API credentials are not fully configured on the server.');
         return null;
     }
 
-    const client = new TwitterApi({
-        appKey,
-        appSecret,
-        accessToken,
-        accessSecret,
-    });
-    
-    return client.readWrite;
+    try {
+        const client = new TwitterApi({
+            appKey,
+            appSecret,
+            accessToken,
+            accessSecret,
+        });
+        
+        return client.readWrite;
+    } catch (error) {
+        console.error('Error initializing Twitter client:', error);
+        return null;
+    }
 }
 
 function contentToText(content: Post['content']): string {
