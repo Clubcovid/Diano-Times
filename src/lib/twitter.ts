@@ -1,3 +1,4 @@
+
 'use server';
 
 import { TwitterApi } from 'twitter-api-v2';
@@ -68,9 +69,16 @@ export async function tweetNewPost(post: Post, siteUrl: string): Promise<{ succe
   try {
     await rwClient.v2.tweet(text);
     return { success: true, message: 'Tweeted successfully.' };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error sending tweet:', error);
-    const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+    // Check for the specific 403 Forbidden error
+    if (error.code === 403) {
+      return { 
+        success: false, 
+        message: 'Twitter API Error (403 Forbidden): Your app does not have write permissions. Please go to your Twitter Developer Portal, find your App\'s "User authentication settings", and change "App permissions" to "Read and Write". You may need to regenerate your keys afterwards.' 
+      };
+    }
+    const message = error.message || 'An unknown error occurred.';
     return { success: false, message: `Failed to tweet: ${message}` };
   }
 }
