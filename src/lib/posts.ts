@@ -1,6 +1,7 @@
 
 
 
+
 import 'server-only';
 import { db } from '@/lib/firebase-admin';
 import type { Ad, Post, ContentBlock } from './types';
@@ -98,37 +99,31 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
     return filteredMockPosts.slice(0, limit);
   }
 
-  const postsCollection = db.collection('posts');
-  let query: Query = postsCollection;
-  
-  // Build the query
-  if (publishedOnly) {
-    query = query.where('status', '==', 'published');
-  }
-  if (tag) {
-    query = query.where('tags', 'array-contains', tag);
-  }
-   if (fromDate) {
-    query = query.where('createdAt', '>=', Timestamp.fromDate(fromDate));
-  }
-  if (ids) {
-     if (ids.length > 0) {
-      query = query.where('__name__', 'in', ids);
-    } else {
-      return []; // Return empty if no IDs are provided
-    }
-  }
-
-
   try {
-    const snapshot = await query.orderBy('createdAt', 'desc').limit(limit || 100).get();
+    let query: Query = db.collection('posts');
     
+    // Fetch all posts and then filter in memory to avoid complex queries requiring indexes.
+    const snapshot = await query.orderBy('createdAt', 'desc').get();
+
     if (snapshot.empty) {
       return [];
     }
     
     let posts = snapshot.docs.map(toPost);
 
+    // Apply filtering after fetching
+    if (publishedOnly) {
+      posts = posts.filter(post => post.status === 'published');
+    }
+    if (tag) {
+      posts = posts.filter(post => post.tags.includes(tag));
+    }
+    if (fromDate) {
+      posts = posts.filter(post => post.createdAt.toDate() >= fromDate);
+    }
+    if (ids && ids.length > 0) {
+      posts = posts.filter(post => ids.includes(post.id));
+    }
     if (searchQuery) {
       const lowerCaseQuery = searchQuery.toLowerCase();
       posts = posts.filter(post => 
@@ -137,42 +132,9 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
       );
     }
     
-    return posts;
+    return limit ? posts.slice(0, limit) : posts;
 
   } catch (error: any) {
-    if (error.code === 9 && error.message.includes('requires an index')) {
-      console.warn(`Firestore query failed due to a missing index. Falling back to client-side filtering. Message: ${error.message}`);
-      
-      let fallbackQuery: Query = db.collection('posts');
-      if (ids && ids.length > 0) {
-         fallbackQuery = fallbackQuery.where('__name__', 'in', ids);
-      }
-      
-      const allPostsSnapshot = await fallbackQuery.get();
-      let posts = allPostsSnapshot.docs.map(toPost);
-
-      // Manual filtering
-      if (publishedOnly) {
-        posts = posts.filter(post => post.status === 'published');
-      }
-      if (tag) {
-        posts = posts.filter(post => post.tags.includes(tag));
-      }
-      if (fromDate) {
-        posts = posts.filter(post => post.createdAt.toDate() >= fromDate);
-      }
-       if (searchQuery) {
-        const lowerCaseQuery = searchQuery.toLowerCase();
-        posts = posts.filter(post => 
-            post.title.toLowerCase().includes(lowerCaseQuery) || 
-            contentToText(post.content).toLowerCase().includes(lowerCaseQuery)
-        );
-      }
-      
-      posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-
-      return posts.slice(0, limit || 100);
-    }
     console.error("Error fetching posts from Firestore:", error);
     return [];
   }
