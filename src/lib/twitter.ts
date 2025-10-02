@@ -5,14 +5,25 @@ import { TwitterApi } from 'twitter-api-v2';
 import type { Post } from './types';
 import { htmlToText } from 'html-to-text';
 
-const client = new TwitterApi({
-  appKey: process.env.TWITTER_API_KEY || '',
-  appSecret: process.env.TWITTER_API_KEY_SECRET || '',
-  accessToken: process.env.TWITTER_ACCESS_TOKEN || '',
-  accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET || '',
-});
+function getTwitterClient() {
+    const appKey = process.env.TWITTER_API_KEY;
+    const appSecret = process.env.TWITTER_API_KEY_SECRET;
+    const accessToken = process.env.TWITTER_ACCESS_TOKEN;
+    const accessSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET;
 
-const rwClient = client.readWrite;
+    if (!appKey || !appSecret || !accessToken || !accessSecret) {
+        return null;
+    }
+
+    const client = new TwitterApi({
+        appKey,
+        appSecret,
+        accessToken,
+        accessSecret,
+    });
+    
+    return client.readWrite;
+}
 
 function contentToText(content: Post['content']): string {
     if (typeof content === 'string') {
@@ -29,7 +40,9 @@ function contentToText(content: Post['content']): string {
 
 
 export async function tweetNewPost(post: Post, siteUrl: string): Promise<{ success: boolean; message: string }> {
-  if (!process.env.TWITTER_API_KEY || !process.env.TWITTER_ACCESS_TOKEN) {
+  const rwClient = getTwitterClient();
+
+  if (!rwClient) {
     return { success: false, message: 'Twitter API credentials are not fully configured on the server.' };
   }
   
