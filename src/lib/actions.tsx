@@ -5,6 +5,7 @@
 
 
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -32,6 +33,7 @@ import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
 import { sendMessage, formatPostForTelegram } from './telegram';
 import { telegramBotFlow } from '@/ai/flows/telegram-bot-flow';
 import { htmlToText } from 'html-to-text';
+import { tweetNewPost } from './twitter';
 
 type SerializableAd = Omit<Ad, 'createdAt'> & {
   createdAt: string;
@@ -119,31 +121,47 @@ export async function createPost(data: PostFormData): Promise<FormState> {
 
     const docRef = await db.collection('posts').add(postToSave);
     
-    let notificationMessage = '';
-    if (validatedData.status === 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
+    let socialMessages: string[] = [];
+    if (validatedData.status === 'published') {
         const newPost = await getPostById(docRef.id);
         if (newPost) {
             const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
-            const telegramMessage = formatPostForTelegram(newPost, siteUrl);
-            const result = await sendMessage({
-                chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
-                text: telegramMessage,
-                parse_mode: 'HTML',
-                disable_web_page_preview: false,
-            });
-            if (result.success) {
-                notificationMessage = ' and sent to Telegram.';
+            
+            // Telegram
+            if (process.env.TELEGRAM_NEWS_CHANNEL_ID) {
+                const telegramMessage = formatPostForTelegram(newPost, siteUrl);
+                const tgResult = await sendMessage({
+                    chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
+                    text: telegramMessage,
+                    parse_mode: 'HTML',
+                    disable_web_page_preview: false,
+                });
+                if (tgResult.success) {
+                    socialMessages.push('sent to Telegram');
+                } else {
+                    socialMessages.push(`failed to send to Telegram: ${tgResult.message}`);
+                }
+            }
+
+            // Twitter
+            const twitterResult = await tweetNewPost(newPost, siteUrl);
+            if (twitterResult.success) {
+                socialMessages.push('sent to Twitter');
             } else {
-                notificationMessage = `, but failed to send to Telegram: ${result.message}`;
+                 socialMessages.push(`failed to send to Twitter: ${twitterResult.message}`);
             }
         }
     }
+    
+    const finalMessage = socialMessages.length > 0
+        ? `Post created successfully; ${socialMessages.join(', ')}.`
+        : 'Post created successfully.';
 
 
     revalidatePath('/');
     revalidatePath('/admin/posts');
 
-    return { success: true, message: `Post created successfully${notificationMessage}`, postId: docRef.id };
+    return { success: true, message: finalMessage, postId: docRef.id };
   } catch (error) {
     console.error('Error creating post:', error);
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -184,34 +202,48 @@ export async function updatePost(postId: string, data: PostFormData): Promise<Fo
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    let notificationMessage = '';
-    if (validatedData.status === 'published' && process.env.TELEGRAM_NEWS_CHANNEL_ID) {
-        // If post is newly published, send notification
-        if (existingPostData?.status !== 'published') {
-            const updatedPost = await getPostById(postId);
-            if (updatedPost) {
-                const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
+    let socialMessages: string[] = [];
+    if (validatedData.status === 'published' && existingPostData?.status !== 'published') {
+        const updatedPost = await getPostById(postId);
+        if (updatedPost) {
+            const siteUrl = headers().get('origin') || 'https://www.talkofnations.com';
+
+            // Telegram
+            if (process.env.TELEGRAM_NEWS_CHANNEL_ID) {
                 const telegramMessage = formatPostForTelegram(updatedPost, siteUrl);
-                const result = await sendMessage({
+                const tgResult = await sendMessage({
                     chat_id: process.env.TELEGRAM_NEWS_CHANNEL_ID,
                     text: telegramMessage,
                     parse_mode: 'HTML',
                     disable_web_page_preview: false,
                 });
-                if (result.success) {
-                    notificationMessage = ' and sent to Telegram.';
+                if (tgResult.success) {
+                    socialMessages.push('sent to Telegram');
                 } else {
-                    notificationMessage = `, but failed to send to Telegram: ${result.message}`;
+                    socialMessages.push(`failed to send to Telegram: ${tgResult.message}`);
                 }
+            }
+
+            // Twitter
+            const twitterResult = await tweetNewPost(updatedPost, siteUrl);
+            if (twitterResult.success) {
+                socialMessages.push('sent to Twitter');
+            } else {
+                socialMessages.push(`failed to send to Twitter: ${twitterResult.message}`);
             }
         }
     }
+
+    const finalMessage = socialMessages.length > 0
+        ? `Post updated successfully; ${socialMessages.join(', ')}.`
+        : 'Post updated successfully.';
+
 
     revalidatePath('/');
     revalidatePath(`/posts/${validatedData.slug}`);
     revalidatePath('/admin/posts');
 
-    return { success: true, message: `Post updated successfully${notificationMessage}`, postId };
+    return { success: true, message: finalMessage, postId };
   } catch (error) {
     console.error('Error updating post:', error);
     const message = error instanceof Error ? error.message : 'An unknown error occurred.';
