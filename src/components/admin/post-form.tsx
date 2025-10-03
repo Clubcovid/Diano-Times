@@ -19,7 +19,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Wand2, Save, PlusCircle, Trash2, GripVertical, Image as ImageIcon, Type, Sparkles } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const availableTags = ['Fashion', 'Gadgets', 'Lifestyle', 'Technology', 'Wellness', 'Travel', 'Food', 'Business', 'Culture', 'Art', 'Reviews', 'Tips', 'Nairobi', 'Kenya', 'Global Affairs', 'Sports'];
+const availableTags = ['Fashion', 'Gadgets', 'Lifestyle', 'Technology', 'Wellness', 'Travel', 'Food', 'Business', 'Culture', 'Art', 'Reviews', 'Tips', 'Nairobi', 'Kenya', 'Global Affairs', 'Sports', 'East Africa', 'Tanzania', 'Uganda', 'Rwanda', 'Politics'];
 
 type SerializablePost = Omit<Post, 'createdAt' | 'updatedAt' | 'content'> & {
   createdAt: string;
