@@ -176,8 +176,16 @@ export default async function PostPage({ params }: { params: { slug: string } })
                 <h1 className="text-4xl md:text-5xl font-bold font-headline leading-tight mb-4">
                 {post.title}
                 </h1>
-                <div className="text-muted-foreground text-sm">
-                <span>Published on {format(postDate, 'MMMM d, yyyy')}</span>
+                <div className="text-muted-foreground text-sm flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-6 w-6">
+                        <AvatarImage src={post.authorImage} alt={post.authorName} />
+                        <AvatarFallback>{post.authorName.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span>By <i className="not-italic font-medium text-foreground">{post.authorName}</i></span>
+                  </div>
+                  <span className="mx-1">·</span>
+                  <span>{format(postDate, 'MMMM d, yyyy')}</span>
                 </div>
             </header>
             <div className="relative aspect-video mb-8 rounded-lg overflow-hidden shadow-lg bg-muted">
@@ -200,26 +208,6 @@ export default async function PostPage({ params }: { params: { slug: string } })
             </article>
 
             <aside className="lg:col-span-1 space-y-8 lg:sticky top-28 h-fit">
-                <Link href={`/search?q=${encodeURIComponent(post.authorName)}`} className="block hover:bg-muted rounded-lg transition-colors">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="font-headline">Article By</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center gap-4">
-                                <Avatar className="h-16 w-16">
-                                    <AvatarImage src={post.authorImage} alt={post.authorName} />
-                                    <AvatarFallback>{post.authorName.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <h3 className="font-semibold text-lg">{post.authorName}</h3>
-                                    <p className="text-sm text-muted-foreground">Talk of Nations Contributor</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </Link>
-
                 <Card>
                     <CardHeader>
                         <CardTitle className="font-headline">Share This Article</CardTitle>
