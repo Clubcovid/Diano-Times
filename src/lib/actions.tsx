@@ -7,6 +7,7 @@
 
 
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -15,13 +16,13 @@ import { generateUrlFriendlySlug as genSlugAI } from '@/ai/flows/generate-url-fr
 import { generatePost as generatePostAI } from '@/ai/flows/generate-post';
 import { generateMagazine as generateMagazineAI } from '@/ai/flows/generate-magazine';
 import { generateCoverImage } from '@/ai/flows/generate-cover-image';
-import { postSchema, adSchema, videoSchema, type PostFormData } from './schemas';
+import { postSchema, adSchema, videoSchema, electionCountdownSchema, type PostFormData, type ElectionCountdownFormData } from './schemas';
 import { z } from 'zod';
 import type { UserRecord } from 'firebase-admin/auth';
-import type { AdminUser, Ad, Video, Post, Magazine } from './types';
+import type { AdminUser, Ad, Video, Post, Magazine, ElectionCountdownConfig } from './types';
 import { headers } from 'next/headers';
 import { mockPosts, mockAds, mockVideos } from './mock-data';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { getPosts, getPostById } from './posts';
@@ -821,5 +822,60 @@ export async function generateCoverImageAction(prompt: string): Promise<{success
         return { success: true, imageUrl: result.imageUrl };
     } catch(e: any) {
         return { success: false, message: e.message || 'An unknown error occurred while generating the image.' };
+    }
+}
+
+const defaultCountdownConfig: Omit<ElectionCountdownConfig, 'electionDate'> & { electionDate: null } = {
+    isEnabled: false,
+    country: 'Kenya',
+    electionDate: null,
+};
+
+export async function getElectionCountdownConfig(): Promise<ElectionCountdownConfig> {
+    const docRef = db?.collection('site_settings').doc('election_countdown');
+    if (!docRef) {
+        return { ...defaultCountdownConfig, electionDate: Timestamp.now() };
+    }
+    try {
+        const doc = await docRef.get();
+        if (!doc.exists) {
+            return { ...defaultCountdownConfig, electionDate: Timestamp.now() };
+        }
+        const data = doc.data() as ElectionCountdownConfig;
+        return { ...defaultCountdownConfig, ...data };
+    } catch (error) {
+        console.error('Error fetching election countdown config:', error);
+        return { ...defaultCountdownConfig, electionDate: Timestamp.now() };
+    }
+}
+
+export async function updateElectionCountdownConfig(data: ElectionCountdownFormData): Promise<{ success: boolean; message?: string; }> {
+    const docRef = db?.collection('site_settings').doc('election_countdown');
+    if (!docRef) {
+        return { success: false, message: 'Database not available.' };
+    }
+
+    const validatedFields = electionCountdownSchema.safeParse(data);
+
+    if (!validatedFields.success) {
+        return {
+          success: false,
+          message: validatedFields.error.errors.map(e => e.message).join(', '),
+        };
+    }
+
+    try {
+        const configToSave = {
+            ...validatedFields.data,
+            electionDate: Timestamp.fromDate(validatedFields.data.electionDate),
+        };
+        await docRef.set(configToSave, { merge: true });
+        revalidatePath('/');
+        revalidatePath('/admin/countdown');
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating election countdown config:', error);
+        const message = error instanceof Error ? error.message : "An unknown error occurred.";
+        return { success: false, message };
     }
 }

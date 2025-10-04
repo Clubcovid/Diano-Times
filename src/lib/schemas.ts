@@ -48,3 +48,11 @@ export const videoSchema = z.object({
 });
 
 export type VideoFormData = z.infer<typeof videoSchema>;
+
+export const electionCountdownSchema = z.object({
+  isEnabled: z.boolean(),
+  country: z.string().min(2, { message: 'Country name is required.' }),
+  electionDate: z.date({ required_error: 'Election date is required.' }),
+});
+
+export type ElectionCountdownFormData = z.infer<typeof electionCountdownSchema>;

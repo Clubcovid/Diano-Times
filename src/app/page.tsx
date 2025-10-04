@@ -2,7 +2,7 @@
 
 import { PostCard } from '@/components/post-card';
 import { getPosts, getTrendingTags } from '@/lib/posts';
-import type { Post } from '@/lib/types';
+import type { Post, ElectionCountdownConfig } from '@/lib/types';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -18,6 +18,8 @@ import { NewsletterPopup } from '@/components/newsletter-popup';
 import { SearchForm } from '@/components/search-form';
 import { AdPopup } from '@/components/ad-popup';
 import { Logo } from '@/components/icons/logo';
+import { getElectionCountdownConfig } from '@/lib/actions';
+import { ElectionCountdown } from '@/components/election-countdown';
 
 function PostsSkeleton() {
   return (
@@ -236,6 +238,22 @@ const WeatherTicker = async () => {
   )
 }
 
+async function CountdownSection() {
+    const config = await getElectionCountdownConfig();
+    if (!config || !config.isEnabled || !config.electionDate) {
+        return null;
+    }
+    
+    return (
+        <section className="container mx-auto px-4 md:px-6 py-8">
+            <ElectionCountdown
+                country={config.country}
+                electionDate={config.electionDate.toDate().toISOString()}
+            />
+        </section>
+    );
+}
+
 export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -246,6 +264,10 @@ export default function HomePage() {
       <MarketTicker />
       <Suspense>
         <TrendingTicker />
+      </Suspense>
+      
+      <Suspense>
+        <CountdownSection />
       </Suspense>
 
       <main className="flex-1">
@@ -288,11 +310,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
-
-    
-
-
-
-

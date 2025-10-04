@@ -65,3 +65,9 @@ export interface ChatSession {
     updatedAt: Timestamp;
     messages: ChatMessage[];
 }
+
+export interface ElectionCountdownConfig {
+  isEnabled: boolean;
+  country: string;
+  electionDate: Timestamp | string; // string for client-side serializable version
+}
