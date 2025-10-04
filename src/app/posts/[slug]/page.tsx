@@ -86,9 +86,14 @@ const PostContent = ({ content }: { content: ContentBlock[] | string }) => {
                 }
                 if (contentBlock.type === 'image') {
                     return (
-                        <div key={index} className="relative aspect-video my-6 rounded-lg overflow-hidden">
-                            <Image src={contentBlock.value.url} alt={contentBlock.value.alt} fill className="object-cover" />
-                        </div>
+                        <figure key={index} className="my-6">
+                            <div className="relative aspect-video rounded-lg overflow-hidden">
+                                <Image src={contentBlock.value.url} alt={contentBlock.value.alt} fill className="object-cover" />
+                            </div>
+                            <figcaption className="text-center text-sm text-muted-foreground mt-2 italic">
+                                {contentBlock.value.alt}
+                            </figcaption>
+                        </figure>
                     );
                 }
                 return null;
