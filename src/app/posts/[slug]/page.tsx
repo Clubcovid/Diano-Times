@@ -182,13 +182,11 @@ export default async function PostPage({ params }: { params: { slug: string } })
                 {post.title}
                 </h1>
                 <div className="text-muted-foreground text-sm flex items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                        <AvatarImage src={post.authorImage} alt={post.authorName} />
-                        <AvatarFallback>{post.authorName.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <span>By <i className="not-italic font-medium text-foreground">{post.authorName}</i></span>
-                  </div>
+                  <Avatar className="h-6 w-6">
+                      <AvatarImage src={post.authorImage} alt={post.authorName} />
+                      <AvatarFallback>{post.authorName.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <span>By <i className="font-medium text-foreground">{post.authorName}</i></span>
                   <span className="mx-1">·</span>
                   <span>{format(postDate, 'MMMM d, yyyy')}</span>
                 </div>
