@@ -1,13 +1,12 @@
 
 'use client';
 
-import { useEffect, useTransition } from 'react';
+import { useTransition } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/use-toast';
 import { electionCountdownSchema, type ElectionCountdownFormData } from '@/lib/schemas';
 import { updateElectionCountdownConfig } from '@/lib/actions';
-import type { ElectionCountdownConfig } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,9 +16,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Save, Loader2, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import type { ElectionCountdownConfig } from '@/lib/types';
 
 interface CountdownFormProps {
-    initialConfig: ElectionCountdownConfig;
+    initialConfig: Omit<ElectionCountdownConfig, 'electionDate'> & { electionDate: string };
 }
 
 export function CountdownForm({ initialConfig }: CountdownFormProps) {
@@ -113,6 +113,7 @@ export function CountdownForm({ initialConfig }: CountdownFormProps) {
                                         selected={field.value}
                                         onSelect={field.onChange}
                                         initialFocus
+                                        disabled={(date) => date < new Date()}
                                     />
                                 </PopoverContent>
                             </Popover>

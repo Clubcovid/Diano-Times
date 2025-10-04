@@ -7,9 +7,10 @@ import type { ElectionCountdownConfig } from "@/lib/types";
 export default async function CountdownPage() {
     const config = await getElectionCountdownConfig();
     
-    const serializableConfig: ElectionCountdownConfig = {
+    // Ensure electionDate is serializable (string) before passing to client component
+    const serializableConfig = {
         ...config,
-        electionDate: config.electionDate ? config.electionDate.toDate().toISOString() : new Date().toISOString(),
+        electionDate: config.electionDate ? (typeof config.electionDate === 'string' ? config.electionDate : config.electionDate.toDate().toISOString()) : new Date().toISOString(),
     };
 
     return (

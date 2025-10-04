@@ -51,8 +51,15 @@ const TimeValue = ({ value, label, isHeroOverlay }: { value: number; label: stri
 
 export function ElectionCountdown({ country, electionDate, isHeroOverlay = false }: ElectionCountdownProps) {
     const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
+    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isClient) return;
+
         setTimeLeft(calculateTimeLeft(electionDate));
 
         const timer = setInterval(() => {
@@ -60,7 +67,11 @@ export function ElectionCountdown({ country, electionDate, isHeroOverlay = false
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [electionDate]);
+    }, [electionDate, isClient]);
+
+    if (!isClient) {
+        return null; // Avoid hydration mismatch
+    }
 
     if (!timeLeft) {
         if (isHeroOverlay) {

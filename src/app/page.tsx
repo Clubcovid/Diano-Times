@@ -2,15 +2,14 @@
 
 import { PostCard } from '@/components/post-card';
 import { getPosts, getTrendingTags } from '@/lib/posts';
-import type { Post, ElectionCountdownConfig } from '@/lib/types';
+import type { Post } from '@/lib/types';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, LogIn, UserPlus, LayoutDashboard, Zap, Instagram, Twitter, Facebook, CloudDrizzle } from 'lucide-react';
+import { ArrowRight, ArrowUp, ArrowDown, Sun, Cloud, CloudRain, CloudLightning, Wind, Snowflake, type LucideIcon, Zap, Instagram, Twitter, Facebook } from 'lucide-react';
 import { mockMarketData, mockWeatherData } from '@/lib/mock-data';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getWeatherForecast, type WeatherForecast } from '@/ai/flows/get-weather-forecast';
 import { BlogHeader } from '@/components/blog-header';
 import { BackToTop } from '@/components/back-to-top';
@@ -111,7 +110,7 @@ async function PostsSection() {
                          <ElectionCountdown
                             isHeroOverlay={true}
                             country={countdownConfig.country}
-                            electionDate={countdownConfig.electionDate.toDate().toISOString()}
+                            electionDate={typeof countdownConfig.electionDate === 'string' ? countdownConfig.electionDate : countdownConfig.electionDate.toDate().toISOString()}
                         />
                     </div>
                 )}
