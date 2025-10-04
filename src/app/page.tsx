@@ -84,6 +84,7 @@ async function PostsSection() {
   }
 
   const [featuredPost, ...otherPosts] = allPosts;
+  const countdownConfig = await getElectionCountdownConfig();
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -104,6 +105,16 @@ async function PostsSection() {
                     <div className="w-full h-full bg-muted" />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+
+                {countdownConfig && countdownConfig.isEnabled && countdownConfig.electionDate && (
+                    <div className="absolute top-0 left-0 right-0 p-4 z-10 bg-black/30 backdrop-blur-sm">
+                         <ElectionCountdown
+                            isHeroOverlay={true}
+                            country={countdownConfig.country}
+                            electionDate={countdownConfig.electionDate.toDate().toISOString()}
+                        />
+                    </div>
+                )}
                 
                 <div className="absolute inset-0 hidden flex-col items-center justify-center p-4 lg:flex">
                     <div className="w-full max-w-xl lg:max-w-2xl">
@@ -238,22 +249,6 @@ const WeatherTicker = async () => {
   )
 }
 
-async function CountdownSection() {
-    const config = await getElectionCountdownConfig();
-    if (!config || !config.isEnabled || !config.electionDate) {
-        return null;
-    }
-    
-    return (
-        <section className="container mx-auto px-4 md:px-6 py-8">
-            <ElectionCountdown
-                country={config.country}
-                electionDate={config.electionDate.toDate().toISOString()}
-            />
-        </section>
-    );
-}
-
 export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -264,10 +259,6 @@ export default function HomePage() {
       <MarketTicker />
       <Suspense>
         <TrendingTicker />
-      </Suspense>
-      
-      <Suspense>
-        <CountdownSection />
       </Suspense>
 
       <main className="flex-1">
