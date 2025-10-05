@@ -19,7 +19,7 @@ const GeneratePostInputSchema = z.object({
 export type GeneratePostInput = z.infer<typeof GeneratePostInputSchema>;
 
 const paragraphBlockSchema = z.object({
-  type: z.literal('paragraph'),
+  type: z.enum(['paragraph']).describe("The type of content block, which must be 'paragraph'."),
   value: z.string().describe('A paragraph of text for the blog post.'),
 });
 
@@ -72,3 +72,4 @@ const generatePostFlow = ai.defineFlow(
     return output!;
   }
 );
+
