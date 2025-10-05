@@ -90,9 +90,11 @@ const PostContent = ({ content }: { content: ContentBlock[] | string }) => {
                             <div className="relative aspect-video rounded-lg overflow-hidden">
                                 <Image src={contentBlock.value.url} alt={contentBlock.value.alt} fill className="object-cover" />
                             </div>
-                            <figcaption className="text-center text-sm text-muted-foreground mt-2 italic">
-                                {contentBlock.value.alt}
-                            </figcaption>
+                            {contentBlock.value.alt && (
+                                <figcaption className="text-center text-sm text-muted-foreground mt-2 italic">
+                                    {contentBlock.value.alt}
+                                </figcaption>
+                            )}
                         </figure>
                     );
                 }
@@ -264,3 +266,5 @@ export default async function PostPage({ params }: { params: { slug: string } })
     </div>
   );
 }
+
+    
