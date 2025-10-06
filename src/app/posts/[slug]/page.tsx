@@ -82,7 +82,7 @@ const PostContent = ({ content }: { content: ContentBlock[] | string }) => {
                 }
                 const contentBlock = block as ContentBlock;
                 if (contentBlock.type === 'paragraph') {
-                    return <p key={index}>{contentBlock.value}</p>;
+                    return <p key={index} dangerouslySetInnerHTML={{ __html: contentBlock.value }} />;
                 }
                 if (contentBlock.type === 'image') {
                     return (
