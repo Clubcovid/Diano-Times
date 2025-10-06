@@ -1,24 +1,33 @@
 # Talk of Nations
 
-Welcome to Talk of Nations, a modern, full-stack news and blog platform built with Next.js, Firebase, and Genkit. This application serves as a feature-rich starting point for creating dynamic, content-driven websites with a built-in admin panel for managing posts.
+Welcome to Talk of Nations, a modern, full-stack news and blog platform built with Next.js, Firebase, and Genkit. This application serves as a feature-rich starting point for creating dynamic, content-driven websites with a built-in admin panel and powerful AI capabilities.
 
 ## Features
 
 - **Modern Frontend**: Built with Next.js 15 and the App Router for a fast, optimized, and scalable user experience.
-- **Component-Based UI**: A beautiful and consistent user interface powered by ShadCN UI and Tailwind CSS.
+- **Component-Based UI**: A beautiful and consistent user interface powered by ShadCN UI and Tailwind CSS, with dark mode support.
 - **Full-Stack with Firebase**:
-  - **Firestore**: A NoSQL database for storing and managing blog posts.
-  - **Firebase Authentication**: Secure email/password authentication for the admin dashboard.
-- **AI-Powered Features**:
-  - **Genkit Integration**: Leverages Google's Genkit to integrate generative AI.
-  - **Automatic Slug Generation**: An AI-powered flow generates URL-friendly slugs from post titles automatically.
+  - **Firestore**: A NoSQL database for storing posts, ads, videos, and settings.
+  - **Firebase Authentication**: Secure email/password and Google social login.
+  - **Firebase Storage**: For storing generated assets like PDF magazines.
+- **AI-Powered Features (Genkit)**:
+  - **Content Auto-Pilot**: Suggests trending topics and generates complete draft posts with a single click.
+  - **URL Slug Generation**: AI-powered flow generates SEO-friendly slugs from post titles.
+  - **Cover Image Generation**: Create stunning cover images for posts directly from a text prompt.
+  -**Weekly Magazine Generator**: Automatically curates posts from the last week into a downloadable PDF magazine.
+  - **Interactive Chatbot ("Ask Diano")**: An AI persona that can answer user questions by searching through your published articles.
 - **Admin Dashboard**:
   - A secure, client-side rendered dashboard for administrators.
-  - **CRUD Operations**: Create, read, update, and delete posts.
-  - **Post Management**: View all posts in a sortable, paginated table.
-  - **Rich Text Editor**: A `textarea` that supports Markdown for writing content.
-- **Responsive Design**: The application is fully responsive and optimized for viewing on desktops, tablets, and mobile devices.
-- **Schema Validation**: Uses `zod` for robust form and data validation on both the client and server.
+  - **CRUD Operations**: Create, read, update, and delete posts, advertisements, and videos.
+  - **Post Management**: View all posts in a sortable table.
+  - **AI Feature Management**: Globally enable or disable specific AI features with kill switches.
+- **Social Media Integration**:
+    - **Telegram**: Automatic notifications for new posts and user sign-ups, plus an interactive bot.
+    - **Twitter/X**: Automatically tweet new articles when they are published.
+- **Dynamic Widgets**:
+    - **Election Countdown**: A configurable countdown timer for upcoming elections, managed from the admin panel.
+    - **Weather & Market Tickers**: Live-updating tickers for weather forecasts and market data.
+- **Responsive Design**: Fully responsive and optimized for desktops, tablets, and mobile devices.
 
 ## Tech Stack
 
@@ -26,8 +35,8 @@ Welcome to Talk of Nations, a modern, full-stack news and blog platform built wi
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components**: [ShadCN UI](https://ui.shadcn.com/)
-- **Backend & Database**: [Firebase](https://firebase.google.com/) (Firestore, Authentication)
-- **AI Integration**: [Genkit](https://firebase.google.com/docs/genkit)
+- **Backend & Database**: [Firebase](https://firebase.google.com/) (Firestore, Authentication, Storage)
+- **AI Integration**: [Genkit](https://firebase.google.com/docs/genkit) (using Google's Gemini models)
 - **Form Management**: [React Hook Form](https://react-hook-form.com/)
 - **Schema Validation**: [Zod](https://zod.dev/)
 - **Icons**: [Lucide React](https://lucide.dev/guide/packages/lucide-react)
@@ -38,26 +47,28 @@ This project is built on a modern, full-stack architecture leveraging Next.js an
 
 ### Frontend
 - **Next.js App Router**: The application uses the App Router for routing, which allows for nested layouts, server components, and granular control over loading states.
-- **React Server Components (RSC)**: By default, pages and components are React Server Components, which run on the server to improve performance by reducing the amount of JavaScript sent to the client. This is used for fetching and displaying data on pages like the homepage and individual post pages.
-- **Client Components**: Components requiring user interaction, state, or lifecycle effects (e.g., forms, buttons, interactive UI elements) are marked with the `'use client'` directive. The admin dashboard is primarily client-rendered to provide a rich, interactive experience.
-- **Styling**: Styling is handled by **Tailwind CSS** for utility-first styling and **ShadCN UI** for the base component library. The theme (colors, fonts, etc.) is configured in `src/app/globals.css` and `tailwind.config.ts`.
-- **State Management**:
-    - **Local State**: Managed with `useState` and `useReducer` hooks within client components.
-    - **Global State**: React Context is used for global state management, specifically for authentication (`src/components/auth-provider.tsx`), which provides user information across the application.
+- **React Server Components (RSC)**: Pages are primarily React Server Components, which run on the server to improve performance by reducing client-side JavaScript. This is used for fetching and displaying data on pages like the homepage and individual posts.
+- **Client Components**: Components requiring user interaction or state (e.g., forms, buttons, interactive UI) are marked with the `'use client'` directive. The admin dashboard is client-rendered to provide a rich, interactive experience.
+- **Styling**: Styling is handled by **Tailwind CSS** for utility-first styling and **ShadCN UI** for the base component library. The theme is configured in `src/app/globals.css`.
+- **State Management**: React Context is used for global state management, specifically for authentication (`src/components/auth-provider.tsx`) and theme switching.
 
 ### Backend and Data
-- **Next.js Server Actions**: Form submissions and data mutations (Create, Update, Delete) are handled using Server Actions (`src/lib/actions.ts`). This allows client components to call secure, server-side functions directly without needing to create separate API endpoints.
-- **Firebase Firestore**: The primary database is a NoSQL Firestore database. Data is organized into collections:
-    - `posts`: Stores all blog post content, metadata, and status.
-    - `users`: Managed by Firebase Authentication, with user profiles accessible for admin display.
-    - `advertisements`: Stores ad-related data like image URLs, links, and titles.
-    - `videos`: Stores YouTube video links and titles.
-- **Firebase Authentication**: Handles user registration and login. Access to the admin panel is restricted to a specific admin email address, as defined in `src/app/admin/layout.tsx`.
+- **Next.js Server Actions**: Form submissions and data mutations (Create, Update, Delete) are handled using Server Actions (`src/lib/actions.tsx`). This allows client components to call secure, server-side functions directly without needing separate API endpoints.
+- **Firebase Firestore**: The primary database is a NoSQL Firestore database. Key collections include:
+    - `posts`: Stores all blog post content and metadata.
+    - `users`: Managed by Firebase Authentication.
+    - `advertisements`: Stores ad-related data.
+    - `videos`: Stores YouTube video links.
+    - `ai_settings`, `site_settings`: Store configurations for AI features and site widgets.
+- **Firebase Authentication**: Handles user registration and login (Email/Password and Google).
 
 ### AI Integration
 - **Genkit**: All generative AI features are powered by Genkit.
-- **AI Flows**: Genkit "flows" are defined in the `src/ai/flows` directory. These are server-side functions that interact with a Generative Model (e.g., Gemini).
-    - `generate-url-friendly-slug.ts`: An AI flow that takes a post title and generates a URL-safe slug, which can be triggered from the post editor.
+- **AI Flows**: Genkit "flows" are server-side functions that interact with a Generative Model (e.g., Gemini), defined in the `src/ai/flows` directory.
+    - `generate-url-friendly-slug.ts`: Creates a URL-safe slug from a title.
+    - `generate-post.ts`: Generates a complete blog post draft from a topic.
+    - `suggest-topics.ts`: Suggests new article ideas.
+    - `ask-diano-flow.ts`: Powers the interactive chatbot.
 - **Schema Definition**: Zod (`zod`) is used to define the input and output schemas for AI flows, ensuring type safety and structured data.
 
 ### Project Structure
@@ -78,29 +89,24 @@ This project is built on a modern, full-stack architecture leveraging Next.js an
 │   │   └── ...             # Other shared components (header, post cards, etc.)
 │   ├── hooks               # Custom React hooks (e.g., useToast)
 │   └── lib                 # Core logic, Firebase setup, actions, schemas
-│       ├── actions.ts      # Server Actions for data mutation
+│       ├── actions.tsx     # Server Actions for data mutation
 │       ├── firebase.ts     # Client-side Firebase initialization
 │       ├── firebase-admin.ts # Server-side Firebase Admin SDK initialization
 │       ├── posts.ts        # Functions for fetching post data
 │       ├── schemas.ts      # Zod schemas for form and data validation
 │       └── types.ts        # TypeScript type definitions
 ├── .env.local              # Environment variables (needs to be created)
-└── ...                     # Configuration files (next.config.ts, tailwind.config.ts, etc.)
+└── ...                     # Configuration files
 ```
 
-
 ## Getting Started
-
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/en/) (v20 or later)
-- [npm](https://www.npmjs.com/) or a compatible package manager
+- [npm](https://www.npmjs.com/)
 
 ### 1. Install Dependencies
-
-Clone the repository and install the required packages:
 
 ```bash
 npm install
@@ -108,15 +114,13 @@ npm install
 
 ### 2. Set Up Environment Variables
 
-This project requires a Firebase project to run. Create a `.env.local` file in the root of your project.
+Create a `.env.local` file in the root of your project and add the following credentials.
 
-#### A. Get Client-Side Firebase Config
+#### A. Firebase Config (Client & Server)
 
-1.  Go to the [Firebase Console](https://console.firebase.google.com/) and select your project.
-2.  Click the **gear icon** next to "Project Overview" and go to **Project settings**.
-3.  In the "Your apps" card, select your web app.
-4.  Under "Firebase SDK snippet", choose **Config**.
-5.  Copy the configuration variables into your `.env.local` file:
+1.  Go to the **Firebase Console** > **Project settings**.
+2.  Under "Your apps", get your web app's **Config** object for the public keys.
+3.  Under the "Service accounts" tab, **Generate new private key** for the admin keys.
 
 ```
 # Firebase Public Config
@@ -126,100 +130,59 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
 NEXT_PUBLIC_FIREBASE_APP_ID=1:...
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-...
-```
 
-#### B. Get Server-Side Firebase Admin SDK Credentials
-
-1.  In the Firebase Console, go to **Project settings** > **Service accounts**.
-2.  Click **Generate new private key**, then confirm by clicking **Generate key**.
-3.  A JSON file will be downloaded. Open it and copy the values into your `.env.local` file:
-
-```
-# Firebase Admin SDK (for server-side operations)
+# Firebase Admin SDK
 FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccount.com
+# Important: Wrap the key in double quotes
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
 ```
 
-**Important**: Your `FIREBASE_PRIVATE_KEY` must be wrapped in double quotes (`"`) because it contains newline characters.
-
-#### C. Get Genkit/Gemini API Key
+#### B. Genkit/Gemini API Key
 
 1.  Visit [Google AI Studio](https://aistudio.google.com/app/apikey) to create an API key.
-2.  Add the key to your `.env.local` file:
 
 ```
 # Genkit/Gemini AI Config
 GEMINI_API_KEY=AIz...
 ```
+#### C. Social Media & API Keys (Optional)
+
+These are needed for social media integrations and the weather ticker.
+
+```
+# Telegram
+TELEGRAM_BOT_TOKEN=...
+TELEGRAM_NEWS_CHANNEL_ID=@YourChannelName
+TELEGRAM_ADMIN_CHAT_ID=...
+
+# Twitter / X
+TWITTER_API_KEY=...
+TWITTER_API_KEY_SECRET=...
+TWITTER_ACCESS_TOKEN=...
+TWITTER_ACCESS_TOKEN_SECRET=...
+
+# WeatherAPI.com Key
+WEATHER_API_KEY=...
+```
 
 ### 3. Run the Development Server
-
-Start the Next.js development server:
 
 ```bash
 npm run dev
 ```
-
 The application will be available at [http://localhost:9002](http://localhost:9002).
 
 ### 4. Run the Genkit Developer UI
 
-To develop and test AI flows, run the Genkit development UI in a separate terminal:
-
+To develop and test AI flows, run the Genkit UI in a separate terminal:
 ```bash
 npm run genkit:dev
 ```
-
-This will start the Genkit development server, typically available at `http://localhost:4000`.
-
-## Social Media & API Integrations
-
-### Telegram Integration
-
-The web application is integrated with Telegram for notifications and user interaction.
-
-#### How It Works
-
-1.  **New User Notifications**: When a new user registers on the website, a notification is automatically sent to a private Telegram chat designated for administrators. This provides real-time updates on user sign-ups.
-2.  **Automatic Post Sharing**: When a new blog post is published (or an existing draft is updated to "published"), a formatted message is automatically sent to a public Telegram channel. This message includes the post title, a snippet, and a link back to the article.
-3.  **Manual Post Sharing**: In the Admin Panel, under "Posts", each post has an option to be manually sent to the Telegram channel. This is useful for resharing content or if the automatic notification failed.
-4.  **Interactive Bot ("Ask Diano")**: The application has a webhook endpoint (`/api/telegram/webhook`) that listens for messages sent to the Telegram bot. When a user interacts with the bot, the message is processed by the `askDianoFlow`, which can use AI to answer questions, search for articles, and respond in character.
-
-#### Missing Details & Setup
-
-To complete the Telegram integration, you need to provide the following environment variables in your `.env` file:
-
--   `TELEGRAM_BOT_TOKEN`: The token for your Telegram bot, obtained from BotFather. This is required for all Telegram functionality.
--   `TELEGRAM_NEWS_CHANNEL_ID`: The ID of the public channel where new posts will be announced (e.g., `@YourChannelName`).
--   `TELEGRAM_ADMIN_CHAT_ID`: The chat ID of the private user or group that will receive new user registration notifications.
-
-You must also set the webhook for your Telegram bot to point to your deployed application's webhook URL: `https://<your-domain>/api/telegram/webhook`.
-
-### Twitter/X Integration
-
-The foundation for a Twitter/X integration has been established by securely storing the necessary API credentials.
-
-#### How It Works (Current State)
-
--   **API Credentials Stored**: Your Twitter API Key, API Key Secret, Bearer Token, Access Token, and Access Token Secret have been added to the application's environment variables (`.env`). This is the first and most critical step for any integration.
-
-#### Missing Details & Next Steps
-
-The integration is currently **inactive**. We have the keys, but no functionality has been built to use them yet. The immediate next step is to decide **what the integration should do**.
-
-A common and powerful next step is to **automatically tweet when a new post is published**. To implement this, we would need to:
-
-1.  **Install a Twitter API Library**: We would add a package like `twitter-api-v2` to the project to simplify communication with the Twitter API.
-2.  **Create a "Tweet Post" Function**: A new server-side function would be created that takes a post's details (title, URL, cover image) and uses the API keys to compose and send a tweet.
-3.  **Integrate with Actions**: This new function would be called from the `createPost` and `updatePost` server actions in `src/lib/actions.tsx`, specifically when a post's status is set to `published`.
-
-This would fully automate sharing your content on Twitter, increasing your reach with no extra effort.
+This will start the Genkit server, typically at `http://localhost:4000`.
 
 ## Admin Access
 
-- The admin dashboard is located at `/admin`.
-- To access it, you first need to create a user in your Firebase project via the Firebase Console (Authentication tab).
-- Use those credentials to log in on the `/login` page.
-```
+- The admin dashboard is at `/admin`.
+- By default, access is restricted to the email `georgedianoh@gmail.com`. You can change this in `src/app/admin/layout.tsx`.
+- Create the admin user account in your Firebase Console (Authentication tab), then log in via the `/login` page.
