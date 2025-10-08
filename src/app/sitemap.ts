@@ -23,6 +23,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/sports',
     '/global-affairs',
     '/privacy',
+    '/rights-and-permissions',
   ].map(route => ({
     url: `${BASE_URL}${route}`,
     lastModified: new Date(),

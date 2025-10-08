@@ -94,15 +94,20 @@ export default function ContactPage() {
                 <Logo className="h-8 w-8 text-primary" />
                 <span className="text-xl font-bold text-foreground">Talk of Nations</span>
             </div>
-            <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
-                <Link href="/about" className="hover:text-primary transition-colors">About Us</Link>
-                <Link href="/contact" className="hover:text-primary transition-colors">Contact</Link>
-                <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-                <Link href="/fashion" className="hover:text-primary transition-colors">Fashion</Link>
-                <Link href="/gadgets" className="hover:text-primary transition-colors">Gadgets</Link>
-                <Link href="/lifestyle" className="hover:text-primary transition-colors">Lifestyle</Link>
-            </nav>
-             <div className="flex gap-4">
+            <div className="flex flex-col items-center gap-4">
+              <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
+                  <Link href="/about" className="hover:text-primary transition-colors">About Us</Link>
+                  <Link href="/contact" className="hover:text-primary transition-colors">Contact</Link>
+                  <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+                  <Link href="/rights-and-permissions" className="hover:text-primary transition-colors">Rights & Permissions</Link>
+              </nav>
+              <div className="flex gap-4 md:hidden">
+                  <a href="#" className="hover:text-primary" aria-label="Instagram"><Instagram /></a>
+                  <a href="https://x.com/TalkofNations?t=Z7MSDp3fplIqkuqYzTrxJw&s=09" target="_blank" rel="noopener noreferrer" className="hover:text-primary" aria-label="Twitter"><Twitter /></a>
+                  <a href="#" className="hover:text-primary" aria-label="Facebook"><Facebook /></a>
+              </div>
+            </div>
+             <div className="hidden md:flex gap-4">
                 <a href="#" className="hover:text-primary" aria-label="Instagram"><Instagram /></a>
                 <a href="https://x.com/TalkofNations?t=Z7MSDp3fplIqkuqYzTrxJw&s=09" target="_blank" rel="noopener noreferrer" className="hover:text-primary" aria-label="Twitter"><Twitter /></a>
                 <a href="#" className="hover:text-primary" aria-label="Facebook"><Facebook /></a>
