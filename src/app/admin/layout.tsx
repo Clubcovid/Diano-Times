@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/icons/logo';
 
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',');
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -26,7 +26,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
 
-    if (user.email !== ADMIN_EMAIL) {
+    if (!user.email || !ADMIN_EMAILS.includes(user.email)) {
       toast({
         title: 'Access Denied',
         description: 'You do not have permission to access the admin panel.',
@@ -36,7 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [user, loading, router, toast]);
 
-  if (loading || !user || user.email !== ADMIN_EMAIL) {
+  if (loading || !user || !user.email || !ADMIN_EMAILS.includes(user.email)) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
