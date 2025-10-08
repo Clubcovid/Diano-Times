@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     // Humor & Gossip
     'funny Kenyan news', 'humorous political gossip', 'trending scandals Kenya', 'rib-cracking Kenyan stories', 'celebrity gossip Kenya',
     // Blog/Brand
-    'Talk of Nations news', 'Talk of Nations gossip', 'Talk of Nations blog', 'unfiltered raw news Kenya', 'daily gossip and humor news',
+    'Talk of Nations', 'talk of nations', 'Talk of Nation', 'talk of nation', 'Talk Nations', 'talk nations', 'Talk of Nations news', 'Talk of Nations gossip', 'Talk of Nations blog', 'unfiltered raw news Kenya', 'daily gossip and humor news',
     // Long-Tail
     'real raw political gossip in Kenya', 'funny commentary on Kenyan leaders', 'latest scandals in Kenyan churches', 'humorous news blog Africa', 'politics with humor and satire'
   ],
