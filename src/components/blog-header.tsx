@@ -88,6 +88,8 @@ ListItem.displayName = "ListItem"
 export function BlogHeader() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',');
+  const isAdmin = user && user.email && ADMIN_EMAILS.includes(user.email);
 
   const handleSignOut = async () => {
     await auth.signOut();
@@ -164,9 +166,11 @@ export function BlogHeader() {
                     <DropdownMenuItem asChild>
                         <Link href="/profile"><UserCircle className="mr-2"/>Profile</Link>
                     </DropdownMenuItem>
-                     <DropdownMenuItem asChild>
-                      <Link href="/admin"><LayoutDashboard className="mr-2"/>Admin</Link>
-                    </DropdownMenuItem>
+                    {isAdmin && (
+                        <DropdownMenuItem asChild>
+                        <Link href="/admin"><LayoutDashboard className="mr-2"/>Admin</Link>
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                       <LogOut className="mr-2"/>
