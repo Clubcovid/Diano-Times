@@ -58,11 +58,10 @@ interface GetPostsOptions {
   searchQuery?: string;
 }
 
-export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
-  const { limit, publishedOnly, tag, fromDate, ids, searchQuery } = options;
-
-  if (!db) {
-    console.warn("Firebase Admin is not initialized. Cannot fetch posts. Returning mock data.");
+function getMockPosts(options: GetPostsOptions = {}): Post[] {
+    const { limit, publishedOnly, tag, fromDate, ids, searchQuery } = options;
+    
+    console.warn("Falling back to mock data for posts.");
     let filteredMockPosts = mockPosts.map(p => {
         if (typeof p.content === 'string') {
             return {
@@ -94,6 +93,15 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
     }
     
     return filteredMockPosts.slice(0, limit);
+}
+
+
+export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
+  const { limit, publishedOnly, tag, fromDate, ids, searchQuery } = options;
+
+  if (!db) {
+    console.warn("Firebase Admin is not initialized. Cannot fetch posts.");
+    return getMockPosts(options);
   }
 
   const postsCollection = db.collection('posts');
@@ -138,6 +146,11 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
     return posts;
 
   } catch (error: any) {
+    // Gracefully handle quota exhaustion or missing indexes
+    if (error.code === 8) { // RESOURCE_EXHAUSTED
+      console.warn(`Firestore quota exceeded. Falling back to mock data. Error: ${error.message}`);
+      return getMockPosts(options);
+    }
     if (error.code === 9 && error.message.includes('requires an index')) {
       console.warn(`Firestore query failed due to a missing index. Falling back to client-side filtering. Message: ${error.message}`);
       
@@ -172,7 +185,7 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
       return posts.slice(0, limit || 100);
     }
     console.error("Error fetching posts from Firestore:", error);
-    return [];
+    return getMockPosts(options); // Fallback to mock data for any other errors
   }
 }
 
