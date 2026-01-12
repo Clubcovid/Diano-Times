@@ -40,14 +40,29 @@ export async function getAiFeatureFlags(): Promise<AiFeatureFlags> {
   try {
     const doc = await docRef.get();
     if (!doc.exists) {
-      await docRef.set(defaultFlags);
+      // If the document doesn't exist, create it with defaults
+      try {
+        await docRef.set(defaultFlags);
+      } catch (writeError: any) {
+        // If even writing fails (e.g., quota), still return defaults
+        if (writeError.code === 8) { // RESOURCE_EXHAUSTED
+           console.warn(`Firestore quota exceeded while trying to set default AI flags. Returning defaults.`);
+        } else {
+           console.error('Error setting default AI feature flags:', writeError);
+        }
+        return defaultFlags;
+      }
       return defaultFlags;
     }
-    // Merge with defaults to ensure all flags are present
+    // Merge with defaults to ensure all flags are present even if some are missing from DB
     return { ...defaultFlags, ...doc.data() };
-  } catch (error) {
-    console.error('Error fetching AI feature flags:', error);
-    return defaultFlags;
+  } catch (error: any) {
+    if (error.code === 8) { // RESOURCE_EXHAUSTED
+      console.warn(`Firestore quota exceeded when fetching AI flags. Falling back to default flags. Error: ${error.message}`);
+    } else {
+      console.error('Error fetching AI feature flags:', error);
+    }
+    return defaultFlags; // Fallback to defaults on any read error
   }
 }
 
