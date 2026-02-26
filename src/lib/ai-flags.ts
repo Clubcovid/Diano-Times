@@ -30,12 +30,9 @@ export async function getAiFeatureFlags(): Promise<AiFeatureFlags> {
   if (!db) return defaultFlags;
   try {
     const doc = await db.collection('ai_settings').doc('feature_flags').get();
-    if (!doc.exists) {
-      return defaultFlags;
-    }
+    if (!doc.exists) return defaultFlags;
     return { ...defaultFlags, ...doc.data() } as AiFeatureFlags;
   } catch (error: any) {
-    // Silently handle database errors to prevent build crashes or disruptive UI overlays
     return defaultFlags;
   }
 }

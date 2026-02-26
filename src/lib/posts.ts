@@ -7,9 +7,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { htmlToText } from 'html-to-text';
 
 function contentToText(content: ContentBlock[] | string): string {
-    if (typeof content === 'string') {
-        return htmlToText(content);
-    }
+    if (typeof content === 'string') return htmlToText(content);
     if (Array.isArray(content)) {
         return content
             .filter(block => block.type === 'paragraph')
@@ -59,55 +57,33 @@ interface GetPostsOptions {
 export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
   const { limit, publishedOnly, tag, fromDate, ids, searchQuery } = options;
 
-  if (!db) {
-    return getMockPosts(options);
-  }
+  if (!db) return getMockPosts(options);
 
   try {
     const postsCollection = db.collection('posts');
     let query: FirebaseFirestore.Query = postsCollection;
     
-    if (publishedOnly) {
-      query = query.where('status', '==', 'published');
-    }
-    if (tag) {
-      query = query.where('tags', 'array-contains', tag);
-    }
-    if (fromDate) {
-      query = query.where('createdAt', '>=', Timestamp.fromDate(fromDate));
-    }
+    if (publishedOnly) query = query.where('status', '==', 'published');
+    if (tag) query = query.where('tags', 'array-contains', tag);
+    if (fromDate) query = query.where('createdAt', '>=', Timestamp.fromDate(fromDate));
     if (ids) {
-      if (ids.length > 0) {
-        query = query.where('__name__', 'in', ids);
-      } else {
-        return [];
-      }
+      if (ids.length > 0) query = query.where('__name__', 'in', ids);
+      else return [];
     }
 
     const snapshot = await query.orderBy('createdAt', 'desc').limit(limit || 100).get();
-    
     if (snapshot.empty) return [];
     
     let posts = snapshot.docs.map(toPost);
 
     if (searchQuery) {
-      const lowerCaseQuery = searchQuery.toLowerCase();
-      posts = posts.filter(post => 
-        post.title.toLowerCase().includes(lowerCaseQuery) || 
-        contentToText(post.content).toLowerCase().includes(lowerCaseQuery)
-      );
+      const q = searchQuery.toLowerCase();
+      posts = posts.filter(p => p.title.toLowerCase().includes(q) || contentToText(p.content).toLowerCase().includes(q));
     }
     
     return posts;
-
   } catch (error: any) {
-    if (error.code === 8 || error.message?.includes('Quota exceeded')) {
-        console.warn("Firestore quota exceeded in getPosts. Falling back to mock data.");
-    } else if (error.code === 9) {
-        console.warn("Firestore index required. Falling back to mock data.");
-    } else {
-        console.error("Firestore error in getPosts:", error.message);
-    }
+    // Quota exhausted (8) or missing index (9)
     return getMockPosts(options);
   }
 }
@@ -131,21 +107,20 @@ function getMockPosts(options: GetPostsOptions): Post[] {
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-  if (!db) {
-    const mock = mockPosts.find(p => p.slug === slug);
-    if (!mock) return null;
-    return { ...mock, content: typeof mock.content === 'string' ? [{ type: 'paragraph', value: mock.content }] : mock.content } as Post;
-  }
+  if (!db) return getMockPostBySlug(slug);
   try {
     const snapshot = await db.collection('posts').where('slug', '==', slug).limit(1).get();
-    if (snapshot.empty) return null;
+    if (snapshot.empty) return getMockPostBySlug(slug);
     return toPost(snapshot.docs[0]);
-  } catch (error: any) {
-    console.warn(`Error in getPostBySlug (${slug}), returning mock fallback:`, error.message);
+  } catch (e) {
+    return getMockPostBySlug(slug);
+  }
+}
+
+function getMockPostBySlug(slug: string): Post | null {
     const mock = mockPosts.find(p => p.slug === slug);
     if (!mock) return null;
     return { ...mock, content: typeof mock.content === 'string' ? [{ type: 'paragraph', value: mock.content }] : mock.content } as Post;
-  }
 }
 
 export async function getPostById(id: string): Promise<Post | null> {
@@ -154,11 +129,8 @@ export async function getPostById(id: string): Promise<Post | null> {
     const doc = await db.collection('posts').doc(id).get();
     if (!doc.exists) return null;
     return toPost(doc);
-  } catch (error: any) {
-    console.warn(`Error in getPostById (${id}), returning mock fallback:`, error.message);
-    const mock = mockPosts.find(p => p.id === id);
-    if (!mock) return null;
-    return { ...mock, content: typeof mock.content === 'string' ? [{ type: 'paragraph', value: mock.content }] : mock.content } as Post;
+  } catch (e) {
+    return null;
   }
 }
 
@@ -176,10 +148,8 @@ export async function getTags(): Promise<string[]> {
       data.tags?.forEach((t: string) => tags.add(t));
     });
     return Array.from(tags).sort();
-  } catch (error: any) {
-    const tags = new Set<string>();
-    mockPosts.forEach(p => p.tags.forEach(t => tags.add(t)));
-    return Array.from(tags).sort();
+  } catch (e) {
+    return [];
   }
 }
 

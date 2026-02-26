@@ -5,7 +5,6 @@ import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
-// Your web app's Firebase configuration for talk-of-nations-db2
 const firebaseConfig: FirebaseOptions = {
   apiKey: "AIzaSyCWbN8et30foJxjRjiTNiNdbVusSD2FP8U",
   authDomain: "talk-of-nations-db2.firebaseapp.com",
@@ -16,7 +15,6 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: "G-K65F7LS96Q"
 };
 
-// Singleton pattern to initialize and get Firebase services
 let app: FirebaseApp;
 if (!getApps().length) {
     app = initializeApp(firebaseConfig);
