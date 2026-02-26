@@ -5,8 +5,6 @@ const projectId = "ton-safe-mode-87055725-5330a";
 
 if (!admin.apps.length) {
     try {
-      // If service account JSON is provided in env, use it. 
-      // Otherwise, rely on Application Default Credentials (ADC) or explicit project ID
       if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
           admin.initializeApp({
             credential: admin.credential.cert({

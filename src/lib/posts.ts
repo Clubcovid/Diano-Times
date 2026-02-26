@@ -29,7 +29,6 @@ function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
     content = [{ type: 'paragraph', value: '' }];
   }
 
-  // Ensure dates are serializable for Next.js RSC -> Client boundary
   const createdAt = data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString();
   const updatedAt = data.updatedAt instanceof Timestamp ? data.updatedAt.toDate().toISOString() : new Date().toISOString();
 
@@ -86,7 +85,11 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
     
     return posts;
   } catch (error: any) {
-    // Gracefully fallback to mock data on index/quota errors
+    // Gracefully fallback to mock data on index/quota errors (Code 8: RESOURCE_EXHAUSTED, Code 9: FAILED_PRECONDITION)
+    if (error.code === 8 || error.code === 9) {
+        return getMockPosts(options);
+    }
+    console.error("Error fetching posts from Firestore:", error);
     return getMockPosts(options);
   }
 }
@@ -120,7 +123,8 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     const snapshot = await db.collection('posts').where('slug', '==', slug).limit(1).get();
     if (snapshot.empty) return getMockPostBySlug(slug);
     return toPost(snapshot.docs[0]);
-  } catch (e) {
+  } catch (e: any) {
+    if (e.code === 8 || e.code === 9) return getMockPostBySlug(slug);
     return getMockPostBySlug(slug);
   }
 }
@@ -142,7 +146,8 @@ export async function getPostById(id: string): Promise<Post | null> {
     const doc = await db.collection('posts').doc(id).get();
     if (!doc.exists) return null;
     return toPost(doc);
-  } catch (e) {
+  } catch (e: any) {
+    if (e.code === 8 || e.code === 9) return getMockPostById(id);
     return getMockPostById(id);
   }
 }
@@ -173,7 +178,9 @@ export async function getTags(): Promise<string[]> {
     });
     return Array.from(tags).sort();
   } catch (e) {
-    return [];
+    const tags = new Set<string>();
+    mockPosts.forEach(p => p.tags.forEach(t => tags.add(t)));
+    return Array.from(tags).sort();
   }
 }
 
