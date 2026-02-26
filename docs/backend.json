@@ -1,0 +1,198 @@
+{
+  "entities": {
+    "BlogPost": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BlogPost",
+      "type": "object",
+      "description": "Represents a single blog post with its content, metadata, and relationships to tags.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the BlogPost entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The main title of the blog post."
+        },
+        "slug": {
+          "type": "string",
+          "description": "A URL-friendly, unique slug generated from the blog post title."
+        },
+        "content": {
+          "type": "string",
+          "description": "The main content of the blog post, supporting markdown or HTML."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief summary or excerpt of the blog post, often used for previews or SEO."
+        },
+        "coverImageUrl": {
+          "type": "string",
+          "description": "The URL of the cover image associated with the blog post.",
+          "format": "uri"
+        },
+        "authorId": {
+          "type": "string",
+          "description": "Reference to the unique identifier of the user who authored the post (from an external authentication system like Firebase Authentication)."
+        },
+        "tagIds": {
+          "type": "array",
+          "description": "An array of unique identifiers for tags associated with this blog post. (Relationship: BlogPost N:N Tag)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Indicates whether the blog post is publicly visible.",
+          "format": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the blog post was first created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The date and time when the blog post was last updated.",
+          "format": "date-time"
+        },
+        "publishedAt": {
+          "type": "string",
+          "description": "The date and time when the blog post was published. Null if not yet published.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "slug",
+        "content",
+        "authorId",
+        "isPublished",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Tag": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Tag",
+      "type": "object",
+      "description": "Represents a category or keyword used to organize and filter blog posts.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Tag entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The human-readable name of the tag (e.g., 'Technology', 'Web Development')."
+        },
+        "slug": {
+          "type": "string",
+          "description": "A URL-friendly, unique slug generated from the tag name."
+        },
+        "description": {
+          "type": "string",
+          "description": "An optional short description of what the tag represents."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the tag was first created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The date and time when the tag was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "slug",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/roles_admin/{adminId}",
+        "definition": {
+          "entityName": "adminRole",
+          "schema": {
+            "$ref": "#/backend/entities/adminRole"
+          },
+          "description": "A collection used for Database Access Control (DBAC). Each document in this collection represents an administrator. The document ID is the Firebase Authentication UID of the admin user. Access to this collection is used for existence checks to grant administrative privileges across the application. No specific schema beyond the UID as ID is typically needed, serving as a marker for administrative roles.",
+          "params": [
+            {
+              "name": "adminId",
+              "description": "The unique Firebase Authentication User ID (UID) of an administrator."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/blog_posts_published/{blogPostId}",
+        "definition": {
+          "entityName": "BlogPost",
+          "schema": {
+            "$ref": "#/backend/entities/BlogPost"
+          },
+          "description": "Stores publicly available blog posts. These posts are readable by anyone and represent the 'published' state. Includes denormalized 'authorId' for ownership verification by the original author or an admin during update/delete operations.",
+          "params": [
+            {
+              "name": "blogPostId",
+              "description": "The unique identifier for a published blog post."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/blog_posts_drafts/{blogPostId}",
+        "definition": {
+          "entityName": "BlogPost",
+          "schema": {
+            "$ref": "#/backend/entities/BlogPost"
+          },
+          "description": "Stores private draft blog posts belonging to a specific user. Access is restricted to the owner (matching 'userId' in path and 'authorId' field) or an admin. Includes denormalized 'authorId' for strict ownership checks and Authorization Independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase Authentication User ID (UID) of the post author."
+            },
+            {
+              "name": "blogPostId",
+              "description": "The unique identifier for a draft blog post."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/tags/{tagId}",
+        "definition": {
+          "entityName": "Tag",
+          "schema": {
+            "$ref": "#/backend/entities/Tag"
+          },
+          "description": "A global collection of tags used to categorize blog posts. Tags are publicly readable and can only be created, updated, or deleted by an authenticated admin user.",
+          "params": [
+            {
+              "name": "tagId",
+              "description": "The unique identifier for a tag."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed following the core principles of Authorization Independence, Structural Segregation, and DBAC to ensure a secure, scalable, and debuggable Diano Blog MVP. \n\n**Authorization Independence via Denormalization:**\nTo eliminate `get()` calls in security rules, the `authorId` field is denormalized and stored directly within every `BlogPost` document, whether it's a published post or a draft. This allows security rules to check ownership (e.g., `request.auth.uid == resource.data.authorId`) directly on the document being accessed, rather than needing to fetch a parent document or an external user profile. This significantly simplifies rule logic and enables atomic operations like creating a post without complex rule dependencies.\n\n**Structural Segregation for Homogeneous Security Posture:**\nBlog posts are strictly segregated based on their security requirements:\n1.  **/blog_posts_published/{blogPostId}**: This collection stores blog posts that are publicly visible. All documents in this collection share the security posture of being readable by anyone (authenticated or unauthenticated) and writable/editable/deletable only by an authenticated admin or the original author. The `isPublished` field for these documents will always be `true`.\n2.  **/users/{userId}/blog_posts_drafts/{blogPostId}**: This subcollection stores blog post drafts, which are private to the author. This path-based ownership ensures that documents here are only accessible (read/write/delete) by the `userId` matching `request.auth.uid` AND `resource.data.authorId`, or by an authenticated admin. The `isPublished` field for these documents will always be `false`.\nThis segregation ensures rules for each collection are simple and unambiguous.\n\n**Global Roles (DBAC) for Admin Authorization:**\nAdmin privileges are managed using a dedicated top-level collection: `/roles_admin/{adminId}`. An admin's UID is used as the document ID in this collection (e.g., `roles_admin/someAdminUid`). Authorization rules for administrative actions (e.g., publishing posts, managing tags) will use an existence check (e.g., `allow write: if exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))`). This adheres to the 'Existence over Content' principle for global roles, making admin checks efficient and clear.\n\n**Querying for Authorization Purposes (QAPs):**\n*   **Published Posts:** The `/blog_posts_published` collection allows for secure `list` queries by anyone. Because all documents are published and accessible, no client-side filtering or complex server-side rules are needed to restrict which documents are returned. Rules can simply allow `list` if `resource.data.isPublished == true` (implicitly handled by the collection structure itself).\n*   **Draft Posts:** The `/users/{userId}/blog_posts_drafts` subcollection inherently supports QAPs. A user querying `/users/{request.auth.uid}/blog_posts_drafts` will only retrieve their own drafts, as the `userId` wildcard in the path *must* match `request.auth.uid`. No additional rule-based filtering on `authorId` is required for `list` operations in this specific subcollection, though `resource.data.authorId == request.auth.uid` would still be used for `get`/`create`/`update`/`delete` on individual documents.\n*   **Tags:** The `/tags` collection allows secure `list` queries by everyone as tags are public. Admin rights are needed for write operations.\n\nOverall, this structure prioritizes explicit security posture per collection, clear ownership, and efficient rule evaluation by leveraging denormalization and structural segregation."
+  }
+}

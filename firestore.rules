@@ -1,0 +1,129 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * FIRESTORE SECURITY RULES DOCUMENTATION
+     *
+     * Core Philosophy:
+     * This ruleset implements a robust security model for the Diano Blog, prioritizing 
+     * Authorization Independence, Structural Segregation, and Database Access Control (DBAC).
+     * It ensures that data access is strictly controlled based on user identity and roles 
+     * while maintaining high performance by avoiding unnecessary document lookups.
+     *
+     * Data Structure:
+     * - /roles_admin/{adminId}: Marker collection for administrative accounts.
+     * - /blog_posts_published/{postId}: Publicly accessible blog content.
+     * - /users/{userId}/blog_posts_drafts/{postId}: Private author-specific drafts.
+     * - /tags/{tagId}: Global, publicly readable categorization system.
+     *
+     * Key Security Decisions:
+     * 1. Denormalization for Authorization: The 'authorId' is stored directly on blog post 
+     *    documents. This allows rules to verify ownership instantly without secondary reads.
+     * 2. Structural Segregation: Private drafts and public posts are stored in separate 
+     *    top-level collections/subcollections. This ensures that a simple 'list' operation 
+     *    on a collection never accidentally leaks private data.
+     * 3. DBAC (Existence-based Roles): Admin privileges are granted by checking for the 
+     *    existence of a user's UID within the 'roles_admin' collection.
+     * 4. Prototyping Flexibility: While ownership and relational integrity (like author 
+     *    links) are strictly enforced, the specific schema/fields of the content are 
+     *    flexible to allow for rapid frontend iteration.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /** @description Checks if the request is from an authenticated user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the authenticated user has an entry in the admin roles collection. */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /** @description Checks if the provided UID matches the authenticated user's UID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Checks if the authenticated user owns the existing document via its authorId field. */
+    function isDocumentOwner(authorId) {
+      return isSignedIn() && request.auth.uid == authorId;
+    }
+
+    /** @description Shorthand for merged data state during create/update. */
+    function incomingData() {
+      return request.resource.data;
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Administrative role markers. Document ID is the User UID.
+     * @path /roles_admin/{adminId}
+     * @allow Authenticated admins can manage roles; users can see their own role status.
+     * @deny Any write by a non-admin user.
+     * @principle Existence-over-content for global roles (DBAC).
+     */
+    match /roles_admin/{adminId} {
+      allow get: if isOwner(adminId) || isAdmin();
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Publicly available blog posts.
+     * @path /blog_posts_published/{blogPostId}
+     * @allow (get, list) Anyone; (create) Author setting themselves as owner; (update, delete) Author or Admin.
+     * @deny (create) Mismatched authorId; (update) Changing the authorId.
+     * @principle Public Read with Owner-Only Writes; Relational Integrity.
+     */
+    match /blog_posts_published/{blogPostId} {
+      allow get, list: if true;
+      
+      allow create: if (isSignedIn() && incomingData().authorId == request.auth.uid) || isAdmin();
+      
+      allow update: if resource != null && (
+        (isDocumentOwner(resource.data.authorId) && incomingData().authorId == resource.data.authorId) || 
+        isAdmin()
+      );
+      
+      allow delete: if resource != null && (isDocumentOwner(resource.data.authorId) || isAdmin());
+    }
+
+    /**
+     * @description User-specific private drafts.
+     * @path /users/{userId}/blog_posts_drafts/{blogPostId}
+     * @allow (all) The specific user (userId) or an Admin.
+     * @deny Access by any other authenticated or unauthenticated user.
+     * @principle Structural Segregation; Ownership-based path validation.
+     */
+    match /users/{userId}/blog_posts_drafts/{blogPostId} {
+      allow get, list: if isOwner(userId) || isAdmin();
+      
+      // On Create: Ensure the internal authorId matches the path userId to maintain integrity.
+      allow create: if (isOwner(userId) && incomingData().authorId == userId) || isAdmin();
+      
+      // On Update: Ensure the authorId cannot be changed (immutability).
+      allow update: if resource != null && (
+        (isOwner(userId) && incomingData().authorId == resource.data.authorId) || 
+        isAdmin()
+      );
+      
+      allow delete: if resource != null && (isOwner(userId) || isAdmin());
+    }
+
+    /**
+     * @description Global collection of categorization tags.
+     * @path /tags/{tagId}
+     * @allow (get, list) Anyone; (create, update, delete) Admin only.
+     * @deny Any write by a non-admin user.
+     * @principle Public Read with Role-Based Writes.
+     */
+    match /tags/{tagId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
