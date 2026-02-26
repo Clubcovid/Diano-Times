@@ -23,15 +23,13 @@ function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
   const data = doc.data();
   if (!data) throw new Error('Document data is empty');
 
-  // Handle legacy string content and ensure content is always an array for new posts
   let content: ContentBlock[];
   if (typeof data.content === 'string') {
-    // Convert legacy string content to the new block format
-    content = data.content.split('\n\n').map(p => ({ type: 'paragraph', value: p }));
+    content = data.content.split('\n\n').filter(p => p.trim() !== '').map(p => ({ type: 'paragraph', value: p }));
   } else if (Array.isArray(data.content)) {
     content = data.content;
   } else {
-    content = [{ type: 'paragraph', value: '' }]; // Fallback for undefined content
+    content = [{ type: 'paragraph', value: '' }];
   }
 
   return {
@@ -62,68 +60,33 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
   const { limit, publishedOnly, tag, fromDate, ids, searchQuery } = options;
 
   if (!db) {
-    console.warn("Firebase Admin is not initialized. Cannot fetch posts. Returning mock data.");
-    let filteredMockPosts = mockPosts.map(p => {
-        if (typeof p.content === 'string') {
-            return {
-                ...p,
-                content: [{ type: 'paragraph', value: p.content }] as ContentBlock[]
-            };
-        }
-        return p as Post;
-    });
-
-    if (publishedOnly) {
-      filteredMockPosts = filteredMockPosts.filter(p => p.status === 'published');
-    }
-    if (tag) {
-      filteredMockPosts = filteredMockPosts.filter(p => p.tags.includes(tag));
-    }
-    if (fromDate) {
-       filteredMockPosts = filteredMockPosts.filter(p => p.createdAt.toDate() >= fromDate);
-    }
-    if (ids) {
-        filteredMockPosts = filteredMockPosts.filter(p => ids.includes(p.id));
-    }
-    if (searchQuery) {
-        const lowerCaseQuery = searchQuery.toLowerCase();
-        filteredMockPosts = filteredMockPosts.filter(p => 
-            p.title.toLowerCase().includes(lowerCaseQuery) ||
-            contentToText(p.content).toLowerCase().includes(lowerCaseQuery)
-        );
-    }
-    
-    return filteredMockPosts.slice(0, limit);
+    return getMockPosts(options);
   }
-
-  const postsCollection = db.collection('posts');
-  let query: Query = postsCollection;
-  
-  // Build the query
-  if (publishedOnly) {
-    query = query.where('status', '==', 'published');
-  }
-  if (tag) {
-    query = query.where('tags', 'array-contains', tag);
-  }
-   if (fromDate) {
-    query = query.where('createdAt', '>=', Timestamp.fromDate(fromDate));
-  }
-  if (ids) {
-     if (ids.length > 0) {
-      query = query.where('__name__', 'in', ids);
-    } else {
-      return []; // Return empty if no IDs are provided
-    }
-  }
-
 
   try {
+    const postsCollection = db.collection('posts');
+    let query: Query = postsCollection;
+    
+    if (publishedOnly) {
+      query = query.where('status', '==', 'published');
+    }
+    if (tag) {
+      query = query.where('tags', 'array-contains', tag);
+    }
+    if (fromDate) {
+      query = query.where('createdAt', '>=', Timestamp.fromDate(fromDate));
+    }
+    if (ids) {
+      if (ids.length > 0) {
+        query = query.where('__name__', 'in', ids);
+      } else {
+        return [];
+      }
+    }
+
     const snapshot = await query.orderBy('createdAt', 'desc').limit(limit || 100).get();
     
-    if (snapshot.empty) {
-      return [];
-    }
+    if (snapshot.empty) return [];
     
     let posts = snapshot.docs.map(toPost);
 
@@ -138,154 +101,100 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
     return posts;
 
   } catch (error: any) {
-    if (error.code === 9 && error.message.includes('requires an index')) {
-      console.warn(`Firestore query failed due to a missing index. Falling back to client-side filtering. Message: ${error.message}`);
-      
-      let fallbackQuery: Query = db.collection('posts');
-      if (ids && ids.length > 0) {
-         fallbackQuery = fallbackQuery.where('__name__', 'in', ids);
-      }
-      
-      const allPostsSnapshot = await fallbackQuery.get();
-      let posts = allPostsSnapshot.docs.map(toPost);
+    console.error("Firestore error in getPosts:", error.message);
+    // Graceful fallback for quota or index issues
+    return getMockPosts(options);
+  }
+}
 
-      // Manual filtering
-      if (publishedOnly) {
-        posts = posts.filter(post => post.status === 'published');
-      }
-      if (tag) {
-        posts = posts.filter(post => post.tags.includes(tag));
-      }
-      if (fromDate) {
-        posts = posts.filter(post => post.createdAt.toDate() >= fromDate);
-      }
-       if (searchQuery) {
-        const lowerCaseQuery = searchQuery.toLowerCase();
-        posts = posts.filter(post => 
-            post.title.toLowerCase().includes(lowerCaseQuery) || 
-            contentToText(post.content).toLowerCase().includes(lowerCaseQuery)
-        );
-      }
-      
-      posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+function getMockPosts(options: GetPostsOptions): Post[] {
+    const { limit, publishedOnly, tag, fromDate, ids, searchQuery } = options;
+    let filtered = mockPosts.map(p => {
+        const content = typeof p.content === 'string' ? [{ type: 'paragraph', value: p.content }] as ContentBlock[] : p.content as ContentBlock[];
+        return { ...p, content } as Post;
+    });
 
-      return posts.slice(0, limit || 100);
+    if (publishedOnly) filtered = filtered.filter(p => p.status === 'published');
+    if (tag) filtered = filtered.filter(p => p.tags.includes(tag));
+    if (fromDate) filtered = filtered.filter(p => p.createdAt.toDate() >= fromDate);
+    if (ids) filtered = filtered.filter(p => ids.includes(p.id));
+    if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(p => p.title.toLowerCase().includes(q) || contentToText(p.content).toLowerCase().includes(q));
     }
-    console.error("Error fetching posts from Firestore:", error);
-    return [];
+    return filtered.slice(0, limit || 100);
+}
+
+export async function getPostBySlug(slug: string): Promise<Post | null> {
+  if (!db) {
+    return mockPosts.find(p => p.slug === slug) as Post || null;
+  }
+  try {
+    const snapshot = await db.collection('posts').where('slug', '==', slug).limit(1).get();
+    if (snapshot.empty) return null;
+    return toPost(snapshot.docs[0]);
+  } catch (error: any) {
+    console.error(`Error in getPostBySlug (${slug}):`, error.message);
+    return mockPosts.find(p => p.slug === slug) as Post || null;
+  }
+}
+
+export async function getPostById(id: string): Promise<Post | null> {
+  if (!db) return mockPosts.find(p => p.id === id) as Post || null;
+  try {
+    const doc = await db.collection('posts').doc(id).get();
+    if (!doc.exists) return null;
+    return toPost(doc);
+  } catch (error: any) {
+    console.error(`Error in getPostById (${id}):`, error.message);
+    return mockPosts.find(p => p.id === id) as Post || null;
   }
 }
 
 export async function getTags(): Promise<string[]> {
-    if (!db) {
-      console.error("Firebase Admin is not initialized. Cannot fetch tags.");
-      const mockTags = new Set<string>();
-      mockPosts.forEach(post => post.tags.forEach(tag => mockTags.add(tag)));
-      return Array.from(mockTags).sort();
-    }
-    const postsCollection = db.collection('posts');
+  if (!db) {
+    const tags = new Set<string>();
+    mockPosts.forEach(p => p.tags.forEach(t => tags.add(t)));
+    return Array.from(tags).sort();
+  }
   try {
-    const snapshot = await postsCollection.where('status', '==', 'published').get();
-    
-    if (snapshot.empty) {
-        return [];
-    }
-
+    const snapshot = await db.collection('posts').where('status', '==', 'published').get();
     const tags = new Set<string>();
     snapshot.docs.forEach(doc => {
-      const data = doc.data() as Omit<Post, 'id'>;
-      data.tags?.forEach(tag => tags.add(tag));
+      const data = doc.data();
+      data.tags?.forEach((t: string) => tags.add(t));
     });
     return Array.from(tags).sort();
-  } catch (error) {
-    console.error("Error fetching tags from Firestore:", error);
-    return [];
+  } catch (error: any) {
+    console.error("Error in getTags:", error.message);
+    const tags = new Set<string>();
+    mockPosts.forEach(p => p.tags.forEach(t => tags.add(t)));
+    return Array.from(tags).sort();
   }
 }
 
 export async function getTrendingTags(limit: number = 5): Promise<string[]> {
-  const posts = await getPosts({ publishedOnly: true, limit: 50 }); // Fetch recent 50 posts
+  const posts = await getPosts({ publishedOnly: true, limit: 50 });
   const tagCounts: Record<string, number> = {};
-
   posts.forEach(post => {
     post.tags.forEach(tag => {
       tagCounts[tag] = (tagCounts[tag] || 0) + 1;
     });
   });
-
   return Object.entries(tagCounts)
     .sort(([, countA], [, countB]) => countB - countA)
     .slice(0, limit)
     .map(([tag]) => tag);
 }
 
-
-export async function getPostBySlug(slug: string): Promise<Post | null> {
-    if (!db) {
-      console.error(`Firebase Admin is not initialized. Cannot fetch post by slug: ${slug}.`);
-      const post = mockPosts.find(p => p.slug === slug);
-      if (!post) return null;
-      if (typeof post.content === 'string') {
-        return { ...post, content: [{ type: 'paragraph', value: post.content }] } as Post;
-      }
-      return post as Post;
-    }
-  try {
-    const postsCollection = db.collection('posts');
-    const snapshot = await postsCollection.where('slug', '==', slug).limit(1).get();
-    if (snapshot.empty) {
-      return null;
-    }
-    return toPost(snapshot.docs[0]);
-  } catch (error) {
-    console.error(`Error fetching post by slug ${slug}:`, error);
-    return null;
-  }
-}
-
-export async function getPostById(id: string): Promise<Post | null> {
-  if (!db) {
-      console.error(`Firebase Admin is not initialized. Cannot fetch post by id: ${id}.`);
-      const post = mockPosts.find(p => p.id === id);
-      if (!post) return null;
-      if (typeof post.content === 'string') {
-        return { ...post, content: [{ type: 'paragraph', value: post.content }] } as Post;
-      }
-      return post as Post;
-  }
-  try {
-    const postDocRef = db.collection('posts').doc(id);
-    const postDoc = await postDocRef.get();
-    if (!postDoc.exists) {
-       return null;
-    }
-    return toPost(postDoc);
-  } catch (error) {
-    console.error(`Error fetching post by ID ${id}:`, error);
-    return null;
-  }
-}
-
-
 export async function getAds(): Promise<Ad[]> {
-  if (!db) {
-      console.error("Database not connected. Cannot fetch ads.");
-      return mockAds.map(ad => ({...ad, createdAt: Timestamp.now()}));
-  }
+  if (!db) return mockAds.map(ad => ({ ...ad, createdAt: Timestamp.now() })) as Ad[];
   try {
-    const adsCollection = db.collection('advertisements');
-    const snapshot = await adsCollection.orderBy('createdAt', 'desc').get();
+    const snapshot = await db.collection('advertisements').orderBy('createdAt', 'desc').get();
     if (snapshot.empty) return [];
-
-    return snapshot.docs.map(doc => {
-      const data = doc.data() as Ad;
-      return {
-        ...data,
-        id: doc.id,
-      };
-    });
-  } catch (error) {
-    console.error('Error fetching ads:', error);
-    return [];
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
+  } catch (error: any) {
+    console.error("Error in getAds:", error.message);
+    return mockAds.map(ad => ({ ...ad, createdAt: Timestamp.now() })) as Ad[];
   }
 }

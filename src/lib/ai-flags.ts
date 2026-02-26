@@ -26,32 +26,21 @@ const defaultFlags: AiFeatureFlags = {
   isAskDianoEnabled: true,
 };
 
-const settingsDocRef = () => {
-    if (!db) return null;
-    return db.collection('ai_settings').doc('feature_flags');
-}
-
 export async function getAiFeatureFlags(): Promise<AiFeatureFlags> {
-  const docRef = settingsDocRef();
-  if (!docRef) {
-      console.warn('AI-FLAGS: DB not available, returning default flags.');
-      return defaultFlags;
-  }
+  if (!db) return defaultFlags;
   try {
-    const doc = await docRef.get();
+    const doc = await db.collection('ai_settings').doc('feature_flags').get();
     if (!doc.exists) {
-      await docRef.set(defaultFlags);
       return defaultFlags;
     }
-    // Merge with defaults to ensure all flags are present
     return { ...defaultFlags, ...doc.data() };
-  } catch (error) {
-    console.error('Error fetching AI feature flags:', error);
+  } catch (error: any) {
+    console.error('Error fetching AI flags:', error.message);
     return defaultFlags;
   }
 }
 
 export async function isAiFeatureEnabled(feature: AiFeature): Promise<boolean> {
     const flags = await getAiFeatureFlags();
-    return flags[feature] ?? false; // Default to false if flag is not defined
+    return flags[feature] ?? false;
 }
