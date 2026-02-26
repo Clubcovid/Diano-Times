@@ -15,12 +15,13 @@ if (!admin.apps.length) {
             storageBucket: `${projectId}.firebasestorage.app`,
           });
       } else {
+          // Fallback for development if keys aren't in .env but project ID is known
           admin.initializeApp({
             projectId: projectId,
             storageBucket: `${projectId}.firebasestorage.app`,
           });
       }
-      console.log('Firebase Admin SDK initialized successfully.');
+      console.log('Firebase Admin SDK initialized successfully for project:', projectId);
     } catch (error) {
       console.error('Firebase Admin SDK initialization error:', error);
     }

@@ -29,6 +29,7 @@ function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
     content = [{ type: 'paragraph', value: '' }];
   }
 
+  // Ensure dates are serializable strings for Next.js components
   const createdAt = data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString();
   const updatedAt = data.updatedAt instanceof Timestamp ? data.updatedAt.toDate().toISOString() : new Date().toISOString();
 
@@ -42,8 +43,8 @@ function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
     status: data.status || 'draft',
     authorName: data.authorName || 'Talk of Nations Staff',
     authorImage: data.authorImage || '',
-    createdAt: createdAt,
-    updatedAt: updatedAt,
+    createdAt: createdAt as any, // Cast to any to handle the transition to serializable strings
+    updatedAt: updatedAt as any,
   } as unknown as Post;
 }
 
@@ -85,11 +86,12 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
     
     return posts;
   } catch (error: any) {
-    // Gracefully fallback to mock data on index/quota errors (Code 8: RESOURCE_EXHAUSTED, Code 9: FAILED_PRECONDITION)
-    if (error.code === 8 || error.code === 9 || error.message?.includes('requires an index')) {
+    // Handle quota (8) and index (9) errors by falling back to mock data
+    if (error.code === 8 || error.code === 9 || error.message?.includes('requires an index') || error.message?.includes('Quota exceeded')) {
+        console.warn("Firestore access issues or quota exceeded, using mock data fallback.");
         return getMockPosts(options);
     }
-    console.warn("Firestore access issues, using mock data fallback:", error.message);
+    console.error("Firestore Error:", error.message);
     return getMockPosts(options);
   }
 }
