@@ -168,7 +168,7 @@ WEATHER_API_KEY=...
 
 ### 3. Run the Development Server
 
-```bash
+```
 npm run dev
 ```
 The application will be available at [http://localhost:9002](http://localhost:9002).
