@@ -1,7 +1,7 @@
 import 'server-only';
 import { db } from '@/lib/firebase-admin';
-import type { Post, ContentBlock } from './types';
-import { mockPosts } from './mock-data';
+import type { Post, ContentBlock, Ad } from './types';
+import { mockPosts, mockAds } from './mock-data';
 import { Timestamp } from 'firebase-admin/firestore';
 import { htmlToText } from 'html-to-text';
 
@@ -199,5 +199,26 @@ export async function getTrendingTags(limit: number = 5): Promise<string[]> {
       .map(([tag]) => tag);
   } catch (e) {
     return ['News', 'Politics', 'Lifestyle', 'Tech', 'Culture'].slice(0, limit);
+  }
+}
+
+export async function getAds(): Promise<Ad[]> {
+  if (!db) return mockAds.map(ad => ({ ...ad, createdAt: new Date().toISOString() })) as any;
+  try {
+    const snapshot = await db.collection('advertisements').orderBy('createdAt', 'desc').get();
+    if (snapshot.empty) return [];
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString()
+      };
+    }) as any;
+  } catch (error: any) {
+    if (error.code === 8 || error.message?.includes('Quota exceeded')) {
+        return mockAds.map(ad => ({ ...ad, createdAt: new Date().toISOString() })) as any;
+    }
+    return [];
   }
 }
