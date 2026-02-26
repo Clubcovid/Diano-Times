@@ -1,4 +1,3 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -72,7 +71,7 @@ export async function createPost(data: PostFormData): Promise<{ success: boolean
 
     if (validated.data.status === 'published') {
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.talkofnations.com';
-        const post = { ...validated.data, id: docRef.id, slug: validated.data.slug } as Post;
+        const post = { ...validated.data, id: docRef.id, slug: validated.data.slug } as unknown as Post;
         tweetNewPost(post, siteUrl).catch(console.error);
     }
 
@@ -132,31 +131,37 @@ export async function getUsers(): Promise<AdminUser[]> {
 }
 
 export async function getAds(): Promise<SerializableAd[]> {
-  const fallback = mockAds.map(ad => ({ ...ad, createdAt: new Date().toISOString() })) as any;
-  if (!db) return fallback;
+  if (!db) return mockAds.map(ad => ({ ...ad, createdAt: new Date().toISOString() })) as any;
   try {
     const snapshot = await db.collection('advertisements').orderBy('createdAt', 'desc').get();
     return snapshot.docs.map(doc => {
       const data = doc.data();
-      return { id: doc.id, ...data, createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString() } as any;
+      return { id: doc.id, ...data, createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString() } as any;
     });
   } catch (error: any) {
-    return fallback;
+    return mockAds.map(ad => ({ ...ad, createdAt: new Date().toISOString() })) as any;
   }
 }
 
 export async function getVideos(): Promise<Video[]> {
-  if (!db) return mockVideos as Video[];
+  if (!db) return mockVideos.map(v => ({ ...v, createdAt: new Date().toISOString() })) as any;
   try {
     const snapshot = await db.collection('videos').orderBy('createdAt', 'desc').get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Video));
+    return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+            id: doc.id, 
+            ...data,
+            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString()
+        } as any;
+    });
   } catch (error: any) {
-    return mockVideos as Video[];
+    return mockVideos.map(v => ({ ...v, createdAt: new Date().toISOString() })) as any;
   }
 }
 
 export async function getElectionCountdownConfig(): Promise<ElectionCountdownConfig> {
-    const defaultVal = { isEnabled: false, country: 'Kenya', electionDate: Timestamp.now().toDate().toISOString() };
+    const defaultVal = { isEnabled: false, country: 'Kenya', electionDate: new Date().toISOString() };
     if (!db) return defaultVal;
     try {
         const doc = await db.collection('site_settings').doc('election_countdown').get();
@@ -165,7 +170,7 @@ export async function getElectionCountdownConfig(): Promise<ElectionCountdownCon
         return { 
             isEnabled: data.isEnabled ?? false, 
             country: data.country ?? 'Kenya', 
-            electionDate: data.electionDate?.toDate ? data.electionDate.toDate().toISOString() : defaultVal.electionDate 
+            electionDate: data.electionDate instanceof Timestamp ? data.electionDate.toDate().toISOString() : defaultVal.electionDate 
         };
     } catch (error: any) {
         return defaultVal;
@@ -257,7 +262,14 @@ export async function getMagazines(): Promise<Magazine[]> {
     if (!db) return [];
     try {
         const snapshot = await db.collection('magazines').orderBy('createdAt', 'desc').get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Magazine));
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return { 
+                id: doc.id, 
+                ...data,
+                createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString()
+            } as any;
+        });
     } catch (e) {
         return [];
     }
@@ -267,7 +279,13 @@ export async function getMagazine(id: string): Promise<Magazine | null> {
     if (!db) return null;
     try {
         const doc = await db.collection('magazines').doc(id).get();
-        return doc.exists ? { id: doc.id, ...doc.data() } as Magazine : null;
+        if (!doc.exists) return null;
+        const data = doc.data()!;
+        return { 
+            id: doc.id, 
+            ...data,
+            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString()
+        } as any;
     } catch (e) {
         return null;
     }
@@ -331,7 +349,8 @@ export async function generateCoverImageAction(p: string) {
 export async function updateUserProfile(prevState: any, formData: FormData) {
     const displayName = formData.get('displayName') as string;
     if (!auth) return { success: false, message: 'Auth service unavailable.' };
-    return { success: true, message: 'Profile updated.' };
+    // This is typically handled via client SDK updateProfile, but here we can use Admin if needed
+    return { success: true, message: 'Profile update request received.' };
 }
 
 export async function createOrUpdateAd(prevState: any, formData: FormData) {

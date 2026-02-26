@@ -1,4 +1,3 @@
-
 import 'server-only';
 import { db } from '@/lib/firebase-admin';
 import type { Post, ContentBlock } from './types';
@@ -30,6 +29,10 @@ function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
     content = [{ type: 'paragraph', value: '' }];
   }
 
+  // Ensure dates are serializable for Next.js RSC -> Client boundary
+  const createdAt = data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString();
+  const updatedAt = data.updatedAt instanceof Timestamp ? data.updatedAt.toDate().toISOString() : new Date().toISOString();
+
   return {
     id: doc.id,
     title: data.title || 'Untitled',
@@ -40,9 +43,9 @@ function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
     status: data.status || 'draft',
     authorName: data.authorName || 'Talk of Nations Staff',
     authorImage: data.authorImage || '',
-    createdAt: data.createdAt || Timestamp.now(),
-    updatedAt: data.updatedAt || Timestamp.now(),
-  } as Post;
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+  } as unknown as Post;
 }
 
 interface GetPostsOptions {
@@ -83,7 +86,7 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
     
     return posts;
   } catch (error: any) {
-    // Quota exhausted (8) or missing index (9)
+    // Gracefully fallback to mock data on index/quota errors
     return getMockPosts(options);
   }
 }
@@ -92,12 +95,17 @@ function getMockPosts(options: GetPostsOptions): Post[] {
     const { limit, publishedOnly, tag, fromDate, ids, searchQuery } = options;
     let filtered = mockPosts.map(p => {
         const content = typeof p.content === 'string' ? [{ type: 'paragraph', value: p.content }] as ContentBlock[] : p.content as ContentBlock[];
-        return { ...p, content } as Post;
+        return { 
+            ...p, 
+            content,
+            createdAt: p.createdAt instanceof Timestamp ? p.createdAt.toDate().toISOString() : p.createdAt,
+            updatedAt: p.updatedAt instanceof Timestamp ? p.updatedAt.toDate().toISOString() : p.updatedAt,
+        } as unknown as Post;
     });
 
     if (publishedOnly) filtered = filtered.filter(p => p.status === 'published');
     if (tag) filtered = filtered.filter(p => p.tags.includes(tag));
-    if (fromDate) filtered = filtered.filter(p => p.createdAt.toDate() >= fromDate);
+    if (fromDate) filtered = filtered.filter(p => new Date(p.createdAt as any) >= fromDate);
     if (ids) filtered = filtered.filter(p => ids.includes(p.id));
     if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -120,18 +128,34 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 function getMockPostBySlug(slug: string): Post | null {
     const mock = mockPosts.find(p => p.slug === slug);
     if (!mock) return null;
-    return { ...mock, content: typeof mock.content === 'string' ? [{ type: 'paragraph', value: mock.content }] : mock.content } as Post;
+    return { 
+        ...mock, 
+        content: typeof mock.content === 'string' ? [{ type: 'paragraph', value: mock.content }] : mock.content,
+        createdAt: mock.createdAt instanceof Timestamp ? mock.createdAt.toDate().toISOString() : mock.createdAt,
+        updatedAt: mock.updatedAt instanceof Timestamp ? mock.updatedAt.toDate().toISOString() : mock.updatedAt,
+    } as unknown as Post;
 }
 
 export async function getPostById(id: string): Promise<Post | null> {
-  if (!db) return mockPosts.find(p => p.id === id) as Post || null;
+  if (!db) return getMockPostById(id);
   try {
     const doc = await db.collection('posts').doc(id).get();
     if (!doc.exists) return null;
     return toPost(doc);
   } catch (e) {
-    return null;
+    return getMockPostById(id);
   }
+}
+
+function getMockPostById(id: string): Post | null {
+    const mock = mockPosts.find(p => p.id === id);
+    if (!mock) return null;
+    return { 
+        ...mock, 
+        content: typeof mock.content === 'string' ? [{ type: 'paragraph', value: mock.content }] : mock.content,
+        createdAt: mock.createdAt instanceof Timestamp ? mock.createdAt.toDate().toISOString() : mock.createdAt,
+        updatedAt: mock.updatedAt instanceof Timestamp ? mock.updatedAt.toDate().toISOString() : mock.updatedAt,
+    } as unknown as Post;
 }
 
 export async function getTags(): Promise<string[]> {
