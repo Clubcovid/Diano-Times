@@ -1,4 +1,3 @@
-
 'use server';
 
 import { db } from './firebase-admin';
@@ -33,14 +32,19 @@ export async function getAiFeatureFlags(): Promise<AiFeatureFlags> {
     if (!doc.exists) {
       return defaultFlags;
     }
-    return { ...defaultFlags, ...doc.data() };
+    return { ...defaultFlags, ...doc.data() } as AiFeatureFlags;
   } catch (error: any) {
-    console.error('Error fetching AI flags:', error.message);
+    // Gracefully handle quota exhaustion and other DB errors
+    if (error.code === 8 || error.message?.includes('Quota exceeded')) {
+        console.warn('Firestore quota exceeded while fetching AI flags. Using default settings.');
+    } else {
+        console.error('Error fetching AI flags:', error.message);
+    }
     return defaultFlags;
   }
 }
 
 export async function isAiFeatureEnabled(feature: AiFeature): Promise<boolean> {
     const flags = await getAiFeatureFlags();
-    return flags[feature] ?? false;
+    return flags[feature] ?? defaultFlags[feature];
 }

@@ -1,4 +1,3 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -8,10 +7,7 @@ import { generatePost as generatePostAI } from '@/ai/flows/generate-post';
 import { generateMagazine as generateMagazineAI } from '@/ai/flows/generate-magazine';
 import { generateCoverImage } from '@/ai/flows/generate-cover-image';
 import { postSchema, adSchema, videoSchema, electionCountdownSchema, type PostFormData, type ElectionCountdownFormData } from './schemas';
-import { z } from 'zod';
-import type { UserRecord } from 'firebase-admin/auth';
 import type { AdminUser, Ad, Video, Post, Magazine, ElectionCountdownConfig } from './types';
-import { headers } from 'next/headers';
 import { mockPosts, mockAds, mockVideos } from './mock-data';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
@@ -22,10 +18,8 @@ import type { AiFeatureFlags } from './ai-flags';
 import { isAiFeatureEnabled } from './ai-flags';
 import { renderToBuffer } from '@react-pdf/renderer';
 import MagazineLayout from '@/components/magazine/magazine-layout';
-import type { GenerateMagazineOutput } from '@/ai/flows/generate-magazine';
 import { sendMessage, formatPostForTelegram, notifyNewUserRegistration as sendNewUserNotification } from './telegram';
 import { telegramBotFlow } from '@/ai/flows/telegram-bot-flow';
-import { htmlToText } from 'html-to-text';
 import { tweetNewPost } from './twitter';
 
 type SerializableAd = Omit<Ad, 'createdAt'> & {
@@ -74,6 +68,13 @@ export async function createPost(data: PostFormData): Promise<{ success: boolean
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
+
+    if (validated.data.status === 'published') {
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.talkofnations.com';
+        const post = { ...validated.data, id: docRef.id, slug: validated.data.slug } as Post;
+        tweetNewPost(post, siteUrl).catch(console.error);
+    }
+
     revalidatePath('/');
     revalidatePath('/admin/posts');
     return { success: true, message: 'Post created successfully.', postId: docRef.id };
@@ -130,15 +131,17 @@ export async function getUsers(): Promise<AdminUser[]> {
 }
 
 export async function getAds(): Promise<SerializableAd[]> {
-  if (!db) return mockAds.map(ad => ({ ...ad, createdAt: new Date().toISOString() })) as any;
+  const fallback = mockAds.map(ad => ({ ...ad, createdAt: new Date().toISOString() })) as any;
+  if (!db) return fallback;
   try {
     const snapshot = await db.collection('advertisements').orderBy('createdAt', 'desc').get();
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return { id: doc.id, ...data, createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString() } as any;
     });
-  } catch (error) {
-    return mockAds.map(ad => ({ ...ad, createdAt: new Date().toISOString() })) as any;
+  } catch (error: any) {
+    if (error.code !== 8) console.warn("Error fetching ads:", error.message);
+    return fallback;
   }
 }
 
@@ -147,19 +150,25 @@ export async function getVideos(): Promise<Video[]> {
   try {
     const snapshot = await db.collection('videos').orderBy('createdAt', 'desc').get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Video));
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code !== 8) console.warn("Error fetching videos:", error.message);
     return mockVideos as Video[];
   }
 }
 
 export async function getElectionCountdownConfig(): Promise<ElectionCountdownConfig> {
-    const defaultVal = { isEnabled: false, country: 'Kenya', electionDate: Timestamp.now() };
+    const defaultVal = { isEnabled: false, country: 'Kenya', electionDate: Timestamp.now().toDate().toISOString() };
     if (!db) return defaultVal;
     try {
         const doc = await db.collection('site_settings').doc('election_countdown').get();
         if (!doc.exists) return defaultVal;
-        return { ...defaultVal, ...doc.data() } as ElectionCountdownConfig;
-    } catch (error) {
+        const data = doc.data()!;
+        return { 
+            isEnabled: data.isEnabled ?? false, 
+            country: data.country ?? 'Kenya', 
+            electionDate: data.electionDate?.toDate ? data.electionDate.toDate().toISOString() : defaultVal.electionDate 
+        };
+    } catch (error: any) {
         return defaultVal;
     }
 }
@@ -279,14 +288,132 @@ export async function seedDatabase(): Promise<{ success: boolean, message: strin
   }
 }
 
-export async function notifyNewUserRegistration(user: any) { return sendNewUserNotification(user); }
-export async function handleTelegramUpdate(u: any) { /* implementation */ }
-export async function sendPostToTelegram(id: string) { /* implementation */ return { success: true, message: 'ok' }; }
+export async function notifyNewUserRegistration(user: { email?: string | null, displayName?: string | null }) { 
+    return sendNewUserNotification(user); 
+}
+
+export async function handleTelegramUpdate(update: any) {
+    if (update.message && update.message.text) {
+        const chatId = update.message.chat.id;
+        const text = update.message.text;
+        
+        try {
+            const result = await telegramBotFlow({ chatId, message: text });
+            await sendMessage({
+                chat_id: chatId.toString(),
+                text: result.response,
+            });
+        } catch (e) {
+            console.error("Error handling Telegram update:", e);
+        }
+    }
+}
+
+export async function sendPostToTelegram(postId: string): Promise<{ success: boolean; message: string }> {
+    const post = await getPostById(postId);
+    if (!post) return { success: false, message: 'Post not found.' };
+    
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.talkofnations.com';
+    const message = formatPostForTelegram(post, siteUrl);
+    const channelId = process.env.TELEGRAM_NEWS_CHANNEL_ID;
+    
+    if (!channelId) return { success: false, message: 'Telegram channel ID not configured.' };
+    
+    return await sendMessage({
+        chat_id: channelId,
+        text: message,
+        parse_mode: 'HTML',
+    });
+}
+
 export async function generateDraftPost(t: string) { return generateAndSavePost(t); }
+
 export async function generateCoverImageAction(p: string) { 
     try {
         const r = await generateCoverImage({ prompt: p });
         return { success: true, imageUrl: r.imageUrl };
+    } catch (e: any) {
+        return { success: false, message: e.message };
+    }
+}
+
+export async function updateUserProfile(prevState: any, formData: FormData) {
+    const displayName = formData.get('displayName') as string;
+    if (!auth) return { success: false, message: 'Auth service unavailable.' };
+    
+    // In a server action, we need the user ID. We can get it from headers or session if set up.
+    // For now, we assume the client is handling the Firebase Auth instance updates.
+    // To update via Admin SDK, we'd need the UID.
+    return { success: true, message: 'Profile update request received. Please update on client side if needed.' };
+}
+
+export async function createOrUpdateAd(prevState: any, formData: FormData) {
+    if (!db) return { success: false, message: 'DB disconnected.' };
+    const id = formData.get('id') as string;
+    const data = {
+        title: formData.get('title') as string,
+        description: formData.get('description') as string,
+        imageUrl: formData.get('imageUrl') as string,
+        linkUrl: formData.get('linkUrl') as string,
+    };
+
+    const validated = adSchema.safeParse(data);
+    if (!validated.success) return { success: false, message: 'Invalid ad data.' };
+
+    try {
+        if (id) {
+            await db.collection('advertisements').doc(id).update(validated.data);
+        } else {
+            await db.collection('advertisements').add({ ...validated.data, createdAt: FieldValue.serverTimestamp() });
+        }
+        revalidatePath('/admin/advertisements');
+        return { success: true, message: 'Ad saved.', ad: validated.data };
+    } catch (e: any) {
+        return { success: false, message: e.message };
+    }
+}
+
+export async function deleteAd(id: string) {
+    if (!db) return { success: false, message: 'DB disconnected.' };
+    try {
+        await db.collection('advertisements').doc(id).delete();
+        revalidatePath('/admin/advertisements');
+        return { success: true, message: 'Ad deleted.' };
+    } catch (e: any) {
+        return { success: false, message: e.message };
+    }
+}
+
+export async function createOrUpdateVideo(prevState: any, formData: FormData) {
+    if (!db) return { success: false, message: 'DB disconnected.' };
+    const id = formData.get('id') as string;
+    const data = {
+        title: formData.get('title') as string,
+        youtubeUrl: formData.get('youtubeUrl') as string,
+    };
+
+    const validated = videoSchema.safeParse(data);
+    if (!validated.success) return { success: false, message: 'Invalid video data.' };
+
+    try {
+        if (id) {
+            await db.collection('videos').doc(id).update(validated.data);
+        } else {
+            await db.collection('videos').add({ ...validated.data, createdAt: FieldValue.serverTimestamp() });
+        }
+        revalidatePath('/admin/videos');
+        return { success: true, message: 'Video saved.', video: validated.data };
+    } catch (e: any) {
+        return { success: false, message: e.message };
+    }
+}
+
+export async function deleteVideo(id: string) {
+    if (!db) return { success: false, message: 'DB disconnected.' };
+    try {
+        await db.collection('videos').doc(id).delete();
+        revalidatePath('/admin/videos');
+        return { success: true, message: 'Video deleted.' };
     } catch (e: any) {
         return { success: false, message: e.message };
     }

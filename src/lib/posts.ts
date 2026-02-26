@@ -1,9 +1,8 @@
-
 import 'server-only';
 import { db } from '@/lib/firebase-admin';
-import type { Ad, Post, ContentBlock } from './types';
-import { mockPosts, mockAds } from './mock-data';
-import { Query, Timestamp } from 'firebase-admin/firestore';
+import type { Post, ContentBlock } from './types';
+import { mockPosts } from './mock-data';
+import { Timestamp } from 'firebase-admin/firestore';
 import { htmlToText } from 'html-to-text';
 
 function contentToText(content: ContentBlock[] | string): string {
@@ -65,7 +64,7 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
 
   try {
     const postsCollection = db.collection('posts');
-    let query: Query = postsCollection;
+    let query: FirebaseFirestore.Query = postsCollection;
     
     if (publishedOnly) {
       query = query.where('status', '==', 'published');
@@ -101,8 +100,14 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
     return posts;
 
   } catch (error: any) {
-    console.error("Firestore error in getPosts:", error.message);
-    // Graceful fallback for quota or index issues
+    // Silence common production errors like missing indexes or quota limits
+    if (error.code === 8 || error.message?.includes('Quota exceeded')) {
+        console.warn("Firestore quota exceeded in getPosts. Falling back to mock data.");
+    } else if (error.code === 9) {
+        console.warn("Firestore index required. Falling back to mock data.");
+    } else {
+        console.error("Firestore error in getPosts:", error.message);
+    }
     return getMockPosts(options);
   }
 }
@@ -134,8 +139,14 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     if (snapshot.empty) return null;
     return toPost(snapshot.docs[0]);
   } catch (error: any) {
-    console.error(`Error in getPostBySlug (${slug}):`, error.message);
-    return mockPosts.find(p => p.slug === slug) as Post || null;
+    if (error.code === 8 || error.message?.includes('Quota exceeded')) {
+        console.warn(`Quota exceeded in getPostBySlug (${slug}). Returning mock data.`);
+    } else {
+        console.error(`Error in getPostBySlug (${slug}):`, error.message);
+    }
+    const mock = mockPosts.find(p => p.slug === slug);
+    if (!mock) return null;
+    return { ...mock, content: typeof mock.content === 'string' ? [{ type: 'paragraph', value: mock.content }] : mock.content } as Post;
   }
 }
 
@@ -146,8 +157,14 @@ export async function getPostById(id: string): Promise<Post | null> {
     if (!doc.exists) return null;
     return toPost(doc);
   } catch (error: any) {
-    console.error(`Error in getPostById (${id}):`, error.message);
-    return mockPosts.find(p => p.id === id) as Post || null;
+    if (error.code === 8 || error.message?.includes('Quota exceeded')) {
+        console.warn(`Quota exceeded in getPostById (${id}). Returning mock data.`);
+    } else {
+        console.error(`Error in getPostById (${id}):`, error.message);
+    }
+    const mock = mockPosts.find(p => p.id === id);
+    if (!mock) return null;
+    return { ...mock, content: typeof mock.content === 'string' ? [{ type: 'paragraph', value: mock.content }] : mock.content } as Post;
   }
 }
 
@@ -166,7 +183,7 @@ export async function getTags(): Promise<string[]> {
     });
     return Array.from(tags).sort();
   } catch (error: any) {
-    console.error("Error in getTags:", error.message);
+    console.warn("Error in getTags, using fallback:", error.message);
     const tags = new Set<string>();
     mockPosts.forEach(p => p.tags.forEach(t => tags.add(t)));
     return Array.from(tags).sort();
@@ -185,16 +202,4 @@ export async function getTrendingTags(limit: number = 5): Promise<string[]> {
     .sort(([, countA], [, countB]) => countB - countA)
     .slice(0, limit)
     .map(([tag]) => tag);
-}
-
-export async function getAds(): Promise<Ad[]> {
-  if (!db) return mockAds.map(ad => ({ ...ad, createdAt: Timestamp.now() })) as Ad[];
-  try {
-    const snapshot = await db.collection('advertisements').orderBy('createdAt', 'desc').get();
-    if (snapshot.empty) return [];
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
-  } catch (error: any) {
-    console.error("Error in getAds:", error.message);
-    return mockAds.map(ad => ({ ...ad, createdAt: Timestamp.now() })) as Ad[];
-  }
 }
