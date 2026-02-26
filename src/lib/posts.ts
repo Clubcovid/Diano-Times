@@ -86,10 +86,10 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
     return posts;
   } catch (error: any) {
     // Gracefully fallback to mock data on index/quota errors (Code 8: RESOURCE_EXHAUSTED, Code 9: FAILED_PRECONDITION)
-    if (error.code === 8 || error.code === 9) {
+    if (error.code === 8 || error.code === 9 || error.message?.includes('requires an index')) {
         return getMockPosts(options);
     }
-    console.error("Error fetching posts from Firestore:", error);
+    console.warn("Firestore access issues, using mock data fallback:", error.message);
     return getMockPosts(options);
   }
 }
@@ -124,7 +124,6 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     if (snapshot.empty) return getMockPostBySlug(slug);
     return toPost(snapshot.docs[0]);
   } catch (e: any) {
-    if (e.code === 8 || e.code === 9) return getMockPostBySlug(slug);
     return getMockPostBySlug(slug);
   }
 }
@@ -147,7 +146,6 @@ export async function getPostById(id: string): Promise<Post | null> {
     if (!doc.exists) return null;
     return toPost(doc);
   } catch (e: any) {
-    if (e.code === 8 || e.code === 9) return getMockPostById(id);
     return getMockPostById(id);
   }
 }

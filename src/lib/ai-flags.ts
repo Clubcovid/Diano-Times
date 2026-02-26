@@ -32,7 +32,7 @@ export async function getAiFeatureFlags(): Promise<AiFeatureFlags> {
     if (!doc.exists) return defaultFlags;
     return { ...defaultFlags, ...doc.data() } as AiFeatureFlags;
   } catch (error: any) {
-    // Silently handle quota errors and return defaults
+    // Silently return defaults on quota or connection issues
     return defaultFlags;
   }
 }
