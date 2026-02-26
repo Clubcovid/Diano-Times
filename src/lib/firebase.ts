@@ -5,17 +5,16 @@ import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration for talk-of-nations-db2
 const firebaseConfig: FirebaseOptions = {
-  apiKey: "AIzaSyD-hGBE5N3gzZHIwvq1bsTtegURUlZUt7w",
-  authDomain: "studio-2630134466-e06b1.firebaseapp.com",
-  databaseURL: "https://studio-2630134466-e06b1-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "studio-2630134466-e06b1",
-  storageBucket: "studio-2630134466-e06b1.appspot.com",
-  messagingSenderId: "1036795142239",
-  appId: "1:1036795142239:web:1a32fd0ddba4ff2fe97bea"
+  apiKey: "AIzaSyCWbN8et30foJxjRjiTNiNdbVusSD2FP8U",
+  authDomain: "talk-of-nations-db2.firebaseapp.com",
+  projectId: "talk-of-nations-db2",
+  storageBucket: "talk-of-nations-db2.firebasestorage.app",
+  messagingSenderId: "1093050725893",
+  appId: "1:1093050725893:web:1de54809a71d2b573b0e6c",
+  measurementId: "G-K65F7LS96Q"
 };
-
 
 // Singleton pattern to initialize and get Firebase services
 let app: FirebaseApp;
@@ -36,6 +35,5 @@ if (typeof window !== 'undefined') {
         }
     });
 }
-
 
 export { app, auth, db, storage };

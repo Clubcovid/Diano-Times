@@ -1,3 +1,4 @@
+
 import 'server-only';
 import { db } from '@/lib/firebase-admin';
 import type { Post, ContentBlock } from './types';
@@ -33,16 +34,16 @@ function toPost(doc: FirebaseFirestore.DocumentSnapshot): Post {
 
   return {
     id: doc.id,
-    title: data.title,
-    slug: data.slug,
+    title: data.title || 'Untitled',
+    slug: data.slug || doc.id,
     content: content,
-    coverImage: data.coverImage,
+    coverImage: data.coverImage || '',
     tags: data.tags || [],
-    status: data.status,
+    status: data.status || 'draft',
     authorName: data.authorName || 'Talk of Nations Staff',
     authorImage: data.authorImage || '',
-    createdAt: data.createdAt,
-    updatedAt: data.updatedAt,
+    createdAt: data.createdAt || Timestamp.now(),
+    updatedAt: data.updatedAt || Timestamp.now(),
   } as Post;
 }
 
@@ -100,7 +101,6 @@ export async function getPosts(options: GetPostsOptions = {}): Promise<Post[]> {
     return posts;
 
   } catch (error: any) {
-    // Silence common production errors like missing indexes or quota limits
     if (error.code === 8 || error.message?.includes('Quota exceeded')) {
         console.warn("Firestore quota exceeded in getPosts. Falling back to mock data.");
     } else if (error.code === 9) {
@@ -132,18 +132,16 @@ function getMockPosts(options: GetPostsOptions): Post[] {
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
   if (!db) {
-    return mockPosts.find(p => p.slug === slug) as Post || null;
+    const mock = mockPosts.find(p => p.slug === slug);
+    if (!mock) return null;
+    return { ...mock, content: typeof mock.content === 'string' ? [{ type: 'paragraph', value: mock.content }] : mock.content } as Post;
   }
   try {
     const snapshot = await db.collection('posts').where('slug', '==', slug).limit(1).get();
     if (snapshot.empty) return null;
     return toPost(snapshot.docs[0]);
   } catch (error: any) {
-    if (error.code === 8 || error.message?.includes('Quota exceeded')) {
-        console.warn(`Quota exceeded in getPostBySlug (${slug}). Returning mock data.`);
-    } else {
-        console.error(`Error in getPostBySlug (${slug}):`, error.message);
-    }
+    console.warn(`Error in getPostBySlug (${slug}), returning mock fallback:`, error.message);
     const mock = mockPosts.find(p => p.slug === slug);
     if (!mock) return null;
     return { ...mock, content: typeof mock.content === 'string' ? [{ type: 'paragraph', value: mock.content }] : mock.content } as Post;
@@ -157,11 +155,7 @@ export async function getPostById(id: string): Promise<Post | null> {
     if (!doc.exists) return null;
     return toPost(doc);
   } catch (error: any) {
-    if (error.code === 8 || error.message?.includes('Quota exceeded')) {
-        console.warn(`Quota exceeded in getPostById (${id}). Returning mock data.`);
-    } else {
-        console.error(`Error in getPostById (${id}):`, error.message);
-    }
+    console.warn(`Error in getPostById (${id}), returning mock fallback:`, error.message);
     const mock = mockPosts.find(p => p.id === id);
     if (!mock) return null;
     return { ...mock, content: typeof mock.content === 'string' ? [{ type: 'paragraph', value: mock.content }] : mock.content } as Post;
@@ -183,7 +177,6 @@ export async function getTags(): Promise<string[]> {
     });
     return Array.from(tags).sort();
   } catch (error: any) {
-    console.warn("Error in getTags, using fallback:", error.message);
     const tags = new Set<string>();
     mockPosts.forEach(p => p.tags.forEach(t => tags.add(t)));
     return Array.from(tags).sort();
@@ -191,15 +184,19 @@ export async function getTags(): Promise<string[]> {
 }
 
 export async function getTrendingTags(limit: number = 5): Promise<string[]> {
-  const posts = await getPosts({ publishedOnly: true, limit: 50 });
-  const tagCounts: Record<string, number> = {};
-  posts.forEach(post => {
-    post.tags.forEach(tag => {
-      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+  try {
+    const posts = await getPosts({ publishedOnly: true, limit: 50 });
+    const tagCounts: Record<string, number> = {};
+    posts.forEach(post => {
+      post.tags.forEach(tag => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      });
     });
-  });
-  return Object.entries(tagCounts)
-    .sort(([, countA], [, countB]) => countB - countA)
-    .slice(0, limit)
-    .map(([tag]) => tag);
+    return Object.entries(tagCounts)
+      .sort(([, countA], [, countB]) => countB - countA)
+      .slice(0, limit)
+      .map(([tag]) => tag);
+  } catch (e) {
+    return ['News', 'Politics', 'Lifestyle', 'Tech', 'Culture'].slice(0, limit);
+  }
 }
